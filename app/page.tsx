@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Sparkles, UserCheck } from "lucide-react";
+import { ArrowLeft, Sparkles, UserCheck, Facebook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MosqueLogo } from "@/components/common/MosqueLogo";
 
@@ -96,10 +96,20 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-slate-200/80 dark:border-slate-800/80 py-5 text-center text-xs text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xs">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="font-bold">
             مركز طارق القرآني • عمان - طبربور
           </p>
+          <a
+            href="https://www.facebook.com/share/p/19sanaeGpj/"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="صفحة مركز طارق القرآني على فيسبوك"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-blue-50 hover:bg-[#1877F2] text-[#1877F2] hover:text-white dark:bg-blue-950/50 dark:text-blue-300 dark:hover:text-white border border-blue-200/80 dark:border-blue-800/80 text-xs font-bold transition-all duration-200 shadow-xs hover:shadow-md group"
+          >
+            <Facebook className="w-4 h-4 transition-transform group-hover:scale-110" />
+            <span>صفحتنا على فيسبوك</span>
+          </a>
           <p>© {new Date().getFullYear()} متابع الحفظ - جميع الحقوق محفوظة</p>
         </div>
       </footer>

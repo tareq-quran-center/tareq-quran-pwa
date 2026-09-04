@@ -44,7 +44,7 @@ export function AppFooter({
             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
               تابع أنشطة وإعلانات المركز:
             </span>
-            <SocialLinks iconSize="md" />
+            <SocialLinks iconSize="md" showLabels={true} />
           </div>
         </div>
 

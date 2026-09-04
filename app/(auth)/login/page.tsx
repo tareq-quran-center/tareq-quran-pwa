@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LogIn, UserPlus, AlertCircle, CheckCircle } from "lucide-react";
+import { LogIn, UserPlus, AlertCircle, CheckCircle, Facebook } from "lucide-react";
 import { loginSchema, signupSchema, LoginInput, SignupInput } from "@/lib/validations/auth";
 import { loginTeacher, signupTeacher } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -254,6 +254,23 @@ export default function LoginPage() {
               </Button>
             </form>
           )}
+
+          {/* Official Center Facebook Link */}
+          <div className="mt-6 pt-4 border-t border-slate-200/80 dark:border-slate-800 flex flex-col items-center gap-2">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              تابع أنشطة وإعلانات المركز:
+            </span>
+            <a
+              href="https://www.facebook.com/share/p/19sanaeGpj/"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="صفحة مركز طارق القرآني على فيسبوك"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-50 hover:bg-[#1877F2] text-[#1877F2] hover:text-white dark:bg-blue-950/50 dark:text-blue-300 dark:hover:text-white border border-blue-200/80 dark:border-blue-800/80 text-xs font-bold transition-all duration-200 shadow-xs hover:shadow-md active:scale-95 group"
+            >
+              <Facebook className="w-4 h-4 transition-transform group-hover:scale-110" />
+              <span>صفحتنا على فيسبوك</span>
+            </a>
+          </div>
         </CardContent>
       </Card>
     </div>

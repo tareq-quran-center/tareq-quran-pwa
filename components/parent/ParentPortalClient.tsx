@@ -119,10 +119,10 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8">
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Sleek Profile Hero Header */}
-        <Card className="border-emerald-800/40 bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 text-white shadow-2xl overflow-hidden relative rounded-3xl">
+        <Card className="border-burgundy-800/40 bg-gradient-to-br from-burgundy-950 via-burgundy-900 to-burgundy-950 text-white shadow-2xl overflow-hidden relative rounded-3xl">
           {/* Background Decorative Radial Glows */}
           <div className="absolute -top-24 -left-24 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-burgundy-400/15 rounded-full blur-3xl pointer-events-none" />
 
           <CardContent className="p-6 sm:p-8 space-y-6 relative z-10">
             {/* Centered/Balanced Hero Layout */}
@@ -158,7 +158,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
               })()}
 
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-800/60 border border-emerald-700/60 text-amber-300 text-xs font-bold">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-burgundy-800/60 border border-burgundy-700/60 text-amber-300 text-xs font-bold">
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>بوابة ولي الأمر</span>
                 </div>
@@ -166,14 +166,14 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                   {student?.full_name || "الطالب"}
                 </h1>
 
-                <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 text-xs text-emerald-200 font-medium">
+                <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 text-xs text-burgundy-200 font-medium">
                   {student?.academic_grade && (
                     <span className="bg-white/15 px-3 py-1 rounded-xl font-bold border border-white/10">
                       🎓 {student.academic_grade}
                     </span>
                   )}
                   {student?.school_name && (
-                    <span className="bg-white/15 px-3 py-1 rounded-xl font-medium border border-white/10">
+                    <span className="bg-white/15 px-3 py-1 rounded-xl font-bold border border-white/10">
                       🏫 {student.school_name}
                     </span>
                   )}
@@ -181,10 +181,10 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
               </div>
             </div>
 
-            {/* Quranic Hadith Motivation Quote */}
-            <div className="pt-4 border-t border-emerald-800/60 flex items-start gap-3 bg-white/5 p-4 rounded-2xl backdrop-blur-sm">
-              <Quote className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-              <p className="text-xs sm:text-sm text-emerald-100 italic leading-relaxed">
+            {/* Motivational Banner */}
+            <div className="pt-4 border-t border-burgundy-800/60 flex items-start gap-3 bg-white/5 p-4 rounded-2xl backdrop-blur-sm">
+              <span className="text-xl">🌟</span>
+              <p className="text-xs sm:text-sm text-burgundy-100 italic leading-relaxed">
                 قال رسول الله ﷺ: <strong className="text-amber-300 font-bold">«خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ»</strong> - هنيئاً لكم هذا الغرس الطيب والمتابعة المباركة لكتاب الله.
               </p>
             </div>
@@ -714,17 +714,17 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
         <div className="text-center text-xs text-slate-500 space-y-3 py-6 border-t border-slate-200/80 dark:border-slate-800">
           <div className="flex flex-col items-center gap-2">
             <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
-              تابع أنشطة وإعلانات مسجد حذيفة بن اليمان:
+              تابع أنشطة وإعلانات مركز طارق القرآني:
             </span>
             <SocialLinks iconSize="md" />
           </div>
 
           <p className="flex items-center justify-center gap-1 text-slate-500 pt-1">
-            <HeartHandshake className="w-4 h-4 text-teal-600" />
+            <HeartHandshake className="w-4 h-4 text-burgundy-700 dark:text-burgundy-400" />
             <span>نعتز بتواصلكم ومتابعتكم المستمرة مع معلم الحلقة</span>
           </p>
           <p className="text-[10px] text-slate-400">
-            © {new Date().getFullYear()} متابع الحفظ • مسجد حذيفة بن اليمان - طبربور
+            © {new Date().getFullYear()} متابع الحفظ • مركز طارق القرآني - طبربور
           </p>
         </div>
       </div>

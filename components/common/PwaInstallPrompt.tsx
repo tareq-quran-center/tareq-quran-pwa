@@ -147,13 +147,13 @@ export function PwaInstallPrompt() {
 
         {/* Top App Identity */}
         <div className="flex items-center gap-3.5 pr-1">
-          <MosqueLogo variant="badge" size="md" className="w-14 h-14" alt="شعار مسجد حذيفة بن اليمان" />
+          <MosqueLogo variant="badge" size="md" className="w-14 h-14" alt="شعار مركز طارق القرآني" />
           <div>
             <h3 className="text-lg font-black text-slate-900 dark:text-slate-50 leading-tight">
               تثبيت تطبيق متابع الحفظ
             </h3>
             <p className="text-xs text-islamicGold-700 dark:text-islamicGold-300 font-bold mt-0.5">
-              مسجد حذيفة بن اليمان • حلقة القرآن الكريم
+              مركز طارق القرآني • حلقة القرآن الكريم
             </p>
           </div>
         </div>

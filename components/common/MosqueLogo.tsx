@@ -29,7 +29,7 @@ export function MosqueLogo({
   className = "",
   gold = false,
   priority = false,
-  alt = "شعار مسجد حذيفة بن اليمان",
+  alt = "شعار مركز طارق القرآني",
 }: MosqueLogoProps) {
   const currentSize = size !== "custom" ? sizeMap[size] : { width: width || 48, height: height || 48, badgeSize: "w-11 h-11" };
   const targetWidth = width || currentSize.width;
@@ -38,17 +38,15 @@ export function MosqueLogo({
   if (variant === "badge") {
     return (
       <div
-        className={`inline-flex items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-950 via-teal-900 to-emerald-900 text-amber-300 border border-islamicGold-400/40 shadow-md shadow-emerald-950/20 overflow-hidden relative group shrink-0 ${currentSize.badgeSize} ${className}`}
+        className={`inline-flex items-center justify-center rounded-full bg-gradient-to-br from-burgundy-950 via-burgundy-900 to-burgundy-800 text-amber-300 border-2 border-islamicGold-400/70 shadow-md shadow-burgundy-950/30 overflow-hidden relative group shrink-0 ${currentSize.badgeSize} ${className}`}
         style={size === "custom" && width ? { width, height } : undefined}
       >
-        {/* Subtle Islamic gold sheen */}
-        <div className="absolute inset-0 bg-radial from-islamicGold-300/15 via-transparent to-transparent pointer-events-none" />
         <Image
-          src="/images/logo-icon-gold.png"
+          src="/images/tareq-logo.jpg"
           alt={alt}
-          width={Math.round(targetWidth * 0.75)}
-          height={Math.round(targetHeight * 0.75)}
-          className="object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)] group-hover:scale-105 transition-transform duration-200"
+          width={targetWidth}
+          height={targetHeight}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
           priority={priority}
           unoptimized={true}
         />
@@ -56,44 +54,18 @@ export function MosqueLogo({
     );
   }
 
-  if (variant === "center") {
-    return (
-      <Image
-        src={gold ? "/images/logo-icon-center-gold.png" : "/images/logo-icon-center.png"}
-        alt={alt}
-        width={targetWidth}
-        height={targetHeight}
-        className={`object-contain ${className}`}
-        priority={priority}
-        unoptimized={true}
-      />
-    );
-  }
-
-  if (variant === "arches" || variant === "icon") {
-    return (
-      <Image
-        src={gold ? "/images/logo-icon-gold.png" : "/images/logo-arches.png"}
-        alt={alt}
-        width={targetWidth}
-        height={targetHeight}
-        className={`object-contain ${className}`}
-        priority={priority}
-        unoptimized={true}
-      />
-    );
-  }
-
-  // Full official logo with typography
+  // Full, arches, center, icon variants all present the beautiful new emblem
   return (
-    <Image
-      src={gold ? "/images/logo-full-gold.png" : "/images/logo-full.png"}
-      alt={alt}
-      width={targetWidth}
-      height={targetHeight}
-      className={`object-contain ${className}`}
-      priority={priority}
-      unoptimized={true}
-    />
+    <div className={`relative inline-block rounded-full overflow-hidden p-0.5 border border-islamicGold-400/40 shadow-sm ${className}`}>
+      <Image
+        src="/images/tareq-logo.jpg"
+        alt={alt}
+        width={targetWidth}
+        height={targetHeight}
+        className="object-contain rounded-full drop-shadow-sm transition-transform duration-300 hover:scale-[1.02]"
+        priority={priority}
+        unoptimized={true}
+      />
+    </div>
   );
 }

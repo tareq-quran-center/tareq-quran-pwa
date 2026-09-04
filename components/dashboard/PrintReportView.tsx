@@ -69,11 +69,11 @@ export function PrintReportView({ reportItems, periodLabel }: PrintReportViewPro
       `}</style>
 
       {/* Official A4 Header */}
-      <div className="flex justify-between items-center border-b-2 border-emerald-800 pb-3 mb-4">
+      <div className="flex justify-between items-center border-b-2 border-burgundy-900 pb-3 mb-4">
         <div>
-          <h1 className="text-xl font-black text-emerald-950">سجل متابعة حلقة القرآن الكريم 📜</h1>
+          <h1 className="text-xl font-black text-burgundy-950">سجل متابعة حلقة القرآن الكريم — مركز طارق القرآني 📜</h1>
           <p className="text-xs font-bold text-slate-600 mt-1">
-            تقرير الإدارة التفصيلي — <span className="text-emerald-800 font-extrabold">{periodLabel}</span>
+            تقرير الإدارة التفصيلي — <span className="text-burgundy-900 font-extrabold">{periodLabel}</span>
           </p>
         </div>
         <div className="text-left text-[11px] text-slate-500 font-bold space-y-0.5">

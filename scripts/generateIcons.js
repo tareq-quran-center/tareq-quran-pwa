@@ -55,22 +55,22 @@ function generatePng(size) {
       const qy = Math.max(0, Math.abs(dy) - (cy - cornerRadius));
       const distCorner = Math.sqrt(qx * qx + qy * qy);
 
-      let r = 6, g = 78, b = 59, a = 255; // #064e3b deep emerald
+      let r = 122, g = 12, b = 30, a = 255; // #7a0c1e royal burgundy
 
       if (distCorner > cornerRadius) {
         a = 0; // transparent outside rounded card
       } else {
-        // Subtle emerald gradient
-        const grad = (y / height) * 30;
-        r = Math.min(255, 6 + grad * 0.4);
-        g = Math.min(255, 78 + grad * 0.8);
-        b = Math.min(255, 59 + grad * 0.6);
+        // Subtle burgundy gradient
+        const grad = (y / height) * 25;
+        r = Math.min(255, 122 + grad * 0.4);
+        g = Math.min(255, 12 + grad * 0.2);
+        b = Math.min(255, 30 + grad * 0.2);
 
         // Gold Quran / Star Symbol in center
         // Center circle / book motif
         if (dist <= rOuter && dist >= rInner) {
           // Gold ring
-          r = 251; g = 191; b = 36; // Amber-400 (#fbbf24)
+          r = 212; g = 175; b = 55; // Metallic Gold (#d4af37)
         } else if (dist < rInner * 0.85) {
           // Book pages shape:
           // Two symmetric curved polygons for open Quran pages
@@ -81,14 +81,14 @@ function generatePng(size) {
           const inRightPage = (nx >= 0.05 && nx <= 0.75 && ny >= -0.65 && ny <= 0.65);
 
           if (inLeftPage || inRightPage) {
-            // Gold fill with emerald lines
-            r = 253; g = 230; b = 138; // Light amber #fde68a
+            // Gold fill with burgundy lines
+            r = 245; g = 222; b = 136; // Light gold #f5de88
             if (Math.abs(ny * 10 - Math.round(ny * 10)) < 0.15 && ny > -0.4 && ny < 0.4) {
-              r = 6; g = 78; b = 59; // green text lines
+              r = 122; g = 12; b = 30; // burgundy text lines
             }
           } else if (Math.abs(dx) < width * 0.04 && Math.abs(dy) < height * 0.28) {
-            // Book spine in gold
-            r = 217; g = 119; b = 6; // Amber-600
+            // Book spine in rich gold
+            r = 184; g = 143; b = 40; // Rich gold
           }
         }
       }
@@ -124,6 +124,15 @@ if (!fs.existsSync(iconsDir)) {
   fs.mkdirSync(iconsDir, { recursive: true });
 }
 
-fs.writeFileSync(path.join(iconsDir, "icon-192x192.png"), generatePng(192));
-fs.writeFileSync(path.join(iconsDir, "icon-512x512.png"), generatePng(512));
-console.log("Successfully generated PWA icons (192x192 and 512x512)!");
+const icon192 = generatePng(192);
+const icon512 = generatePng(512);
+
+fs.writeFileSync(path.join(iconsDir, "icon-192x192.png"), icon192);
+fs.writeFileSync(path.join(iconsDir, "icon-512x512.png"), icon512);
+fs.writeFileSync(path.join(iconsDir, "icon-maskable-192x192.png"), icon192);
+fs.writeFileSync(path.join(iconsDir, "icon-maskable-512x512.png"), icon512);
+
+const publicDir = path.join(__dirname, "..", "public");
+fs.writeFileSync(path.join(publicDir, "apple-touch-icon.png"), icon192);
+fs.writeFileSync(path.join(publicDir, "favicon.png"), generatePng(64));
+console.log("Successfully generated all PWA icons & favicon with royal burgundy & gold theme!");

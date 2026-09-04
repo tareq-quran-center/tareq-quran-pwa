@@ -12,29 +12,43 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
         primary: {
-          DEFAULT: "#0F766E", // Teal 700 - Elegant Quranic Teal
+          DEFAULT: "#7A0C1E", // Royal Islamic Burgundy
           foreground: "#FFFFFF",
-          light: "#14B8A6",
-          dark: "#115E59",
+          light: "#9B162C",
+          dark: "#590714",
+        },
+        burgundy: {
+          DEFAULT: "#7A0C1E",
+          50: "#FDF2F4",
+          100: "#FCE7EA",
+          200: "#F9D1D7",
+          300: "#F4ABB6",
+          400: "#EC7A8D",
+          500: "#DF4763",
+          600: "#C52646",
+          700: "#9E1834",
+          800: "#7A0C1E",
+          900: "#5B0815",
+          950: "#38040B",
         },
         accent: {
-          DEFAULT: "#D97706", // Amber 600 - Warm Gold Accent
+          DEFAULT: "#D4AF37", // Metallic Gold Accent
           foreground: "#FFFFFF",
-          light: "#F59E0B",
+          light: "#DFC274",
         },
         islamicGold: {
-          DEFAULT: "#B39B59", // Mosque logo signature gold
-          50: "#FBF9F2",
-          100: "#F5F0E1",
-          200: "#EADDC0",
-          300: "#DEC89E",
-          400: "#D0B27A",
-          500: "#B39B59",
-          600: "#9C8344",
-          700: "#7F6732",
-          800: "#604E25",
-          900: "#44371A",
-          950: "#271F0D",
+          DEFAULT: "#D4AF37", // Signature logo metallic gold
+          50: "#FDFBF5",
+          100: "#FAF4E4",
+          200: "#F4E7C4",
+          300: "#EBD69E",
+          400: "#DFC274",
+          500: "#D4AF37",
+          600: "#B88F28",
+          700: "#916B1B",
+          800: "#73521A",
+          900: "#4A3412",
+          950: "#2A1C08",
         },
         card: {
           DEFAULT: "var(--card-bg)",

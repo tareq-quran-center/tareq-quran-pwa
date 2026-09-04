@@ -75,13 +75,13 @@ export default function ParentSearchGatewayPage() {
         <div className="text-center space-y-3">
           <div className="flex justify-center">
             <MosqueLogo
-              variant="arches"
+              variant="full"
               size="xl"
               width={140}
-              height={125}
-              className="object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
+              height={140}
+              className="object-contain drop-shadow-md transition-transform duration-300 hover:scale-105"
               priority
-              alt="شعار مسجد حذيفة بن اليمان"
+              alt="شعار مركز طارق القرآني"
             />
           </div>
           <div>
@@ -89,13 +89,13 @@ export default function ParentSearchGatewayPage() {
               بوابة أولياء الأمور
             </h1>
             <p className="text-sm text-slate-500 font-medium mt-1">
-              مسجد حذيفة بن اليمان • متابعة حفظ القرآن الكريم لأبنائكم
+              مركز طارق القرآني • متابعة حفظ القرآن الكريم لأبنائكم
             </p>
           </div>
         </div>
 
         {/* Main Search Card */}
-        <Card className="border-teal-200 dark:border-slate-800 shadow-xl bg-white dark:bg-slate-900">
+        <Card className="border-burgundy-200/80 dark:border-slate-800 shadow-xl bg-white dark:bg-slate-900">
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-lg font-bold flex items-center gap-2">
               <Search className="w-5 h-5 text-teal-600" />

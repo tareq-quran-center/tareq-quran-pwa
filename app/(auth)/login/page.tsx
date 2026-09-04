@@ -57,11 +57,20 @@ export default function LoginPage() {
 
     const res = await signupTeacher(data);
     if (res.success) {
-      setSuccessMessage("تم إنشاء الحساب بنجاح! جاري التوجيه إلى اللوحة...");
-      setTimeout(() => {
-        router.push("/dashboard");
-        router.refresh();
-      }, 800);
+      if (res.data?.requiresConfirmation) {
+        setSuccessMessage(
+          "تم إنشاء الحساب بنجاح! يتطلب حسابك تأكيد البريد الإلكتروني. يرجى فتح بريدك الإلكتروني (وتفقد مجلد الرسائل غير المرغوب فيها Spam) والضغط على رابط التفعيل ثم تسجيل الدخول."
+        );
+        loginForm.setValue("email", data.email);
+        setActiveTab("login");
+        setIsLoading(false);
+      } else {
+        setSuccessMessage("تم إنشاء الحساب بنجاح! جاري التوجيه إلى اللوحة...");
+        setTimeout(() => {
+          router.push("/dashboard");
+          router.refresh();
+        }, 800);
+      }
     } else {
       setErrorMessage(res.error || "فشل إنشاء الحساب");
       setIsLoading(false);
@@ -74,20 +83,20 @@ export default function LoginPage() {
         <CardHeader className="space-y-2 text-center pb-4">
           <div className="flex justify-center mb-2">
             <MosqueLogo
-              variant="arches"
+              variant="full"
               size="xl"
               width={140}
-              height={125}
-              className="object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
+              height={140}
+              className="object-contain drop-shadow-md transition-transform duration-300 hover:scale-105"
               priority
-              alt="شعار مسجد حذيفة بن اليمان"
+              alt="شعار مركز طارق القرآني"
             />
           </div>
           <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-50">
             بوابة المعلم
           </CardTitle>
           <CardDescription className="text-slate-500 font-medium">
-            متابع الحفظ • مسجد حذيفة بن اليمان
+            متابع الحفظ • مركز طارق القرآني
           </CardDescription>
 
           {/* Tabs Switcher */}
@@ -101,7 +110,7 @@ export default function LoginPage() {
               }}
               className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
                 activeTab === "login"
-                  ? "bg-white dark:bg-slate-800 text-teal-800 dark:text-teal-300 shadow-sm"
+                  ? "bg-white dark:bg-slate-800 text-burgundy-900 dark:text-burgundy-300 shadow-sm font-black"
                   : "text-slate-500 hover:text-slate-900"
               }`}
             >
@@ -116,7 +125,7 @@ export default function LoginPage() {
               }}
               className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
                 activeTab === "signup"
-                  ? "bg-white dark:bg-slate-800 text-teal-800 dark:text-teal-300 shadow-sm"
+                  ? "bg-white dark:bg-slate-800 text-burgundy-900 dark:text-burgundy-300 shadow-sm font-black"
                   : "text-slate-500 hover:text-slate-900"
               }`}
             >

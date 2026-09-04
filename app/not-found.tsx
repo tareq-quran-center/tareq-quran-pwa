@@ -8,11 +8,11 @@ export default function NotFoundPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center space-y-6 bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800">
         <div className="flex justify-center">
-          <MosqueLogo variant="badge" size="lg" className="w-16 h-16" alt="شعار مسجد حذيفة بن اليمان" />
+          <MosqueLogo variant="badge" size="lg" className="w-16 h-16" alt="شعار مركز طارق القرآني" />
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-4xl font-black text-teal-800 dark:text-teal-300">404</h1>
+          <h1 className="text-4xl font-black text-burgundy-900 dark:text-burgundy-300">404</h1>
           <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-50">
             عذراً، الصفحة غير موجودة
           </h2>

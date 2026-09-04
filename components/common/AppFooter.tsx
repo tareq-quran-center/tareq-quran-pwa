@@ -22,18 +22,18 @@ export function AppFooter({
     >
       <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8 space-y-5">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-right">
-          {/* Mosque & Platform Identity */}
+          {/* Center & Platform Identity */}
           <div className="space-y-1">
             <div className="flex items-center justify-center sm:justify-start gap-2.5">
-              <MosqueLogo variant="badge" size="xs" className="w-8 h-8" alt="شعار مسجد حذيفة بن اليمان" />
+              <MosqueLogo variant="badge" size="xs" className="w-8 h-8" alt="شعار مركز طارق القرآني" />
               <h4 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
-                حلقات مسجد حذيفة بن اليمان
+                حلقات مركز طارق القرآني
               </h4>
             </div>
 
             {showMosqueDetails && (
               <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-center sm:justify-start gap-1">
-                <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <MapPin className="w-3.5 h-3.5 text-burgundy-700 dark:text-burgundy-400 shrink-0" />
                 <span>عمان - طبربور • متابعة وإتقان القرآن الكريم</span>
               </p>
             )}
@@ -42,7 +42,7 @@ export function AppFooter({
           {/* Social Channels Action */}
           <div className="flex flex-col items-center sm:items-end gap-1.5">
             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-              تابع أنشطة وإعلانات المسجد:
+              تابع أنشطة وإعلانات المركز:
             </span>
             <SocialLinks iconSize="md" />
           </div>
@@ -51,7 +51,7 @@ export function AppFooter({
         {/* Bottom Rights Bar */}
         <div className="border-t border-slate-100 dark:border-slate-800/80 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400 font-medium">
           <p className="flex items-center gap-1">
-            <HeartHandshake className="w-3.5 h-3.5 text-emerald-600" />
+            <HeartHandshake className="w-3.5 h-3.5 text-burgundy-700 dark:text-burgundy-400" />
             <span>نعتز بخدمة كتاب الله عز وجل وتنشئة جيل القرآن</span>
           </p>
           <p>© {currentYear} متابع الحفظ • جميع الحقوق محفوظة</p>

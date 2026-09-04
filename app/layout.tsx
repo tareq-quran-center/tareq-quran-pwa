@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#064e3b",
+  themeColor: "#7A0C1E",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -71,7 +71,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased selection:bg-emerald-100 selection:text-emerald-900 pt-safe pb-safe">
+      <body className="antialiased selection:bg-burgundy-100 selection:text-burgundy-950 pt-safe pb-safe">
         <PWAProvider />
         <OfflineBanner />
         <ErrorBoundary>

@@ -27,13 +27,13 @@ export function Header() {
         {/* Brand Logo & Title */}
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="flex items-center gap-2.5 group">
-            <MosqueLogo variant="badge" size="sm" className="w-10 h-10" alt="شعار مسجد حذيفة بن اليمان" />
+            <MosqueLogo variant="badge" size="sm" className="w-10 h-10" alt="شعار مركز طارق القرآني" />
             <div className="flex flex-col">
               <span className="font-black text-base sm:text-lg text-slate-900 dark:text-slate-50 leading-tight">
                 متابع الحفظ
               </span>
               <span className="text-[10px] text-islamicGold-700 dark:text-islamicGold-300 font-bold hidden sm:inline">
-                مسجد حذيفة بن اليمان
+                مركز طارق القرآني
               </span>
             </div>
           </Link>
@@ -50,11 +50,11 @@ export function Header() {
                   href={item.href}
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-bold transition-all ${
                     isActive
-                      ? "bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 shadow-sm border border-emerald-200/50 dark:border-emerald-800/50"
+                      ? "bg-burgundy-50 dark:bg-burgundy-950/70 text-burgundy-900 dark:text-burgundy-300 shadow-sm border border-burgundy-200/60 dark:border-burgundy-800/60"
                       : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? "text-emerald-700 dark:text-emerald-400" : "text-slate-400"}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? "text-burgundy-700 dark:text-burgundy-400" : "text-slate-400"}`} />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -115,7 +115,7 @@ export function Header() {
           className="flex items-center gap-2 group shrink-0 focus:outline-none"
           aria-label="الرئيسية - متابع الحفظ"
         >
-          <MosqueLogo variant="badge" size="sm" className="w-9 h-9" alt="شعار مسجد حذيفة بن اليمان" />
+          <MosqueLogo variant="badge" size="sm" className="w-9 h-9" alt="شعار مركز طارق القرآني" />
         </Link>
 
         {/* Center: Main Visual Focal Point (Title «متابع الحفظ») */}
@@ -127,7 +127,7 @@ export function Header() {
             متابع الحفظ
           </span>
           <span className="text-[10px] text-islamicGold-700 dark:text-islamicGold-300 font-bold hidden min-[390px]:inline-block leading-none mt-0.5">
-            مسجد حذيفة بن اليمان
+            مركز طارق القرآني
           </span>
         </Link>
 

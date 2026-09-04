@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /dashboard/
+Disallow: /students/
+Disallow: /trash/
+Disallow: /quran/
+Disallow: /parent/
+Disallow: /api/
+Disallow: /*_rsc*
+
+Allow: /$
+Allow: /login$

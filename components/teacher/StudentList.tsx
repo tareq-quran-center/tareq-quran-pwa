@@ -1,0 +1,344 @@
+"use client";
+
+import { useState, useCallback, useMemo } from "react";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import { Search, UserPlus, Users, CalendarCheck, Trash2 } from "lucide-react";
+import { StudentRow, AttendanceRecordRow, MemorizationLogRow } from "@/types";
+import { getAttendanceAlertsMap } from "@/lib/attendanceAlerts";
+import { StudentInput } from "@/lib/validations/student";
+import { createStudent, updateStudent, deleteStudent } from "@/lib/actions/student";
+import { StudentCard } from "./StudentCard";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useRealtimeSync, RealtimePayload } from "@/lib/hooks/useRealtimeSync";
+import { lightHaptic } from "@/lib/haptics";
+
+const StudentDialog = dynamic(() => import("./StudentDialog").then((mod) => mod.StudentDialog), { ssr: false });
+const DeleteStudentDialog = dynamic(() => import("./DeleteStudentDialog").then((mod) => mod.DeleteStudentDialog), { ssr: false });
+const QuickAttendanceSheet = dynamic(() => import("./QuickAttendanceSheet").then((mod) => mod.QuickAttendanceSheet), { ssr: false });
+
+interface StudentListProps {
+  initialStudents: StudentRow[];
+  initialAttendance?: AttendanceRecordRow[];
+  initialLogs?: MemorizationLogRow[];
+  logs?: any[];
+}
+
+export function StudentList({
+  initialStudents,
+  initialAttendance = [],
+  initialLogs = [],
+  logs: propLogs,
+}: StudentListProps) {
+  const [students, setStudents] = useState<StudentRow[]>(initialStudents);
+  const [logs, setLogs] = useState<MemorizationLogRow[]>(propLogs || initialLogs || []);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"name" | "pages">("name");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isQuickAttendanceOpen, setIsQuickAttendanceOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<StudentRow | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [alertMessage, setAlertMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Realtime payload handler for instant student list & logs sync
+  const handleRealtimePayload = useCallback((payload: RealtimePayload<StudentRow & MemorizationLogRow>) => {
+    const { table, eventType, new: newRecord, old: oldRecord } = payload;
+    if (table === "students") {
+      const studentRec = newRecord as StudentRow;
+      if (eventType === "INSERT" && studentRec) {
+        setStudents((prev) => [studentRec, ...prev.filter((s) => s.id !== studentRec.id)]);
+      } else if (eventType === "DELETE" && oldRecord && oldRecord.id) {
+        setStudents((prev) => prev.filter((s) => s.id !== oldRecord.id));
+      } else if (eventType === "UPDATE" && studentRec) {
+        setStudents((prev) =>
+          prev.map((s) => (s.id === studentRec.id ? studentRec : s))
+        );
+      }
+    }
+    if (table === "memorization_logs") {
+      const logRec = newRecord as MemorizationLogRow;
+      if (eventType === "INSERT" && logRec) {
+        setLogs((prev) => [logRec, ...prev.filter((l) => l.id !== logRec.id)]);
+      } else if (eventType === "DELETE" && oldRecord && oldRecord.id) {
+        setLogs((prev) => prev.filter((l) => l.id !== oldRecord.id));
+      } else if (eventType === "UPDATE" && logRec) {
+        setLogs((prev) =>
+          prev.map((l) => (l.id === logRec.id ? logRec : l))
+        );
+      }
+    }
+  }, []);
+
+  const { notification } = useRealtimeSync({
+    tables: ["students", "memorization_logs"],
+    onPayload: handleRealtimePayload,
+  });
+
+  // Compute attendance alerts for student cards
+  const alertsMap = useMemo(() => {
+    return getAttendanceAlertsMap(students, initialAttendance);
+  }, [students, initialAttendance]);
+
+  // Compute weekly top student id for gamification badges
+  const weeklyTopStudentId = useMemo(() => {
+    if (!students || students.length === 0 || !logs || logs.length === 0) return undefined;
+    const now = new Date();
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay(), 0, 0, 0, 0).getTime();
+
+    const weeklyLogs = logs.filter((l) => l.created_at && new Date(l.created_at).getTime() >= startOfWeek);
+    const pagesMap: Record<string, number> = {};
+    weeklyLogs.forEach((l) => {
+      if (l.student_id) {
+        pagesMap[l.student_id] = (pagesMap[l.student_id] || 0) + (Number(l.page_count) || 1);
+      }
+    });
+
+    let topId: string | undefined = undefined;
+    let maxPages = 0;
+    Object.entries(pagesMap).forEach(([id, p]) => {
+      if (p > maxPages) {
+        maxPages = p;
+        topId = id;
+      }
+    });
+
+    return maxPages > 0 ? topId : undefined;
+  }, [students, logs]);
+
+  const filteredStudents = students
+    .filter((s) => s.full_name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+    .sort((a, b) => {
+      if (sortBy === "pages") {
+        const pagesB = b.total_pages_memorized ?? b.total_pages_count ?? 0;
+        const pagesA = a.total_pages_memorized ?? a.total_pages_count ?? 0;
+        return pagesB - pagesA;
+      }
+      return a.full_name.localeCompare(b.full_name, "ar");
+    });
+
+  const handleOpenAdd = () => {
+    setSelectedStudent(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenEdit = (student: StudentRow) => {
+    setSelectedStudent(student);
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenDelete = (student: StudentRow) => {
+    setSelectedStudent(student);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleSaveStudent = async (data: StudentInput) => {
+    setIsLoading(true);
+    setAlertMessage(null);
+
+    if (selectedStudent) {
+      const res = await updateStudent(selectedStudent.id, data);
+      if (res.success && res.data) {
+        setStudents((prev) =>
+          prev.map((s) => (s.id === selectedStudent.id ? res.data! : s))
+        );
+        setAlertMessage({ type: "success", text: "تم تحديث بيانات الطالب بنجاح" });
+      } else {
+        setAlertMessage({ type: "error", text: res.error || "فشل التحديث" });
+      }
+    } else {
+      const res = await createStudent(data);
+      if (res.success && res.data) {
+        setStudents((prev) => [res.data!, ...prev]);
+        setAlertMessage({ type: "success", text: "تمت إضافة الطالب بنجاح" });
+      } else {
+        setAlertMessage({ type: "error", text: res.error || "فشلت الإضافة" });
+      }
+    }
+
+    setIsLoading(false);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedStudent) return;
+    setIsLoading(true);
+    setAlertMessage(null);
+
+    const res = await deleteStudent(selectedStudent.id);
+    if (res.success) {
+      setStudents((prev) => prev.filter((s) => s.id !== selectedStudent.id));
+      setAlertMessage({ type: "success", text: "تم حذف الطالب بنجاح" });
+      setIsDeleteDialogOpen(false);
+    } else {
+      setAlertMessage({ type: "error", text: res.error || "فشل الحذف" });
+    }
+
+    setIsLoading(false);
+  };
+
+  return (
+    <div className="space-y-6">
+      {notification && (
+        <div className="p-3 bg-teal-800 text-white font-bold text-xs rounded-xl shadow-lg animate-in slide-in-from-top duration-300 flex items-center justify-center gap-2">
+          <span>{notification}</span>
+        </div>
+      )}
+
+      {/* Alert Banner */}
+      {alertMessage && (
+        <div
+          className={`p-4 rounded-xl text-sm font-semibold flex items-center justify-between transition-all ${
+            alertMessage.type === "success"
+              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+              : "bg-rose-50 text-rose-800 border border-rose-200"
+          }`}
+        >
+          <span>{alertMessage.text}</span>
+          <button onClick={() => setAlertMessage(null)} className="text-xs text-slate-500 underline">
+            إغلاق
+          </button>
+        </div>
+      )}
+
+      {/* Top Controls: Search Bar + Sort Picker (Row 1) & 3-Action Compact Grid (Row 2) */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white/70 dark:bg-slate-900/70 p-3 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+        {/* Row 1: Search & Sort */}
+        <div className="flex items-center gap-2 flex-1">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Input
+              type="text"
+              placeholder="بحث باسم الطالب..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pr-9 h-9 text-xs"
+            />
+          </div>
+
+          <select
+            value={sortBy}
+            onChange={(e) => {
+              lightHaptic();
+              setSortBy(e.target.value as "name" | "pages");
+            }}
+            className="h-9 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 shrink-0 cursor-pointer"
+          >
+            <option value="name">الاسم أبجدياً</option>
+            <option value="pages">الأكثر تسميعاً 🏆</option>
+          </select>
+        </div>
+
+        {/* Row 2: 3-Action Compact Grid */}
+        <div className="grid grid-cols-3 sm:flex sm:items-center gap-1.5 sm:gap-2">
+          {/* Action 1: Bulk Attendance */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              lightHaptic();
+              setIsQuickAttendanceOpen(true);
+            }}
+            className="h-9 px-2 sm:px-3 gap-1.5 shadow-sm border-teal-200 dark:border-teal-900 text-teal-800 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-xl text-xs font-bold justify-center"
+            title="تحضير جميع طلاب الحلقة اليوم"
+          >
+            <CalendarCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
+            <span className="truncate">تحضير الحلقة</span>
+          </Button>
+
+          {/* Action 2: Add Student */}
+          <Button
+            size="sm"
+            onClick={() => {
+              lightHaptic();
+              handleOpenAdd();
+            }}
+            className="h-9 px-2 sm:px-3 gap-1.5 shadow-sm bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold justify-center"
+            title="إضافة طالب جديد إلى كشف الحلقة"
+          >
+            <UserPlus className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">إضافة طالب</span>
+          </Button>
+
+          {/* Action 3: Trash */}
+          <Link href="/trash">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full h-9 px-2 sm:px-3 gap-1.5 shadow-sm border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl text-xs font-bold justify-center"
+              title="سلة المهملات واستعادة الطلاب المحذوفين"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+              <span className="truncate">السلة 🗑️</span>
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Student Cards Grid */}
+      {filteredStudents.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredStudents.map((student) => (
+            <StudentCard
+              key={student.id}
+              student={student}
+              logs={logs}
+              attendance={initialAttendance}
+              alert={alertsMap.get(student.id)}
+              weeklyTopStudentId={weeklyTopStudentId}
+              onEdit={handleOpenEdit}
+              onDelete={handleOpenDelete}
+            />
+          ))}
+        </div>
+      ) : (
+        /* Empty State */
+        <div className="border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl p-12 text-center bg-white dark:bg-slate-900 shadow-sm space-y-4">
+          <div className="w-16 h-16 rounded-full bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300 flex items-center justify-center mx-auto">
+            <Users className="w-8 h-8" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-50">
+              {searchQuery ? "لا توجد نتائج مطابقة لاسم البحث" : "لا يوجد طلاب مسجلون بعد"}
+            </h3>
+            <p className="text-sm text-slate-500 max-w-md mx-auto mt-1">
+              {searchQuery
+                ? "تأكد من كتابة الاسم بشكل صحيح أو جرب كلمة بحث أخرى"
+                : "ابدأ بإضافة أول طالب في الحلقة لتوليد رابط المتابعة الخاص بولي أمره ومتابعة التسميع والحضور"}
+            </p>
+          </div>
+          {!searchQuery && (
+            <Button onClick={handleOpenAdd} className="gap-2 mt-2">
+              <UserPlus className="w-4 h-4" />
+              <span>إضافة طالب جديد</span>
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Dialog Modals */}
+      <StudentDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSubmit={handleSaveStudent}
+        student={selectedStudent}
+        isLoading={isLoading}
+      />
+
+      <DeleteStudentDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        studentName={selectedStudent?.full_name}
+        isLoading={isLoading}
+      />
+
+      <QuickAttendanceSheet
+        isOpen={isQuickAttendanceOpen}
+        onClose={() => setIsQuickAttendanceOpen(false)}
+        students={students}
+        onSuccess={() => setAlertMessage({ type: "success", text: "تم تسجيل حضور الحلقة بنجاح!" })}
+      />
+    </div>
+  );
+}

@@ -1,0 +1,963 @@
+"use server";
+
+import { cache } from "react";
+import { createClient } from "@/lib/supabase/server";
+import { studentSchema, StudentInput } from "@/lib/validations/student";
+import { validateAndFormatJordanianPhone } from "@/lib/phoneUtils";
+import { StudentRow, StudentInsert, StudentUpdate, ParentProgressPayload, MemorizationLogRow, AttendanceRecordRow } from "@/types";
+import { calculateRecitationPages } from "@/lib/quranMetadata";
+import { revalidatePath } from "next/cache";
+import { getActiveGroupId } from "./group";
+
+export interface ActionResult<T = void> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+export async function getStudents(): Promise<ActionResult<StudentRow[]>> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return {
+        success: false,
+        error: "غير مصرح لك للوصول، يرجى تسجيل الدخول أولاً",
+      };
+    }
+
+    // 1. Query directly from public.students table under RLS (active students only)
+    const { data: students, error: studentsError } = await supabase
+      .from("students")
+      .select("*")
+      .is("deleted_at", null)
+      .order("full_name", { ascending: true });
+
+    if (studentsError) {
+      return {
+        success: false,
+        error: "فشل جلب قائمة الطلاب: " + studentsError.message,
+      };
+    }
+
+    // 2. Fetch active memorization logs summary to compute all-time total pages & recitations
+    const studentIds = (students || []).map((s) => s.id);
+    let logsSummary: any[] = [];
+    if (studentIds.length > 0) {
+      const { data: logsData } = await supabase
+        .from("memorization_logs")
+        .select("*")
+        .in("student_id", studentIds);
+      logsSummary = logsData || [];
+    }
+
+    const logsMap = new Map<string, { totalPages: number; count: number }>();
+    logsSummary.forEach((l) => {
+      if (l.deleted_at) return;
+
+      if (l.student_id) {
+        const cur = logsMap.get(l.student_id) || { totalPages: 0, count: 0 };
+        let pages = typeof l.page_count === "number" && !isNaN(l.page_count) && l.page_count > 0
+          ? Number(l.page_count)
+          : null;
+
+        if (pages === null) {
+          if (l.surah_start && l.surah_end) {
+            const calculated = calculateRecitationPages(l.surah_start, l.surah_end, l.aya_start || 1, l.aya_end || 1);
+            pages = isNaN(calculated) || calculated < 0 ? 0 : calculated;
+          } else {
+            pages = 0;
+          }
+        }
+        cur.totalPages += pages;
+        cur.count += 1;
+        logsMap.set(l.student_id, cur);
+      }
+    });
+
+    // 3. Auto-patch any student missing parent_token and map pre-aggregated totals
+    const safeStudents: StudentRow[] = await Promise.all(
+      (students || []).map(async (student) => {
+        let token = student.parent_token;
+        if (!token) {
+          token = crypto.randomUUID();
+          await supabase
+            .from("students")
+            .update({ parent_token: token })
+            .eq("id", student.id);
+        }
+        const stats = logsMap.get(student.id) || { totalPages: 0, count: 0 };
+        const totalPages = Number(stats.totalPages.toFixed(2));
+        return {
+          ...student,
+          parent_token: token,
+          total_pages_memorized: totalPages,
+          total_recitations_count: stats.count,
+          total_pages_count: totalPages,
+        };
+      })
+    );
+
+    return {
+      success: true,
+      data: safeStudents,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "حدث خطأ غير متوقع",
+    };
+  }
+}
+
+export async function createStudent(data: StudentInput): Promise<ActionResult<StudentRow>> {
+  const validation = studentSchema.safeParse(data);
+  if (!validation.success) {
+    return {
+      success: false,
+      error: validation.error.errors[0]?.message || "بيانات الطالب غير صحيحة",
+    };
+  }
+
+  // Normalize and validate parent phone to standard Jordanian format (07XXXXXXXX)
+  let normalizedPhone: string | null = null;
+  if (validation.data.parent_phone && validation.data.parent_phone.trim() !== "") {
+    const phoneRes = validateAndFormatJordanianPhone(validation.data.parent_phone);
+    if (!phoneRes.isValid) {
+      return {
+        success: false,
+        error: phoneRes.error || "رقم هاتف ولي الأمر غير صحيح",
+      };
+    }
+    normalizedPhone = phoneRes.local || null;
+  }
+
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return {
+        success: false,
+        error: "غير مصرح لك بإضافة طالب، يرجى تسجيل الدخول",
+      };
+    }
+
+    const groupResult = await getActiveGroupId();
+    const resultObj = groupResult as unknown as {
+      status: "ok" | "no_group" | "multiple_groups" | "unauthenticated" | "error";
+      groupId?: string;
+      error?: string;
+    };
+
+    if (resultObj.status === "unauthenticated") {
+      return {
+        success: false,
+        error: "غير مصرح لك بإضافة طالب، يرجى تسجيل الدخول",
+      };
+    }
+
+    if (resultObj.status === "no_group") {
+      return {
+        success: false,
+        error: "لا تنتمي إلى أي حلقة قرآنية حالياً. يرجى إنشاء أو الانضمام إلى حلقة أولاً قبل إضافة الطلاب.",
+      };
+    }
+
+    if (resultObj.status === "multiple_groups") {
+      return {
+        success: false,
+        error: "المستخدم ينتمي إلى أكثر من حلقة. يرجى تحديد الحلقة النشطة قبل إضافة الطالب.",
+      };
+    }
+
+    if (resultObj.status !== "ok" || !resultObj.groupId) {
+      return {
+        success: false,
+        error: resultObj.error || "تعذر تحديد الحلقة النشطة لإضافة الطالب إليها. يرجى التأكد من اختيار حلقة صحيحة.",
+      };
+    }
+
+    const assignedGroupId: string = resultObj.groupId;
+
+    const insertPayload: StudentInsert = {
+      teacher_id: user.id,
+      group_id: assignedGroupId,
+      full_name: validation.data.full_name,
+      parent_phone: normalizedPhone,
+      academic_grade: validation.data.academic_grade || null,
+      school_name: validation.data.school_name || null,
+      address: validation.data.address || null,
+      father_job: validation.data.father_job || null,
+      avatar_url: validation.data.avatar_url || null,
+      join_date: validation.data.join_date || new Date().toISOString().split("T")[0],
+      parent_token: crypto.randomUUID(),
+      deleted_at: null,
+    };
+
+    const { data: newStudent, error } = await supabase
+      .from("students")
+      .insert(insertPayload)
+      .select()
+      .single();
+
+    if (error) {
+      return {
+        success: false,
+        error: "فشل إضافة الطالب: " + error.message,
+      };
+    }
+
+    revalidatePath("/students");
+    revalidatePath("/dashboard");
+    return {
+      success: true,
+      data: newStudent,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "حدث خطأ غير متوقع أثناء إضافة الطالب",
+    };
+  }
+}
+
+export async function updateStudent(id: string, data: StudentInput): Promise<ActionResult<StudentRow>> {
+  if (!id) {
+    return { success: false, error: "معرف الطالب مطلوب" };
+  }
+
+  const validation = studentSchema.safeParse(data);
+  if (!validation.success) {
+    return {
+      success: false,
+      error: validation.error.errors[0]?.message || "بيانات التعديل غير صحيحة",
+    };
+  }
+
+  // Normalize and validate parent phone to standard Jordanian format (07XXXXXXXX)
+  let normalizedPhone: string | null = null;
+  if (validation.data.parent_phone && validation.data.parent_phone.trim() !== "") {
+    const phoneRes = validateAndFormatJordanianPhone(validation.data.parent_phone);
+    if (!phoneRes.isValid) {
+      return {
+        success: false,
+        error: phoneRes.error || "رقم هاتف ولي الأمر غير صحيح",
+      };
+    }
+    normalizedPhone = phoneRes.local || null;
+  }
+
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return {
+        success: false,
+        error: "غير مصرح لك لتعديل بيانات الطالب",
+      };
+    }
+
+    const updatePayload: StudentUpdate = {
+      full_name: validation.data.full_name,
+      parent_phone: normalizedPhone,
+      academic_grade: validation.data.academic_grade || null,
+      school_name: validation.data.school_name || null,
+      address: validation.data.address || null,
+      father_job: validation.data.father_job || null,
+      avatar_url: validation.data.avatar_url || null,
+      ...(validation.data.join_date ? { join_date: validation.data.join_date } : {}),
+    };
+
+    const { data: updatedStudent, error } = await supabase
+      .from("students")
+      .update(updatePayload)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      return {
+        success: false,
+        error: "فشل تحديث بيانات الطالب: " + error.message,
+      };
+    }
+
+    revalidatePath("/students");
+    revalidatePath("/dashboard");
+    revalidatePath(`/students/${id}`);
+    if (updatedStudent.parent_token) {
+      revalidatePath(`/parent/${updatedStudent.parent_token}`);
+    }
+    return {
+      success: true,
+      data: updatedStudent,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "حدث خطأ غير متوقع أثناء تحديث بيانات الطالب",
+    };
+  }
+}
+
+export async function deleteStudent(id: string): Promise<ActionResult> {
+  if (!id) {
+    return { success: false, error: "معرف الطالب مطلوب" };
+  }
+
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return {
+        success: false,
+        error: "غير مصرح لك بحذف الطالب",
+      };
+    }
+
+    // Soft delete: Mark student with deleted_at timestamp to protect historical logs and attendance records
+    const { error } = await supabase
+      .from("students")
+      .update({
+        deleted_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (error) {
+      return {
+        success: false,
+        error: "فشل حذف الطالب: " + error.message,
+      };
+    }
+
+    revalidatePath("/students");
+    revalidatePath("/trash");
+    revalidatePath("/dashboard");
+    revalidatePath(`/students/${id}`);
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "حدث خطأ غير متوقع أثناء حذف الطالب",
+    };
+  }
+}
+
+export async function restoreStudent(id: string): Promise<ActionResult<StudentRow>> {
+  if (!id) {
+    return { success: false, error: "معرف الطالب مطلوب للاستعادة" };
+  }
+
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return {
+        success: false,
+        error: "غير مصرح لك باستعادة الطالب، يرجى تسجيل الدخول",
+      };
+    }
+
+    // Restore student by clearing deleted_at under RLS
+    const { data: restoredStudent, error } = await supabase
+      .from("students")
+      .update({
+        deleted_at: null,
+      })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error || !restoredStudent) {
+      return {
+        success: false,
+        error: "فشل استعادة الطالب: " + (error?.message || "الطالب غير موجود أو غير مصرح لك باستعادته"),
+      };
+    }
+
+    revalidatePath("/students");
+    revalidatePath("/trash");
+    revalidatePath("/dashboard");
+    revalidatePath(`/students/${id}`);
+    if (restoredStudent.parent_token) {
+      revalidatePath(`/parent/${restoredStudent.parent_token}`);
+    }
+
+    return {
+      success: true,
+      data: restoredStudent,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "حدث خطأ غير متوقع أثناء استعادة الطالب",
+    };
+  }
+}
+
+export async function getDeletedStudents(): Promise<ActionResult<StudentRow[]>> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return {
+        success: false,
+        error: "غير مصرح لك للوصول، يرجى تسجيل الدخول أولاً",
+      };
+    }
+
+    // 1. Query deleted students from public.students table under RLS
+    const { data: students, error: studentsError } = await supabase
+      .from("students")
+      .select("*")
+      .not("deleted_at", "is", null)
+      .order("deleted_at", { ascending: false });
+
+    if (studentsError) {
+      return {
+        success: false,
+        error: "فشل جلب قائمة الطلاب المحذوفين: " + studentsError.message,
+      };
+    }
+
+    if (!students || students.length === 0) {
+      return {
+        success: true,
+        data: [],
+      };
+    }
+
+    const studentIds = students.map((s) => s.id);
+
+    // 2. Fetch memorization logs summary for deleted students
+    const { data: logsSummary } = await supabase
+      .from("memorization_logs")
+      .select("student_id, page_count")
+      .in("student_id", studentIds);
+
+    const logsMap = new Map<string, { totalPages: number; count: number }>();
+    (logsSummary || []).forEach((l) => {
+      if (l.student_id) {
+        const cur = logsMap.get(l.student_id) || { totalPages: 0, count: 0 };
+        cur.totalPages += Number(l.page_count) || 1;
+        cur.count += 1;
+        logsMap.set(l.student_id, cur);
+      }
+    });
+
+    const safeStudents: StudentRow[] = students.map((student) => {
+      const stats = logsMap.get(student.id) || { totalPages: 0, count: 0 };
+      const totalPages = Number(stats.totalPages.toFixed(2));
+      return {
+        ...student,
+        total_pages_memorized: totalPages,
+        total_recitations_count: stats.count,
+        total_pages_count: totalPages,
+      };
+    });
+
+    return {
+      success: true,
+      data: safeStudents,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "حدث خطأ غير متوقع أثناء جلب سلة المهملات",
+    };
+  }
+}
+
+export const getDeletedStudentsCached = cache(getDeletedStudents);
+
+/**
+ * Permanently deletes all students currently in the archive / trash (deleted_at IS NOT NULL)
+ * belonging to the authenticated teacher.
+ * Also cascades and purges all associated attendance records and memorization logs
+ * to ensure no orphaned records remain.
+ */
+export async function emptyTrashStudents(): Promise<ActionResult<{ deletedCount: number }>> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return {
+        success: false,
+        error: "غير مصرح لك بتنفيذ هذه العملية، يرجى تسجيل الدخول أولاً",
+      };
+    }
+
+    // 1. Find all archived/soft-deleted students belonging to the teacher under RLS
+    const { data: trashedStudents, error: fetchErr } = await supabase
+      .from("students")
+      .select("id, avatar_url")
+      .not("deleted_at", "is", null);
+
+    if (fetchErr) {
+      return {
+        success: false,
+        error: "فشل استعلام الطلاب المؤرشفين: " + fetchErr.message,
+      };
+    }
+
+    if (!trashedStudents || trashedStudents.length === 0) {
+      return {
+        success: true,
+        data: { deletedCount: 0 },
+      };
+    }
+
+    const trashedIds = trashedStudents.map((s) => s.id);
+
+    // 2. Cascade delete attendance records
+    await supabase
+      .from("attendance_records")
+      .delete()
+      .in("student_id", trashedIds);
+
+    // Also purge from legacy attendance table if present
+    await supabase
+      .from("attendance")
+      .delete()
+      .in("student_id", trashedIds);
+
+    // 3. Cascade delete memorization logs
+    await supabase
+      .from("memorization_logs")
+      .delete()
+      .in("student_id", trashedIds);
+
+    // 4. Permanently delete student rows from public.students
+    const { error: delError } = await supabase
+      .from("students")
+      .delete()
+      .in("id", trashedIds);
+
+    if (delError) {
+      return {
+        success: false,
+        error: "فشل حذف بيانات الطلاب نهائياً: " + delError.message,
+      };
+    }
+
+    // 5. Clean up avatar files from storage if applicable
+    for (const student of trashedStudents) {
+      if (student.avatar_url && student.avatar_url.includes("/avatars/")) {
+        try {
+          const path = student.avatar_url.split("/avatars/")[1];
+          if (path) {
+            await supabase.storage.from("avatars").remove([path]);
+          }
+        } catch {
+          // Non-blocking storage cleanup
+        }
+      }
+    }
+
+    revalidatePath("/trash");
+    revalidatePath("/students");
+    revalidatePath("/dashboard");
+
+    return {
+      success: true,
+      data: { deletedCount: trashedIds.length },
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "حدث خطأ غير متوقع أثناء تفريغ سلة المهملات",
+    };
+  }
+}
+
+export async function regenerateParentToken(studentId: string): Promise<ActionResult<{ parent_token: string }>> {
+  if (!studentId) {
+    return { success: false, error: "معرف الطالب مطلوب" };
+  }
+
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return {
+        success: false,
+        error: "غير مصرح لك بتجديد الرابط، يرجى تسجيل الدخول",
+      };
+    }
+
+    const newToken = crypto.randomUUID();
+
+    const { data: updatedStudent, error } = await supabase
+      .from("students")
+      .update({ parent_token: newToken })
+      .eq("id", studentId)
+      .select("id, parent_token")
+      .single();
+
+    if (error || !updatedStudent) {
+      return {
+        success: false,
+        error: "فشل تجديد رابط المتابعة: " + (error?.message || "الطالب غير موجود"),
+      };
+    }
+
+    revalidatePath(`/students/${studentId}`);
+    revalidatePath("/students");
+    revalidatePath("/dashboard");
+
+    return {
+      success: true,
+      data: { parent_token: updatedStudent.parent_token },
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "حدث خطأ غير متوقع أثناء تجديد الرابط",
+    };
+  }
+}
+
+
+import {
+  getStudentProgressByToken as getParentProgressByToken,
+  findStudentByPhoneOrCode as findParentStudentByPhoneOrCode,
+  type ParentSearchResult,
+} from "./parent";
+export type { ParentSearchResult };
+
+export async function getStudentProgressByToken(token: string): Promise<ParentProgressPayload> {
+  return getParentProgressByToken(token);
+}
+
+export async function findStudentByPhoneOrCode(input: string): Promise<ParentSearchResult> {
+  return findParentStudentByPhoneOrCode(input);
+}
+
+export const getStudentsCached = cache(getStudents);
+
+export type TimeframeFilter = "today" | "this_week" | "this_month" | "last_30_days" | "all";
+
+export interface TeacherReportDataOptions {
+  timeframe?: TimeframeFilter;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+}
+
+export interface TeacherReportStats {
+  totalStudents: number;
+  activeStudents: number;
+  totalMemorizedPages: number;
+  overallAttendanceRate: number;
+  totalPresent: number;
+  totalAbsent: number;
+  totalLate: number;
+  totalExcused: number;
+}
+
+export interface TeacherReportDataResult {
+  success: boolean;
+  students?: StudentRow[];
+  logs?: MemorizationLogRow[];
+  attendance?: AttendanceRecordRow[];
+  stats?: TeacherReportStats;
+  error?: string;
+}
+
+function resolveDateRange(options?: TeacherReportDataOptions): { startStr: string; endStr: string } {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const todayStr = `${year}-${month}-${day}`;
+
+  if (options?.startDate && options?.endDate) {
+    return { startStr: options.startDate, endStr: options.endDate };
+  }
+
+  const timeframe = options?.timeframe || "this_month";
+
+  if (timeframe === "all") {
+    return { startStr: "", endStr: "" };
+  }
+
+  if (timeframe === "today") {
+    return { startStr: todayStr, endStr: todayStr };
+  }
+
+  if (timeframe === "this_week") {
+    const dayOfWeek = now.getDay(); // 0 is Sunday
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek);
+    const wYear = startOfWeek.getFullYear();
+    const wMonth = String(startOfWeek.getMonth() + 1).padStart(2, "0");
+    const wDay = String(startOfWeek.getDate()).padStart(2, "0");
+    return { startStr: `${wYear}-${wMonth}-${wDay}`, endStr: todayStr };
+  }
+
+  if (timeframe === "last_30_days") {
+    const start30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const sYear = start30.getFullYear();
+    const sMonth = String(start30.getMonth() + 1).padStart(2, "0");
+    const sDay = String(start30.getDate()).padStart(2, "0");
+    return { startStr: `${sYear}-${sMonth}-${sDay}`, endStr: todayStr };
+  }
+
+  // Default: "this_month"
+  // For early days in the month (first 7 days), extend window back 30 days so streak/absence alerts retain full historical context
+  const dayOfMonth = now.getDate();
+  if (dayOfMonth < 7) {
+    const start30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const sYear = start30.getFullYear();
+    const sMonth = String(start30.getMonth() + 1).padStart(2, "0");
+    const sDay = String(start30.getDate()).padStart(2, "0");
+    return { startStr: `${sYear}-${sMonth}-${sDay}`, endStr: todayStr };
+  }
+
+  const startOfMonthStr = `${year}-${month}-01`;
+  return { startStr: startOfMonthStr, endStr: todayStr };
+}
+
+export async function getTeacherReportData(options?: TeacherReportDataOptions): Promise<TeacherReportDataResult> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { success: false, error: "غير مصرح لك للوصول، يرجى تسجيل الدخول أولاً" };
+    }
+
+    const { startStr, endStr } = resolveDateRange(options);
+
+    // 1. Fetch Active Students directly from public.students table under RLS
+    const studentsPromise = supabase
+      .from("students")
+      .select("*")
+      .is("deleted_at", null)
+      .order("full_name", { ascending: true });
+
+    // 2. Fetch Time-scoped Attendance Records (under teacher RLS)
+    let attendanceQuery = supabase
+      .from("attendance_records")
+      .select("*");
+
+    if (startStr) {
+      attendanceQuery = attendanceQuery.gte("date", startStr);
+    }
+    if (endStr) {
+      attendanceQuery = attendanceQuery.lte("date", endStr);
+    }
+    const attendancePromise = attendanceQuery.order("date", { ascending: false });
+
+    // 3. Fetch Logs (under teacher RLS)
+    let logsQuery = supabase
+      .from("memorization_logs")
+      .select("*");
+
+    if (startStr) {
+      logsQuery = logsQuery.gte("date", startStr);
+    }
+    if (endStr) {
+      logsQuery = logsQuery.lte("date", endStr);
+    }
+    if (options?.limit) {
+      logsQuery = logsQuery.limit(options.limit);
+    }
+    const logsPromise = logsQuery.order("created_at", { ascending: false });
+
+    // Execute core queries in parallel
+    const [studentsRes, attendanceRes, logsRes] = await Promise.all([
+      studentsPromise,
+      attendancePromise,
+      logsPromise,
+    ]);
+
+    const rawStudents = studentsRes.data || [];
+    const studentIds = rawStudents.map((s) => s.id);
+    const logs = logsRes.data || [];
+
+    // 4. All-time logs summary for the teacher's active students to pre-aggregate totals accurately.
+    // Optimization: When timeframe is "all" (no date bounds & no limit), reuse `logs` directly
+    // to eliminate duplicate multi-MB database queries. Only query separately if date filter is active.
+    let allLogsSummary: any[] = [];
+    if (!startStr && !endStr && !options?.limit) {
+      allLogsSummary = logs;
+    } else if (studentIds.length > 0) {
+      const { data: allLogsData } = await supabase
+        .from("memorization_logs")
+        .select("student_id, page_count, surah_start, surah_end, aya_start, aya_end, deleted_at")
+        .in("student_id", studentIds);
+      allLogsSummary = allLogsData || [];
+    }
+
+    const statsLogs = logs;
+
+    const logsMap = new Map<string, { totalPages: number; count: number }>();
+    allLogsSummary.forEach((l) => {
+      if (l.deleted_at) return;
+
+      if (l.student_id) {
+        const cur = logsMap.get(l.student_id) || { totalPages: 0, count: 0 };
+        let pages = typeof l.page_count === "number" && !isNaN(l.page_count) && l.page_count > 0
+          ? Number(l.page_count)
+          : null;
+
+        if (pages === null) {
+          if (l.surah_start && l.surah_end) {
+            const calculated = calculateRecitationPages(l.surah_start, l.surah_end, l.aya_start || 1, l.aya_end || 1);
+            pages = isNaN(calculated) || calculated < 0 ? 0 : calculated;
+          } else {
+            pages = 0;
+          }
+        }
+        cur.totalPages += pages;
+        cur.count += 1;
+        logsMap.set(l.student_id, cur);
+      }
+    });
+
+    const students: StudentRow[] = rawStudents.map((s) => {
+      const stats = logsMap.get(s.id) || { totalPages: 0, count: 0 };
+      const totalPages = Number(stats.totalPages.toFixed(2));
+      return {
+        ...s,
+        total_pages_memorized: totalPages,
+        total_recitations_count: stats.count,
+        total_pages_count: totalPages,
+      };
+    });
+    const attendance = attendanceRes.data || [];
+
+    // Calculate Summary Statistics
+    let totalMemorizedPages = 0;
+    const activeStudentIds = new Set<string>();
+
+    statsLogs.forEach((l) => {
+      if (l.student_id) {
+        activeStudentIds.add(l.student_id);
+      }
+      totalMemorizedPages += Number(l.page_count) || 1;
+    });
+    totalMemorizedPages = Number(totalMemorizedPages.toFixed(2));
+
+    let totalPresent = 0;
+    let totalAbsent = 0;
+    let totalLate = 0;
+    let totalExcused = 0;
+
+    attendance.forEach((a) => {
+      if (a.status === "حاضر") totalPresent++;
+      else if (a.status === "غائب") totalAbsent++;
+      else if (a.status === "متأخر") totalLate++;
+      else if (a.status === "مستأذن") totalExcused++;
+    });
+
+    const totalRecorded = totalPresent + totalAbsent + totalLate + totalExcused;
+    const overallAttendanceRate = totalRecorded > 0
+      ? Math.round(((totalPresent + totalLate) / totalRecorded) * 100)
+      : 100;
+
+    const stats: TeacherReportStats = {
+      totalStudents: students.length,
+      activeStudents: activeStudentIds.size,
+      totalMemorizedPages,
+      overallAttendanceRate,
+      totalPresent,
+      totalAbsent,
+      totalLate,
+      totalExcused,
+    };
+
+    return {
+      success: true,
+      students,
+      logs: allLogsSummary.length > 0 ? allLogsSummary : logs,
+      attendance,
+      stats,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "حدث خطأ أثناء جلب بيانات التقرير",
+    };
+  }
+}
+
+export const getTeacherReportDataCached = cache(getTeacherReportData);
+
+/**
+ * Mark student as contacted by the teacher for follow-up alerts
+ */
+export async function markStudentContacted(studentId: string): Promise<ActionResult<StudentRow>> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { success: false, error: "غير مصرح لك بتسجيل التواصل، يرجى تسجيل الدخول أولاً" };
+    }
+
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from("students")
+      .update({ last_contacted_at: now, updated_at: now })
+      .eq("id", studentId)
+      .eq("teacher_id", user.id)
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: "فشل حفظ حالة التواصل في قاعدة البيانات" };
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/students");
+
+    return {
+      success: true,
+      data: data as StudentRow,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "حدث خطأ غير متوقع أثناء تسجيل التواصل",
+    };
+  }
+}

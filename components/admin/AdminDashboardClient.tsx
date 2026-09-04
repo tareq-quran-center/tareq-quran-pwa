@@ -15,6 +15,7 @@ import {
   updateTeacher,
   toggleTeacherActive,
   transferStudentHalaqa,
+  claimAdminRole,
 } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -276,6 +277,29 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
     }
   };
 
+  // Claim Admin Role State & Handler
+  const [isAdminConfirmed, setIsAdminConfirmed] = useState(
+    initialData.currentUserIsAdmin ?? false
+  );
+  const [isClaimingAdmin, setIsClaimingAdmin] = useState(false);
+
+  const handleClaimAdmin = async () => {
+    setIsClaimingAdmin(true);
+    try {
+      const res = await claimAdminRole();
+      if (res.success) {
+        setIsAdminConfirmed(true);
+        showToast("تم تثبيت وتفعيل صلاحية مدير المركز بنجاح 👑");
+      } else {
+        showToast(res.error || "فشل تعيين الصلاحية");
+      }
+    } catch {
+      showToast("حدث خطأ غير متوقع");
+    } finally {
+      setIsClaimingAdmin(false);
+    }
+  };
+
   // Filtered students
   const filteredStudents = students.filter((s) => {
     const matchesSearch =
@@ -327,6 +351,31 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
           </div>
         </div>
       </div>
+
+      {/* If current user has not yet claimed admin role */}
+      {!isAdminConfirmed && (
+        <div className="no-print p-4 sm:p-5 bg-gradient-to-r from-amber-50 via-white to-amber-50 dark:from-amber-950/60 dark:via-slate-900 dark:to-amber-950/60 border-2 border-amber-300 dark:border-amber-700 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 text-amber-900 dark:text-amber-200 shadow-md">
+          <div className="flex items-center gap-3 text-right">
+            <span className="text-2xl p-2 rounded-2xl bg-amber-100 dark:bg-amber-900/60">👑</span>
+            <div>
+              <h4 className="text-sm font-black text-slate-900 dark:text-white">
+                تأكيد هوية مدير مركز طارق القرآني
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                حسابك الحالي مسجل كـ "معلم". اضغط على الزر لتثبيت وتفعيل صلاحية "مدير المركز" رسمياً لحسابك.
+              </p>
+            </div>
+          </div>
+
+          <Button
+            onClick={handleClaimAdmin}
+            disabled={isClaimingAdmin}
+            className="w-full sm:w-auto bg-gradient-to-r from-burgundy-900 to-burgundy-800 hover:from-burgundy-800 hover:to-burgundy-700 text-white font-black text-xs px-5 py-2.5 rounded-2xl border border-islamicGold-400 shadow-md whitespace-nowrap"
+          >
+            {isClaimingAdmin ? "جارٍ التفعيل..." : "تأكيد صفتي كمدير المركز 👑"}
+          </Button>
+        </div>
+      )}
 
       {/* Navigation Tabs */}
       <div className="no-print flex items-center gap-1.5 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-x-auto">

@@ -28,37 +28,61 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
 
     if (uuidRegex.test(cleanCode)) {
       // Lookup by parent_token or student id
-      const { data: byToken } = await supabase
+      let tokenRes = await supabase
         .from("students")
         .select("*")
         .eq("parent_token", cleanCode)
         .is("deleted_at", null)
         .maybeSingle();
 
-      if (byToken) {
-        student = byToken;
+      if (tokenRes.error) {
+        tokenRes = await supabase
+          .from("students")
+          .select("*")
+          .eq("parent_token", cleanCode)
+          .maybeSingle();
+      }
+
+      if (tokenRes.data) {
+        student = tokenRes.data;
       } else {
-        const { data: byId } = await supabase
+        let idRes = await supabase
           .from("students")
           .select("*")
           .eq("id", cleanCode)
           .is("deleted_at", null)
           .maybeSingle();
-        student = byId;
+
+        if (idRes.error) {
+          idRes = await supabase
+            .from("students")
+            .select("*")
+            .eq("id", cleanCode)
+            .maybeSingle();
+        }
+        student = idRes.data;
       }
     } else {
       // Lookup by phone number
       const phoneValidation = validateAndFormatJordanianPhone(cleanCode);
       if (phoneValidation.isValid) {
-        const { data: byPhone } = await supabase
+        let phoneRes = await supabase
           .from("students")
           .select("*")
           .in("parent_phone", phoneValidation.variations)
           .is("deleted_at", null)
           .limit(1);
 
-        if (byPhone && byPhone.length > 0) {
-          student = byPhone[0];
+        if (phoneRes.error) {
+          phoneRes = await supabase
+            .from("students")
+            .select("*")
+            .in("parent_phone", phoneValidation.variations)
+            .limit(1);
+        }
+
+        if (phoneRes.data && phoneRes.data.length > 0) {
+          student = phoneRes.data[0];
         }
       }
     }

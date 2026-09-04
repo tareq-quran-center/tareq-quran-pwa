@@ -74,22 +74,44 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
       .from("group_members")
       .select("*");
 
-    // 4. Fetch all active students across center
-    const { data: students, error: studentsError } = await supabase
+    // 4. Fetch all active students across center (with graceful fallback if deleted_at column is missing)
+    let safeStudents: any[] = [];
+    const studentsRes = await supabase
       .from("students")
       .select("*")
       .is("deleted_at", null)
       .order("full_name", { ascending: true });
 
-    if (studentsError) {
-      return { success: false, error: "فشل جلب الطلاب: " + studentsError.message };
+    if (studentsRes.error) {
+      // Fallback: query without deleted_at
+      const fallbackStudents = await supabase
+        .from("students")
+        .select("*")
+        .order("full_name", { ascending: true });
+
+      if (fallbackStudents.error) {
+        return { success: false, error: "فشل جلب الطلاب: " + fallbackStudents.error.message };
+      }
+      safeStudents = fallbackStudents.data || [];
+    } else {
+      safeStudents = studentsRes.data || [];
     }
 
-    // 5. Fetch all memorization logs summary
-    const { data: logs } = await supabase
+    // 5. Fetch all memorization logs summary (with graceful fallback if deleted_at column is missing)
+    let safeLogs: any[] = [];
+    const logsRes = await supabase
       .from("memorization_logs")
       .select("id, student_id, teacher_id, page_count, grade, log_type, created_at")
       .is("deleted_at", null);
+
+    if (logsRes.error) {
+      const fallbackLogs = await supabase
+        .from("memorization_logs")
+        .select("id, student_id, teacher_id, page_count, grade, log_type, created_at");
+      safeLogs = fallbackLogs.data || [];
+    } else {
+      safeLogs = logsRes.data || [];
+    }
 
     // 6. Fetch recent attendance records (last 30 days)
     const thirtyDaysAgo = new Date();
@@ -103,8 +125,6 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
     const safeProfiles = profiles || [];
     const safeGroups = groups || [];
     const safeMembers = members || [];
-    const safeStudents = students || [];
-    const safeLogs = logs || [];
     const safeAttendance = attendance || [];
 
     // Today's date for today's attendance count
@@ -456,3 +476,36 @@ export async function transferStudentHalaqa(
     return { success: false, error: err instanceof Error ? err.message : "خطأ غير متوقع" };
   }
 }
+
+/**
+ * Allows the current logged-in center director to claim/confirm the Admin role
+ */
+export async function claimAdminRole() {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "غير مصرح، يرجى تسجيل الدخول أولاً" };
+    }
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ role: "admin", is_active: true })
+      .eq("id", user.id);
+
+    if (error) {
+      return { success: false, error: "فشل تعيين الصلاحية: " + error.message };
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/dashboard");
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "خطأ غير متوقع" };
+  }
+}
+

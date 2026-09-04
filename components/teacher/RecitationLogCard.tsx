@@ -54,8 +54,8 @@ export function RecitationLogCard({
               </span>
             )}
             {audioUrl && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 animate-pulse">
-                <Mic className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-800 dark:text-burgundy-300 border border-burgundy-300 dark:border-burgundy-800 animate-pulse">
+                <Mic className="w-3 h-3 text-burgundy-700 dark:text-burgundy-400" />
                 <span>🎙️ تلاوة مسجلة</span>
               </span>
             )}
@@ -66,14 +66,14 @@ export function RecitationLogCard({
 
           {/* Surah Range */}
           <div className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
-            من سورة <span className="text-emerald-700 dark:text-emerald-400">{log.surah_start}</span> (آية {log.aya_start || 1}) إلى سورة{" "}
-            <span className="text-emerald-700 dark:text-emerald-400">{log.surah_end || log.surah_start}</span> (آية {log.aya_end || 1})
+            من سورة <span className="text-burgundy-800 dark:text-burgundy-300">{log.surah_start}</span> (آية {log.aya_start || 1}) إلى سورة{" "}
+            <span className="text-burgundy-800 dark:text-burgundy-300">{log.surah_end || log.surah_start}</span> (آية {log.aya_end || 1})
           </div>
 
           {/* Inline Audio Player */}
           {audioUrl && (
-            <div className="mt-3 p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 w-full max-w-lg">
-              <div className="flex items-center gap-2 mb-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+            <div className="mt-3 p-2.5 rounded-xl bg-burgundy-50 dark:bg-burgundy-950/40 border border-burgundy-200 dark:border-burgundy-800/60 w-full max-w-lg">
+              <div className="flex items-center gap-2 mb-1.5 text-xs font-semibold text-burgundy-900 dark:text-burgundy-300">
                 <Volume2 className="w-3.5 h-3.5" />
                 <span>🎙️ تلاوة الطالب المسجلة</span>
               </div>
@@ -96,7 +96,7 @@ export function RecitationLogCard({
               variant="ghost"
               size="icon"
               onClick={() => onEdit(log as MemorizationLogRow)}
-              className="text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shrink-0 rounded-xl"
+              className="text-slate-400 hover:text-burgundy-800 dark:hover:text-burgundy-300 hover:bg-burgundy-50 dark:hover:bg-burgundy-950/40 shrink-0 rounded-xl"
               title="تعديل التسميع"
             >
               <Pencil className="w-4 h-4" />

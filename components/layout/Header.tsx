@@ -79,14 +79,14 @@ export function Header() {
           ) : isSyncing ? (
             <div
               title="جارٍ المزامنة مع الخادم..."
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-100 dark:bg-teal-950/80 border border-teal-300 dark:border-teal-800 text-[11px] font-black text-teal-900 dark:text-teal-300"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-burgundy-100 dark:bg-burgundy-950/80 border border-burgundy-300 dark:border-burgundy-800 text-[11px] font-black text-burgundy-900 dark:text-burgundy-300"
             >
               <RefreshCw className="w-3 h-3 animate-spin" />
               <span>مزامنة...</span>
             </div>
           ) : (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-slate-800 border border-emerald-100 dark:border-slate-700 text-xs font-bold text-emerald-900 dark:text-emerald-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-burgundy-50 dark:bg-slate-800 border border-burgundy-100 dark:border-slate-700 text-xs font-bold text-burgundy-900 dark:text-burgundy-300">
+              <span className="w-2 h-2 rounded-full bg-islamicGold-500 animate-pulse"></span>
               <span>معلم الحلقة</span>
             </div>
           )}
@@ -145,7 +145,7 @@ export function Header() {
           ) : isSyncing ? (
             <div
               title="جارٍ المزامنة مع الخادم..."
-              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-teal-100 dark:bg-teal-950/80 border border-teal-300 dark:border-teal-800 text-[10px] font-black text-teal-900 dark:text-teal-300"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-burgundy-100 dark:bg-burgundy-950/80 border border-burgundy-300 dark:border-burgundy-800 text-[10px] font-black text-burgundy-900 dark:text-burgundy-300"
             >
               <RefreshCw className="w-3 h-3 animate-spin" />
             </div>

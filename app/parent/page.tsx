@@ -98,7 +98,7 @@ export default function ParentSearchGatewayPage() {
         <Card className="border-burgundy-200/80 dark:border-slate-800 shadow-xl bg-white dark:bg-slate-900">
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <Search className="w-5 h-5 text-teal-600" />
+              <Search className="w-5 h-5 text-burgundy-700" />
               <span>الاستعلام برقم الجوال</span>
             </CardTitle>
             <CardDescription className="text-xs">
@@ -187,17 +187,17 @@ export default function ParentSearchGatewayPage() {
                     <button
                       key={st.id}
                       onClick={() => router.push(`/parent/${st.parent_token}`)}
-                      className="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-teal-600 bg-slate-50 dark:bg-slate-850 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-right flex items-center justify-between transition-all group"
+                      className="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-burgundy-600 bg-slate-50 dark:bg-slate-850 hover:bg-burgundy-50 dark:hover:bg-burgundy-950/40 text-right flex items-center justify-between transition-all group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-200 flex items-center justify-center font-bold">
+                        <div className="w-9 h-9 rounded-xl bg-burgundy-100 dark:bg-burgundy-900 text-burgundy-800 dark:text-burgundy-200 flex items-center justify-center font-bold">
                           <User className="w-5 h-5" />
                         </div>
                         <span className="font-bold text-slate-900 dark:text-slate-100">
                           {st.full_name}
                         </span>
                       </div>
-                      <ArrowLeft className="w-4 h-4 text-teal-600 group-hover:-translate-x-1 transition-transform" />
+                      <ArrowLeft className="w-4 h-4 text-burgundy-700 group-hover:-translate-x-1 transition-transform" />
                     </button>
                   ))}
                 </div>
@@ -217,7 +217,7 @@ export default function ParentSearchGatewayPage() {
         {/* Footer Info */}
         <div className="text-center text-xs text-slate-400 space-y-1">
           <p className="flex items-center justify-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
+            <ShieldCheck className="w-3.5 h-3.5 text-burgundy-700" />
             <span>بوابة آمنة ومحمية لمتابعة حلقات التحفيظ</span>
           </p>
         </div>

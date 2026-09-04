@@ -154,12 +154,12 @@ export function calculateStudentReportItems(
           attendancePercentage = 100;
           attendanceText = "حاضر";
           badgeStyle =
-            "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800";
+            "bg-burgundy-100 text-burgundy-900 dark:bg-burgundy-950/80 dark:text-islamicGold-300 border border-burgundy-300 dark:border-burgundy-800";
         } else if (status === "متأخر" || (status as string) === "late") {
           attendancePercentage = 100;
           attendanceText = "متأخر";
           badgeStyle =
-            "bg-teal-100 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300 border border-teal-300 dark:border-teal-800";
+            "bg-orange-100 text-orange-800 dark:bg-orange-950/80 dark:text-orange-300 border border-orange-300 dark:border-orange-800";
         } else if (status === "غائب" || (status as string) === "absent") {
           attendancePercentage = 0;
           attendanceText = "غائب";
@@ -195,7 +195,7 @@ export function calculateStudentReportItems(
         attendanceText = `${presentDays} / ${totalSessions} (${percentage}%)`;
         if (percentage >= 85) {
           badgeStyle =
-            "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800";
+            "bg-burgundy-100 text-burgundy-900 dark:bg-burgundy-950/80 dark:text-islamicGold-300 border border-burgundy-300 dark:border-burgundy-800";
         } else if (percentage >= 60) {
           badgeStyle =
             "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-800";

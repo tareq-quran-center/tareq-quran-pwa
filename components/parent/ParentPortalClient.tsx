@@ -198,7 +198,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
               <CardTitle className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">
                 إجمالي الجلسات
               </CardTitle>
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 flex items-center justify-center font-bold shrink-0">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-800 dark:text-burgundy-300 flex items-center justify-center font-bold shrink-0">
                 <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </CardHeader>
@@ -236,7 +236,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
               <CardTitle className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">
                 إجمالي الصفحات
               </CardTitle>
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold shrink-0">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-islamicGold-100 dark:bg-islamicGold-950/80 text-islamicGold-800 dark:text-islamicGold-300 flex items-center justify-center font-bold shrink-0">
                 <BookCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </CardHeader>
@@ -258,7 +258,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <CardTitle className="text-base sm:text-lg flex items-center gap-2 font-black text-slate-900 dark:text-slate-50">
-                  <BookCheck className="w-5 h-5 text-emerald-600" />
+                  <BookCheck className="w-5 h-5 text-burgundy-700" />
                   <span>
                     {viewMode === "juz" ? "تقدم حفظ الأجزاء القرآنية 📑" : "تقدم حفظ السور القرآنية 📊"}
                   </span>
@@ -277,7 +277,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                   onClick={() => setViewMode("juz")}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${
                     viewMode === "juz"
-                      ? "bg-white dark:bg-slate-900 text-teal-800 dark:text-teal-300 shadow-xs"
+                      ? "bg-white dark:bg-slate-900 text-burgundy-900 dark:text-burgundy-300 shadow-xs"
                       : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
                   }`}
                 >
@@ -288,7 +288,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                   onClick={() => setViewMode("surah")}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${
                     viewMode === "surah"
-                      ? "bg-white dark:bg-slate-900 text-teal-800 dark:text-teal-300 shadow-xs"
+                      ? "bg-white dark:bg-slate-900 text-burgundy-900 dark:text-burgundy-300 shadow-xs"
                       : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
                   }`}
                 >
@@ -304,7 +304,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                 onClick={() => setStatusFilter("all")}
                 className={`px-3 py-1 rounded-xl text-xs font-bold transition-all shrink-0 ${
                   statusFilter === "all"
-                    ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
+                    ? "bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-900 dark:text-burgundy-300 border border-burgundy-300 dark:border-burgundy-800"
                     : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900"
                 }`}
               >
@@ -326,7 +326,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                 onClick={() => setStatusFilter("completed")}
                 className={`px-3 py-1 rounded-xl text-xs font-bold transition-all shrink-0 ${
                   statusFilter === "completed"
-                    ? "bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-800"
+                    ? "bg-islamicGold-100 dark:bg-islamicGold-950 text-islamicGold-900 dark:text-islamicGold-300 border border-islamicGold-300 dark:border-islamicGold-800"
                     : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900"
                 }`}
               >
@@ -348,7 +348,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center justify-center">
+                            <span className="w-6 h-6 rounded-lg bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-800 dark:text-burgundy-300 font-bold text-xs flex items-center justify-center">
                               {surah.surahId}
                             </span>
                             <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-slate-100">
@@ -357,7 +357,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                           </div>
 
                           {surah.isCompleted ? (
-                            <span className="px-2 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                            <span className="px-2 py-0.5 rounded-full text-[11px] font-black bg-islamicGold-100 dark:bg-islamicGold-950 text-islamicGold-800 dark:text-islamicGold-300 border border-islamicGold-300 dark:border-islamicGold-800">
                               مكتمل 100% ✅
                             </span>
                           ) : (
@@ -372,8 +372,8 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                           <div
                             className={`h-full transition-all duration-300 rounded-full ${
                               surah.isCompleted
-                                ? "bg-gradient-to-r from-emerald-500 to-teal-500"
-                                : "bg-gradient-to-r from-amber-500 to-teal-500"
+                                ? "bg-gradient-to-r from-burgundy-800 to-burgundy-600"
+                                : "bg-gradient-to-r from-amber-500 to-burgundy-700"
                             }`}
                             style={{ width: `${surah.percentage}%` }}
                           />
@@ -396,7 +396,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                     <button
                       type="button"
                       onClick={() => setShowAllProgress(!showAllProgress)}
-                      className="w-full py-2.5 px-4 text-xs font-bold text-teal-700 dark:text-teal-400 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/50 dark:hover:bg-teal-900/50 rounded-2xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+                      className="w-full py-2.5 px-4 text-xs font-bold text-burgundy-800 dark:text-burgundy-300 bg-burgundy-50 hover:bg-burgundy-100 dark:bg-burgundy-950/50 dark:hover:bg-burgundy-900/50 rounded-2xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
                     >
                       <span>
                         {showAllProgress ? "طي القائمة ⌃" : `عرض كافة السور (${filteredSurahList.length} سورة) ⌄`}
@@ -430,7 +430,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                           >
                             {/* Right: Circle Number + Juz Name */}
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <span className="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-200 font-black text-xs flex items-center justify-center border border-teal-200/80 dark:border-teal-800 shrink-0">
+                              <span className="w-8 h-8 rounded-xl bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-800 dark:text-burgundy-200 font-black text-xs flex items-center justify-center border border-burgundy-200/80 dark:border-burgundy-800 shrink-0">
                                 {juz.juzNumber}
                               </span>
                               <div className="min-w-0">
@@ -446,7 +446,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                             {/* Middle: Badge & Left: Interactive Arrow */}
                             <div className="flex items-center gap-2 shrink-0">
                               {juz.isCompleted ? (
-                                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-islamicGold-100 dark:bg-islamicGold-950 text-islamicGold-800 dark:text-islamicGold-300 border border-islamicGold-300 dark:border-islamicGold-800">
                                   مكتمل 100% ✅
                                 </span>
                               ) : juz.status === "in_progress" ? (
@@ -461,7 +461,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
 
                               <ChevronDown
                                 className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
-                                  isExpanded ? "rotate-180 text-teal-600 dark:text-teal-400" : ""
+                                  isExpanded ? "rotate-180 text-burgundy-700 dark:text-burgundy-400" : ""
                                 }`}
                               />
                             </div>
@@ -480,9 +480,9 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                                 <div
                                   className={`h-full transition-all duration-300 rounded-full ${
                                     juz.isCompleted
-                                      ? "bg-gradient-to-r from-emerald-500 to-teal-500"
+                                      ? "bg-gradient-to-r from-burgundy-800 to-burgundy-600"
                                       : juz.status === "in_progress"
-                                      ? "bg-gradient-to-r from-amber-500 to-teal-500"
+                                      ? "bg-gradient-to-r from-amber-500 to-burgundy-700"
                                       : "bg-slate-300 dark:bg-slate-600"
                                   }`}
                                   style={{ width: `${juz.percentage}%` }}
@@ -510,7 +510,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                     <button
                       type="button"
                       onClick={() => setShowAllProgress(!showAllProgress)}
-                      className="w-full py-2.5 px-4 text-xs font-bold text-teal-700 dark:text-teal-400 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/50 dark:hover:bg-teal-900/50 rounded-2xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+                      className="w-full py-2.5 px-4 text-xs font-bold text-burgundy-800 dark:text-burgundy-300 bg-burgundy-50 hover:bg-burgundy-100 dark:bg-burgundy-950/50 dark:hover:bg-burgundy-900/50 rounded-2xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
                     >
                       <span>
                         {showAllProgress ? "طي القائمة ⌃" : `عرض كافة الأجزاء (${filteredJuzList.length} جزء) ⌄`}
@@ -532,7 +532,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
         <Card className="border-slate-200 dark:border-slate-800 shadow-sm rounded-3xl overflow-hidden">
           <CardHeader className="p-5 pb-3">
             <CardTitle className="text-base sm:text-lg flex items-center gap-2 font-black text-slate-900 dark:text-slate-50">
-              <BookOpen className="w-5 h-5 text-teal-600" />
+              <BookOpen className="w-5 h-5 text-burgundy-700" />
               <span>سجل التسميع والمراجعة اليومي ({totalLogsCount})</span>
             </CardTitle>
             <CardDescription className="text-xs text-slate-500">
@@ -572,14 +572,14 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                             📖 {formatPageCount(log?.page_count)}
                           </span>
                           {log?.audio_url && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 animate-pulse">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-800 dark:text-burgundy-300 border border-burgundy-300 dark:border-burgundy-800 animate-pulse">
                               <span>🎙️ تلاوة مسجلة</span>
                             </span>
                           )}
                         </div>
 
                         <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 shrink-0">
-                          {isExpanded ? <ChevronUp className="w-5 h-5 text-teal-600" /> : <ChevronDown className="w-5 h-5" />}
+                          {isExpanded ? <ChevronUp className="w-5 h-5 text-burgundy-700" /> : <ChevronDown className="w-5 h-5" />}
                         </div>
                       </button>
 
@@ -601,13 +601,13 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                           </div>
 
                           <div className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
-                            من سورة <span className="text-teal-700 dark:text-teal-400">{log?.surah_start || "-"}</span> (آية {log?.aya_start || 1}) إلى سورة{" "}
-                            <span className="text-teal-700 dark:text-teal-400">{log?.surah_end || "-"}</span> (آية {log?.aya_end || 1})
+                            من سورة <span className="text-burgundy-800 dark:text-burgundy-300">{log?.surah_start || "-"}</span> (آية {log?.aya_start || 1}) إلى سورة{" "}
+                            <span className="text-burgundy-800 dark:text-burgundy-300">{log?.surah_end || "-"}</span> (آية {log?.aya_end || 1})
                           </div>
 
                           {log?.audio_url && (
-                            <div className="pt-1.5 space-y-1.5 bg-emerald-50/60 dark:bg-emerald-950/30 p-3 rounded-2xl border border-emerald-200/80 dark:border-emerald-800/80">
-                              <span className="text-xs font-black text-emerald-900 dark:text-emerald-200 flex items-center gap-1">
+                            <div className="pt-1.5 space-y-1.5 bg-burgundy-50/60 dark:bg-burgundy-950/30 p-3 rounded-2xl border border-burgundy-200/80 dark:border-burgundy-800/80">
+                              <span className="text-xs font-black text-burgundy-900 dark:text-burgundy-200 flex items-center gap-1">
                                 <span>🎙️ استمع لتلاوة ابنكم المسجلة:</span>
                               </span>
                               <audio
@@ -634,7 +634,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                   <button
                     type="button"
                     onClick={() => setShowAllLogs(!showAllLogs)}
-                    className="w-full py-2.5 px-4 text-xs font-bold text-teal-700 dark:text-teal-400 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/50 dark:hover:bg-teal-900/50 rounded-2xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full py-2.5 px-4 text-xs font-bold text-burgundy-800 dark:text-burgundy-300 bg-burgundy-50 hover:bg-burgundy-100 dark:bg-burgundy-950/50 dark:hover:bg-burgundy-900/50 rounded-2xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <span>
                       {showAllLogs ? "طي السجلات ⌃" : `عرض كافة التسميعات (${safeLogs.length} تسميع) ⌄`}
@@ -659,7 +659,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
           <CardHeader className="p-5 pb-3">
             <CardTitle className="text-base sm:text-lg flex items-center justify-between font-black text-slate-900 dark:text-slate-50">
               <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-teal-600" />
+                <Calendar className="w-5 h-5 text-burgundy-700" />
                 <span>سجل الحضور والغياب ({safeAttendance.length})</span>
               </div>
             </CardTitle>
@@ -692,7 +692,7 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                   <button
                     type="button"
                     onClick={() => setIsAttendanceExpanded(!isAttendanceExpanded)}
-                    className="w-full py-2.5 px-4 text-xs font-bold text-teal-700 dark:text-teal-400 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/50 dark:hover:bg-teal-900/50 rounded-2xl transition-colors flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 px-4 text-xs font-bold text-burgundy-800 dark:text-burgundy-300 bg-burgundy-50 hover:bg-burgundy-100 dark:bg-burgundy-950/50 dark:hover:bg-burgundy-900/50 rounded-2xl transition-colors flex items-center justify-center gap-1.5"
                   >
                     <span>{isAttendanceExpanded ? "طي سجل الحضور" : `عرض كافة السجلات (${safeAttendance.length} يوم)`}</span>
                     {isAttendanceExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}

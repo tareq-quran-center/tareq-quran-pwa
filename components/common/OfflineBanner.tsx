@@ -51,10 +51,10 @@ export function OfflineBanner() {
         !isOnline
           ? "bg-amber-600 dark:bg-amber-700 text-white"
           : isSyncing
-          ? "bg-teal-700 dark:bg-teal-800 text-white animate-pulse"
+          ? "bg-burgundy-800 dark:bg-burgundy-900 text-white animate-pulse"
           : pendingCount > 0
           ? "bg-amber-500 text-amber-950"
-          : "bg-emerald-600 text-white"
+          : "bg-burgundy-900 text-white"
       }`}
     >
       <div className="flex items-center gap-2 flex-1 justify-center">
@@ -68,7 +68,7 @@ export function OfflineBanner() {
           </>
         ) : isSyncing ? (
           <>
-            <RefreshCw className="w-4 h-4 shrink-0 animate-spin text-teal-200" />
+            <RefreshCw className="w-4 h-4 shrink-0 animate-spin text-islamicGold-300" />
             <span>جارٍ مزامنة السجلات المعلقة ({pendingCount}) مع قاعدة البيانات...</span>
           </>
         ) : pendingCount > 0 ? (
@@ -78,7 +78,7 @@ export function OfflineBanner() {
           </>
         ) : (
           <>
-            <Wifi className="w-4 h-4 shrink-0 text-emerald-200" />
+            <Wifi className="w-4 h-4 shrink-0 text-islamicGold-300" />
             <span>{lastSyncResult || "تم استعادة الاتصال بالإنترنت والمزامنة بنجاح"}</span>
           </>
         )}

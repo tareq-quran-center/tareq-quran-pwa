@@ -119,7 +119,7 @@ export function StudentCard({ student, logs, attendance, alert, weeklyTopStudent
         {/* CARD HEADER: Profile Info + Visible Edit Action + 3-Dots Menu */}
         <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="w-14 h-14 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-200 flex items-center justify-center font-bold overflow-hidden border-2 border-teal-200 dark:border-teal-800 shrink-0 shadow-sm">
+            <div className="w-14 h-14 rounded-full bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-900 dark:text-burgundy-200 flex items-center justify-center font-bold overflow-hidden border-2 border-burgundy-200 dark:border-burgundy-800 shrink-0 shadow-sm">
               {student.avatar_url && !imgError ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -137,7 +137,7 @@ export function StudentCard({ student, logs, attendance, alert, weeklyTopStudent
                 <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-50 flex items-center gap-1.5 flex-wrap">
                   <span className="truncate">{student.full_name}</span>
                   {student.academic_grade && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300 border border-teal-200 shrink-0">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-burgundy-50 dark:bg-burgundy-950 text-burgundy-800 dark:text-burgundy-300 border border-burgundy-200 shrink-0">
                       {student.academic_grade}
                     </span>
                   )}
@@ -167,9 +167,9 @@ export function StudentCard({ student, logs, attendance, alert, weeklyTopStudent
                 onEdit(student);
               }}
               title="تعديل بيانات الطالب"
-              className="h-8 px-2 gap-1 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/50 rounded-lg"
+              className="h-8 px-2 gap-1 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-burgundy-800 hover:bg-burgundy-50 dark:hover:bg-burgundy-950/50 rounded-lg"
             >
-              <Edit3 className="w-3.5 h-3.5 text-teal-600" />
+              <Edit3 className="w-3.5 h-3.5 text-burgundy-700" />
               <span className="hidden xs:inline">تعديل</span>
             </Button>
 
@@ -202,7 +202,7 @@ export function StudentCard({ student, logs, attendance, alert, weeklyTopStudent
                       onClick={() => setIsMenuOpen(false)}
                       className="flex items-center gap-2 px-3 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
-                      <ExternalLink className="w-3.5 h-3.5 text-teal-600" />
+                      <ExternalLink className="w-3.5 h-3.5 text-burgundy-700" />
                       <span>معاينة بوابة ولي الأمر</span>
                     </Link>
                     <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
@@ -226,13 +226,13 @@ export function StudentCard({ student, logs, attendance, alert, weeklyTopStudent
 
         {/* CARD CONTENT: Compact Stats & Contact */}
         <CardContent className="p-4 pt-1 pb-2 text-sm space-y-1.5">
-          <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-bold text-teal-800 dark:text-teal-300 bg-teal-50/70 dark:bg-teal-950/40 px-2.5 py-1.5 rounded-lg border border-teal-100 dark:border-teal-900">
+          <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-bold text-burgundy-900 dark:text-burgundy-300 bg-burgundy-50/70 dark:bg-burgundy-950/40 px-2.5 py-1.5 rounded-lg border border-burgundy-100 dark:border-burgundy-900">
             <span>📚 مجموع التسميع المنجز:</span>
             <span className="font-mono text-sm font-black">{formattedPages} صفحة</span>
           </div>
 
           <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 px-1">
-            <Phone className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+            <Phone className="w-3.5 h-3.5 text-burgundy-700 shrink-0" />
             <span>هاتف ولي الأمر: </span>
             <span dir="ltr" className="font-mono text-slate-800 dark:text-slate-200 font-bold">
               {student.parent_phone || "غير مسجل"}
@@ -247,9 +247,9 @@ export function StudentCard({ student, logs, attendance, alert, weeklyTopStudent
             <Button
               variant="outline"
               size="sm"
-              className="w-full min-h-[38px] gap-2 font-bold text-xs bg-slate-50 dark:bg-slate-800/80 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-teal-300 rounded-xl transition-all"
+              className="w-full min-h-[38px] gap-2 font-bold text-xs bg-slate-50 dark:bg-slate-800/80 hover:bg-burgundy-50 dark:hover:bg-burgundy-950/40 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-burgundy-300 rounded-xl transition-all"
             >
-              <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+              <BookOpen className="w-4 h-4 text-burgundy-700 dark:text-burgundy-400" />
               <span>عرض الملف والتسميع اليومي</span>
             </Button>
           </Link>
@@ -261,10 +261,10 @@ export function StudentCard({ student, logs, attendance, alert, weeklyTopStudent
               variant="ghost"
               size="sm"
               onClick={handleDirectWhatsApp}
-              className="h-8 px-2 gap-1.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50/60 dark:bg-emerald-950/30 hover:bg-emerald-100 border border-emerald-200/60 dark:border-emerald-900/50 rounded-lg justify-center transition-all"
+              className="h-8 px-2 gap-1.5 text-[11px] font-bold text-burgundy-900 dark:text-burgundy-200 bg-burgundy-50/60 dark:bg-burgundy-950/30 hover:bg-burgundy-100 border border-burgundy-200/60 dark:border-burgundy-900/50 rounded-lg justify-center transition-all"
               title="مراسلة ولي الأمر بتقرير الإنجاز عبر واتساب"
             >
-              <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <MessageSquare className="w-3.5 h-3.5 text-burgundy-700 dark:text-burgundy-400 shrink-0" />
               <span className="truncate">📱 واتساب</span>
             </Button>
 
@@ -275,7 +275,7 @@ export function StudentCard({ student, logs, attendance, alert, weeklyTopStudent
               onClick={handleCopyParentLink}
               className={`h-8 px-2 gap-1.5 text-[11px] font-bold border rounded-lg justify-center transition-all ${
                 copied
-                  ? "bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700"
+                  ? "bg-burgundy-800 text-white border-burgundy-800 hover:bg-burgundy-900"
                   : "text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
               }`}
               title="نسخ رابط المتابعة المباشر لولي الأمر"

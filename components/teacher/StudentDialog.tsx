@@ -127,7 +127,7 @@ export function StudentDialog({
       <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 shrink-0">
-          <div className="flex items-center gap-2 text-teal-800 dark:text-teal-300 font-bold text-lg">
+          <div className="flex items-center gap-2 text-burgundy-900 dark:text-burgundy-300 font-bold text-lg">
             {student ? <UserCheck className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
             <span>{student ? "تعديل بيانات الطالب" : "إضافة طالب جديد"}</span>
           </div>
@@ -152,12 +152,12 @@ export function StudentDialog({
 
             {/* Avatar Upload Section */}
             <div className="flex flex-col items-center justify-center space-y-2 pb-2">
-              <div className="relative w-20 h-20 rounded-full border-2 border-teal-600 bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden shadow-md group">
+              <div className="relative w-20 h-20 rounded-full border-2 border-burgundy-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden shadow-md group">
                 {avatarPreview ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={avatarPreview} alt="معاينة الصورة" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-xl font-bold text-teal-800 dark:text-teal-300">
+                  <span className="text-xl font-bold text-burgundy-900 dark:text-burgundy-300">
                     {student?.full_name ? student.full_name.charAt(0) : "📷"}
                   </span>
                 )}
@@ -223,7 +223,7 @@ export function StudentDialog({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="academic_grade" className="flex items-center gap-1 text-xs font-bold">
-                  <GraduationCap className="w-4 h-4 text-teal-600" />
+                  <GraduationCap className="w-4 h-4 text-burgundy-700" />
                   <span>الصف الدراسي (اختياري)</span>
                 </Label>
                 <select
@@ -242,7 +242,7 @@ export function StudentDialog({
 
               <div className="space-y-2">
                 <Label htmlFor="join_date" className="flex items-center gap-1 text-xs font-bold">
-                  <Calendar className="w-4 h-4 text-teal-600" />
+                  <Calendar className="w-4 h-4 text-burgundy-700" />
                   <span>تاريخ الانضمام للنادي / الحلقة</span>
                 </Label>
                 <Input
@@ -261,7 +261,7 @@ export function StudentDialog({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="school_name" className="flex items-center gap-1 text-xs font-bold">
-                  <School className="w-4 h-4 text-teal-600" />
+                  <School className="w-4 h-4 text-burgundy-700" />
                   <span>اسم المدرسة (اختياري)</span>
                 </Label>
                 <Input
@@ -276,7 +276,7 @@ export function StudentDialog({
 
               <div className="space-y-2">
                 <Label htmlFor="father_job" className="flex items-center gap-1 text-xs font-bold">
-                  <Briefcase className="w-4 h-4 text-teal-600" />
+                  <Briefcase className="w-4 h-4 text-burgundy-700" />
                   <span>عمل / مهنة الوالد (اختياري)</span>
                 </Label>
                 <Input
@@ -292,7 +292,7 @@ export function StudentDialog({
 
             <div className="space-y-2">
               <Label htmlFor="address" className="flex items-center gap-1 text-xs font-bold">
-                <MapPin className="w-4 h-4 text-teal-600" />
+                <MapPin className="w-4 h-4 text-burgundy-700" />
                 <span>مكان السكن / العنوان (اختياري)</span>
               </Label>
               <Input
@@ -311,7 +311,7 @@ export function StudentDialog({
             <button
               type="submit"
               disabled={isLoading || isCompressing}
-              className="flex-1 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.98] text-white font-bold py-3.5 px-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 text-sm md:text-base flex items-center justify-center gap-2"
+              className="flex-1 bg-burgundy-800 hover:bg-burgundy-900 active:scale-[0.98] text-white font-bold py-3.5 px-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 text-sm md:text-base flex items-center justify-center gap-2"
             >
               <span>{isLoading ? "جاري الحفظ..." : student ? "تحديث ➕" : "إضافة الطالب ➕"}</span>
             </button>

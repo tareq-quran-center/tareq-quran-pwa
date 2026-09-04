@@ -57,7 +57,7 @@ export function StatsCards({ students, logs, attendance = [], stats }: StatsCard
             <CardTitle className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">
               إجمالي الطلاب
             </CardTitle>
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold shrink-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-900 dark:text-burgundy-300 flex items-center justify-center font-bold shrink-0">
               <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </CardHeader>

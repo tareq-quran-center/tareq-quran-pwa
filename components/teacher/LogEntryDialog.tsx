@@ -402,8 +402,8 @@ export function LogEntryDialog({
         {/* Dedicated Header Section */}
         <div className="p-3.5 sm:p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 z-10 shrink-0">
           <div className="flex flex-col">
-            <div className="flex items-center gap-2 text-teal-800 dark:text-teal-300 font-bold text-base">
-              <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+            <div className="flex items-center gap-2 text-burgundy-900 dark:text-burgundy-300 font-bold text-base">
+              <BookOpen className="w-4 h-4 text-burgundy-700 dark:text-burgundy-400" />
               <span>{editingLog ? "تعديل بيانات التسميع ✏️" : "تسجيل تسميع جديد 📖"}</span>
             </div>
             {studentName && (
@@ -434,7 +434,7 @@ export function LogEntryDialog({
             {/* Assistant / Supervisor Name Input */}
             <div className="space-y-1">
               <Label htmlFor="assistant_name" className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
-                <UserCheck className="w-3.5 h-3.5 text-teal-600" />
+                <UserCheck className="w-3.5 h-3.5 text-burgundy-700" />
                 <span>اسم المشرف / المساعد (اختياري)</span>
               </Label>
               <Input
@@ -466,7 +466,7 @@ export function LogEntryDialog({
                       }}
                       className={`py-2 px-1.5 text-xs font-bold rounded-xl border transition-all text-center ${
                         selectedLogType === type.value
-                          ? "bg-teal-700 text-white border-teal-700 shadow-sm"
+                          ? "bg-burgundy-800 text-white border-burgundy-800 shadow-sm"
                           : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                     >
@@ -480,14 +480,14 @@ export function LogEntryDialog({
             {/* Surah & Ayah Selection */}
             <div className="space-y-2.5 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800">
               <div className="space-y-1">
-                <Label htmlFor="primary_surah" className="text-xs font-bold text-teal-900 dark:text-teal-300">
+                <Label htmlFor="primary_surah" className="text-xs font-bold text-burgundy-900 dark:text-burgundy-300">
                   اختر السورة *
                 </Label>
                 <select
                   id="primary_surah"
                   value={selectedSurahStart}
                   onChange={(e) => handlePrimarySurahChange(e.target.value)}
-                  className="w-full h-9 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 text-xs font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                  className="w-full h-9 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 text-xs font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-burgundy-500 outline-none transition-all"
                 >
                   {QURAN_SURAHS.map((s) => {
                     const norm = normalizeSurahName(s.name);
@@ -555,7 +555,7 @@ export function LogEntryDialog({
                         }
                       }
                     }}
-                    className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 w-3.5 h-3.5"
+                    className="rounded border-slate-300 text-burgundy-700 focus:ring-burgundy-500 w-3.5 h-3.5"
                   />
                   <span>تسميع ممتد بين سورين مختلفين</span>
                 </label>
@@ -600,13 +600,13 @@ export function LogEntryDialog({
 
               {/* Informative Progress Banner when Surah is in-progress (partial) */}
               {!isSurahAlreadyMemorized && selectedSurahProgress && selectedSurahProgress.memorizedPages > 0 && (
-                <div className="p-3 rounded-2xl bg-teal-500/15 border border-teal-500/40 text-teal-900 dark:text-teal-200 text-xs font-bold flex items-start gap-2.5 shadow-sm animate-in fade-in duration-200">
+                <div className="p-3 rounded-2xl bg-burgundy-500/15 border border-burgundy-500/40 text-burgundy-900 dark:text-burgundy-200 text-xs font-bold flex items-start gap-2.5 shadow-sm animate-in fade-in duration-200">
                   <span className="text-base shrink-0">⏳</span>
                   <div className="space-y-1 leading-relaxed">
                     <p>
-                      تم حفظ <strong className="text-teal-950 dark:text-teal-100 font-black">{selectedSurahProgress.memorizedPages} من {selectedSurahProgress.totalPages} صفحات</strong> من سورة {selectedSurahProgress.surahName} ({selectedSurahProgress.percentage}%).
+                      تم حفظ <strong className="text-burgundy-950 dark:text-burgundy-100 font-black">{selectedSurahProgress.memorizedPages} من {selectedSurahProgress.totalPages} صفحات</strong> من سورة {selectedSurahProgress.surahName} ({selectedSurahProgress.percentage}%).
                     </p>
-                    <p className="text-[11px] text-teal-800 dark:text-teal-300/90 font-medium">
+                    <p className="text-[11px] text-burgundy-800 dark:text-burgundy-300/90 font-medium">
                       يمكنك مواصلة تسجيل (حفظ جديد) للصفحات المتبقية لإتمام حفظ السورة كاملة.
                     </p>
                   </div>
@@ -617,7 +617,7 @@ export function LogEntryDialog({
             {/* Page Count Presets & Precise Input */}
             <div className="space-y-2 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800">
               <Label className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
-                <Hash className="w-3.5 h-3.5 text-teal-600" />
+                <Hash className="w-3.5 h-3.5 text-burgundy-700" />
                 <span>كمية التسميع (عدد الصفحات)</span>
               </Label>
 
@@ -633,7 +633,7 @@ export function LogEntryDialog({
                     }}
                     className={`py-1.5 px-1 text-xs font-bold rounded-xl border transition-all text-center ${
                       currentPageCount === preset.value
-                        ? "bg-teal-800 text-white border-teal-800 shadow-sm"
+                        ? "bg-burgundy-800 text-white border-burgundy-800 shadow-sm"
                         : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
                     }`}
                   >
@@ -672,7 +672,7 @@ export function LogEntryDialog({
                     onClick={() => setValue("grade", g.value)}
                     className={`py-2.5 px-2 text-xs font-bold rounded-2xl border transition-all flex items-center justify-center gap-1.5 ${
                       selectedGrade === g.value
-                        ? "bg-teal-800 text-white border-teal-800 shadow-md"
+                        ? "bg-burgundy-800 text-white border-burgundy-800 shadow-md"
                         : "bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
                     }`}
                   >
@@ -712,7 +712,7 @@ export function LogEntryDialog({
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.98] text-white font-bold py-3 px-5 rounded-2xl shadow-md transition-all text-sm flex items-center justify-center gap-2"
+              className="flex-1 bg-burgundy-800 hover:bg-burgundy-900 active:scale-[0.98] text-white font-bold py-3 px-5 rounded-2xl shadow-md transition-all text-sm flex items-center justify-center gap-2"
             >
               <span>
                 {isLoading

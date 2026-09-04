@@ -154,7 +154,7 @@ export function AttendanceAlertsCard({
             onClick={() => setActiveTab("contacted")}
             className={`flex-1 py-2 px-3 rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all ${
               activeTab === "contacted"
-                ? "bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 shadow-sm border border-slate-200 dark:border-slate-700"
+                ? "bg-white dark:bg-slate-800 text-burgundy-900 dark:text-burgundy-300 shadow-sm border border-slate-200 dark:border-slate-700"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
@@ -162,7 +162,7 @@ export function AttendanceAlertsCard({
             <span
               className={`px-2 py-0.5 rounded-full text-[11px] font-black ${
                 activeTab === "contacted"
-                  ? "bg-emerald-600 text-white"
+                  ? "bg-burgundy-800 text-white"
                   : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
               }`}
             >
@@ -173,8 +173,8 @@ export function AttendanceAlertsCard({
 
         {/* Feedback Alert Banner */}
         {successMessage && (
-          <div className="mx-4 mt-3 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-200 text-xs font-bold flex items-center gap-2 animate-in slide-in-from-top duration-200 shrink-0">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div className="mx-4 mt-3 p-3 rounded-2xl bg-burgundy-50 dark:bg-burgundy-950/80 border border-burgundy-200 dark:border-burgundy-900 text-burgundy-900 dark:text-burgundy-200 text-xs font-bold flex items-center gap-2 animate-in slide-in-from-top duration-200 shrink-0">
+            <CheckCircle2 className="w-4 h-4 text-burgundy-700 shrink-0" />
             <span>{successMessage}</span>
           </div>
         )}
@@ -185,7 +185,7 @@ export function AttendanceAlertsCard({
             <>
               {pendingAlerts.length === 0 ? (
                 <div className="p-8 text-center rounded-3xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-2.5">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center shadow-inner">
+                  <div className="w-12 h-12 rounded-full bg-burgundy-100 dark:bg-burgundy-950/80 text-burgundy-800 dark:text-burgundy-300 mx-auto flex items-center justify-center shadow-inner">
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
                   <p className="text-sm font-black text-slate-800 dark:text-slate-200">
@@ -215,7 +215,7 @@ export function AttendanceAlertsCard({
                               <Link
                                 href={`/students/${alert.studentId}`}
                                 onClick={onClose}
-                                className="font-black text-sm text-slate-900 dark:text-slate-100 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                                className="font-black text-sm text-slate-900 dark:text-slate-100 hover:text-burgundy-800 dark:hover:text-burgundy-300 transition-colors"
                               >
                                 {alert.studentName}
                               </Link>
@@ -249,9 +249,9 @@ export function AttendanceAlertsCard({
                             >
                               <Button
                                 type="button"
-                                className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                                className="w-full py-2 bg-burgundy-800 hover:bg-burgundy-900 active:scale-[0.98] text-white font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all"
                               >
-                                <MessageSquare className="w-4 h-4 fill-current" />
+                                <MessageSquare className="w-4 h-4 fill-current text-islamicGold-400" />
                                 <span>واتساب ولي الأمر 💬</span>
                               </Button>
                             </a>
@@ -272,7 +272,7 @@ export function AttendanceAlertsCard({
                             onClick={() => handleMarkContacted(alert.studentId, alert.studentName)}
                             disabled={isLoading}
                             variant="outline"
-                            className="w-full py-2 border-emerald-600 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 active:scale-[0.98] font-black rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all"
+                            className="w-full py-2 border-burgundy-600 text-burgundy-800 dark:text-burgundy-300 hover:bg-burgundy-50 dark:hover:bg-burgundy-950/60 active:scale-[0.98] font-black rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all"
                           >
                             {isLoading ? (
                               <>
@@ -281,7 +281,7 @@ export function AttendanceAlertsCard({
                               </>
                             ) : (
                               <>
-                                <Check className="w-4 h-4 text-emerald-600" />
+                                <Check className="w-4 h-4 text-burgundy-700" />
                                 <span>✅ تم التواصل</span>
                               </>
                             )}
@@ -319,18 +319,18 @@ export function AttendanceAlertsCard({
                   {contactedAlerts.map((alert) => (
                     <div
                       key={alert.studentId}
-                      className="p-3.5 rounded-2xl bg-white dark:bg-slate-850 border border-emerald-200/80 dark:border-emerald-900/50 shadow-sm flex flex-col justify-between gap-3 transition-all"
+                      className="p-3.5 rounded-2xl bg-white dark:bg-slate-850 border border-burgundy-200/80 dark:border-burgundy-900/50 shadow-sm flex flex-col justify-between gap-3 transition-all"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-200 flex items-center justify-center font-black text-sm shrink-0">
+                          <div className="w-9 h-9 rounded-xl bg-burgundy-100 dark:bg-burgundy-950/80 text-burgundy-900 dark:text-burgundy-200 flex items-center justify-center font-black text-sm shrink-0">
                             {alert.studentName.charAt(0)}
                           </div>
                           <div>
                             <Link
                               href={`/students/${alert.studentId}`}
                               onClick={onClose}
-                              className="font-black text-sm text-slate-900 dark:text-slate-100 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                              className="font-black text-sm text-slate-900 dark:text-slate-100 hover:text-burgundy-800 dark:hover:text-burgundy-300 transition-colors"
                             >
                               {alert.studentName}
                             </Link>
@@ -340,7 +340,7 @@ export function AttendanceAlertsCard({
                           </div>
                         </div>
 
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-900 shrink-0">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black bg-burgundy-100 text-burgundy-800 border border-burgundy-300 dark:bg-burgundy-950/80 dark:text-burgundy-300 dark:border-burgundy-900 shrink-0">
                           <Check className="w-3.5 h-3.5 shrink-0" />
                           <span>تم التواصل ✓</span>
                         </span>
@@ -357,7 +357,7 @@ export function AttendanceAlertsCard({
                           <Button
                             type="button"
                             variant="ghost"
-                            className="w-full py-1.5 text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5"
+                            className="w-full py-1.5 text-slate-600 dark:text-slate-400 hover:text-burgundy-800 dark:hover:text-burgundy-300 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5"
                           >
                             <MessageSquare className="w-3.5 h-3.5" />
                             <span>إعادة إرسال رسالة عبر واتساب 💬</span>

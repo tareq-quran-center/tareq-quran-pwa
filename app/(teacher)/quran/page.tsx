@@ -157,7 +157,7 @@ export default function QuranReaderPage() {
       {/* Dynamic Header & View Switcher */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-teal-800 text-white flex items-center justify-center font-bold shadow-md">
+          <div className="w-12 h-12 rounded-xl bg-burgundy-900 text-white flex items-center justify-center font-bold shadow-md">
             <BookOpen className="w-6 h-6" />
           </div>
           <div>
@@ -205,7 +205,7 @@ export default function QuranReaderPage() {
                 onClick={() => setIndexTab("surahs")}
                 className={`px-5 py-2 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${
                   indexTab === "surahs"
-                    ? "bg-teal-800 text-white shadow-sm"
+                    ? "bg-burgundy-800 text-white shadow-sm"
                     : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
                 }`}
               >
@@ -218,7 +218,7 @@ export default function QuranReaderPage() {
                 onClick={() => setIndexTab("ajzaa")}
                 className={`px-5 py-2 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${
                   indexTab === "ajzaa"
-                    ? "bg-teal-800 text-white shadow-sm"
+                    ? "bg-burgundy-800 text-white shadow-sm"
                     : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
                 }`}
               >
@@ -249,11 +249,11 @@ export default function QuranReaderPage() {
               {filteredSurahs.map((surah: Surah) => (
                 <Card
                   key={surah.id}
-                  className="hover:border-teal-600 hover:shadow-md transition-all border-slate-200 dark:border-slate-800 group"
+                  className="hover:border-burgundy-500 hover:shadow-md transition-all border-slate-200 dark:border-slate-800 group"
                 >
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950 text-teal-800 dark:text-teal-200 border border-teal-200 dark:border-teal-900 flex items-center justify-center font-mono font-bold text-sm shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-burgundy-50 dark:bg-burgundy-950 text-burgundy-900 dark:text-burgundy-200 border border-burgundy-200 dark:border-burgundy-900 flex items-center justify-center font-mono font-bold text-sm shrink-0">
                         {surah.id}
                       </div>
                       <div>
@@ -263,7 +263,7 @@ export default function QuranReaderPage() {
                             className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
                               surah.type === "مكية"
                                 ? "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300"
-                                : "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300"
+                                : "bg-burgundy-50 text-burgundy-800 border-burgundy-200 dark:bg-burgundy-950 dark:text-burgundy-300"
                             }`}
                           >
                             {surah.type}
@@ -295,11 +295,11 @@ export default function QuranReaderPage() {
               {filteredAjzaa.map((juz: Juz) => (
                 <Card
                   key={juz.number}
-                  className="hover:border-teal-600 hover:shadow-md transition-all border-slate-200 dark:border-slate-800 group"
+                  className="hover:border-burgundy-500 hover:shadow-md transition-all border-slate-200 dark:border-slate-800 group"
                 >
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-teal-800 text-white flex items-center justify-center font-mono font-bold text-sm shrink-0 shadow-sm">
+                      <div className="w-10 h-10 rounded-xl bg-burgundy-900 text-white flex items-center justify-center font-mono font-bold text-sm shrink-0 shadow-sm">
                         {juz.number}
                       </div>
                       <div>
@@ -307,7 +307,7 @@ export default function QuranReaderPage() {
                           {juz.name}
                         </h3>
                         <p className="text-xs text-slate-500 mt-0.5">
-                          يبدأ من صفحة: <strong className="text-teal-700 font-mono">{juz.startPage}</strong>
+                          يبدأ من صفحة: <strong className="text-burgundy-800 font-mono">{juz.startPage}</strong>
                         </p>
                       </div>
                     </div>
@@ -316,7 +316,7 @@ export default function QuranReaderPage() {
                       size="sm"
                       variant="outline"
                       onClick={() => jumpToPage(juz.startPage)}
-                      className="gap-1.5 font-bold border-teal-200 hover:bg-teal-50 hover:text-teal-900"
+                      className="gap-1.5 font-bold border-burgundy-200 hover:bg-burgundy-50 hover:text-burgundy-900"
                     >
                       <span>انتقال</span>
                       <ArrowRight className="w-3.5 h-3.5 rotate-180" />
@@ -333,7 +333,7 @@ export default function QuranReaderPage() {
       {viewMode === "reader" && (
         <div className="space-y-3 animate-in fade-in duration-200">
           {/* Top Control Bar inside Reader */}
-          <div className="bg-gradient-to-r from-teal-900 via-teal-800 to-teal-950 text-white p-4 rounded-2xl shadow-xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border border-teal-700">
+          <div className="bg-gradient-to-r from-burgundy-950 via-burgundy-900 to-burgundy-950 text-white p-4 rounded-2xl shadow-xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border border-burgundy-800">
             {/* Dynamic Status Display */}
             <div className="flex items-center gap-3 flex-wrap text-sm font-bold">
               <span className="bg-white/15 px-3 py-1 rounded-lg border border-white/10 flex items-center gap-1.5">
@@ -345,7 +345,7 @@ export default function QuranReaderPage() {
                 {currentJuz.name.split(" ")[0]} {currentJuz.name.split(" ")[1]}
               </span>
 
-              <span className="bg-amber-400 text-teal-950 font-mono font-black px-3 py-1 rounded-lg shadow-sm">
+              <span className="bg-amber-400 text-burgundy-950 font-mono font-black px-3 py-1 rounded-lg shadow-sm">
                 صفحة {currentPage} من 604
               </span>
             </div>
@@ -371,7 +371,7 @@ export default function QuranReaderPage() {
 
               {/* Direct Page Input */}
               <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-xl border border-white/20">
-                <span className="text-xs font-bold text-teal-200">صفحة:</span>
+                <span className="text-xs font-bold text-islamicGold-200">صفحة:</span>
                 <input
                   type="number"
                   min={1}
@@ -407,7 +407,7 @@ export default function QuranReaderPage() {
               max={604}
               value={currentPage}
               onChange={(e) => setCurrentPage(Number(e.target.value))}
-              className="flex-1 accent-teal-700 h-2 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
+              className="flex-1 accent-burgundy-700 h-2 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
             />
             <span className="text-xs font-mono font-bold text-slate-500">604</span>
           </div>
@@ -426,7 +426,7 @@ export default function QuranReaderPage() {
             <button
               onClick={goToNextPage}
               disabled={currentPage >= 604}
-              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-teal-900/80 hover:bg-teal-900 text-white backdrop-blur-md flex items-center justify-center shadow-2xl transition-all disabled:opacity-30 disabled:pointer-events-none group"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-burgundy-950/85 hover:bg-burgundy-900 text-white backdrop-blur-md flex items-center justify-center shadow-2xl transition-all disabled:opacity-30 disabled:pointer-events-none group"
               title="الصفحة التالية (الصفحة + 1)"
             >
               <ChevronRight className="w-7 h-7 group-hover:translate-x-0.5 transition-transform" />
@@ -436,7 +436,7 @@ export default function QuranReaderPage() {
             <button
               onClick={goToPrevPage}
               disabled={currentPage <= 1}
-              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-teal-900/80 hover:bg-teal-900 text-white backdrop-blur-md flex items-center justify-center shadow-2xl transition-all disabled:opacity-30 disabled:pointer-events-none group"
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-burgundy-950/85 hover:bg-burgundy-900 text-white backdrop-blur-md flex items-center justify-center shadow-2xl transition-all disabled:opacity-30 disabled:pointer-events-none group"
               title="الصفحة السابقة (الصفحة - 1)"
             >
               <ChevronLeft className="w-7 h-7 group-hover:-translate-x-0.5 transition-transform" />
@@ -463,7 +463,7 @@ export default function QuranReaderPage() {
               <button
                 onClick={goToPrevPage}
                 disabled={currentPage <= 1}
-                className="hover:text-teal-700 disabled:opacity-30 flex items-center gap-1"
+                className="hover:text-burgundy-800 disabled:opacity-30 flex items-center gap-1"
               >
                 ← الصفحة السابقة ({currentPage > 1 ? currentPage - 1 : 1})
               </button>
@@ -475,7 +475,7 @@ export default function QuranReaderPage() {
               <button
                 onClick={goToNextPage}
                 disabled={currentPage >= 604}
-                className="hover:text-teal-700 disabled:opacity-30 flex items-center gap-1"
+                className="hover:text-burgundy-800 disabled:opacity-30 flex items-center gap-1"
               >
                 الصفحة التالية ({currentPage < 604 ? currentPage + 1 : 604}) →
               </button>

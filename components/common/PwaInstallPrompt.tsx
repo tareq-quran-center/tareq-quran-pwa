@@ -160,12 +160,12 @@ export function PwaInstallPrompt() {
 
         {/* 1. Success State */}
         {view === "success" ? (
-          <div className="p-5 bg-emerald-50 dark:bg-emerald-950/50 rounded-2xl border border-emerald-200 dark:border-emerald-800 text-center space-y-2.5 animate-in zoom-in-90 duration-200">
-            <CheckCircle2 className="w-12 h-12 text-emerald-600 dark:text-emerald-400 mx-auto animate-bounce" />
-            <p className="font-black text-base text-emerald-900 dark:text-emerald-200">
+          <div className="p-5 bg-burgundy-50 dark:bg-burgundy-950/50 rounded-2xl border border-burgundy-200 dark:border-burgundy-800 text-center space-y-2.5 animate-in zoom-in-90 duration-200">
+            <CheckCircle2 className="w-12 h-12 text-burgundy-700 dark:text-burgundy-400 mx-auto animate-bounce" />
+            <p className="font-black text-base text-burgundy-900 dark:text-burgundy-200">
               تم تثبيت التطبيق بنجاح! 🚀
             </p>
-            <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
+            <p className="text-xs text-burgundy-800 dark:text-burgundy-300 font-medium">
               يمكنك الآن فتح التطبيق مباشرة من شاشتك الرئيسية في أي وقت.
             </p>
           </div>
@@ -182,7 +182,7 @@ export function PwaInstallPrompt() {
               {isIOS ? (
                 <>
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-black shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-800 dark:text-burgundy-300 flex items-center justify-center font-black shrink-0">
                       <Share2 className="w-4 h-4" />
                     </div>
                     <span>
@@ -191,7 +191,7 @@ export function PwaInstallPrompt() {
                   </div>
 
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
-                    <div className="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 flex items-center justify-center font-black shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-islamicGold-100 dark:bg-islamicGold-950 text-islamicGold-800 dark:text-islamicGold-300 flex items-center justify-center font-black shrink-0">
                       <PlusSquare className="w-4 h-4" />
                     </div>
                     <span>
@@ -202,7 +202,7 @@ export function PwaInstallPrompt() {
               ) : (
                 <>
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-black shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-800 dark:text-burgundy-300 flex items-center justify-center font-black shrink-0">
                       <MoreVertical className="w-4 h-4" />
                     </div>
                     <span>
@@ -211,7 +211,7 @@ export function PwaInstallPrompt() {
                   </div>
 
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
-                    <div className="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 flex items-center justify-center font-black shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-islamicGold-100 dark:bg-islamicGold-950 text-islamicGold-800 dark:text-islamicGold-300 flex items-center justify-center font-black shrink-0">
                       <ArrowDownCircle className="w-4 h-4" />
                     </div>
                     <span>
@@ -236,7 +236,7 @@ export function PwaInstallPrompt() {
 
             <Button
               onClick={handleClose}
-              className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl shadow-md text-xs"
+              className="w-full py-3 bg-burgundy-800 hover:bg-burgundy-900 text-white font-bold rounded-xl shadow-md text-xs"
             >
               حسناً، فهمت ذلك 👍
             </Button>
@@ -244,9 +244,9 @@ export function PwaInstallPrompt() {
         ) : (
           /* 3. Primary 1-Click Install View (Android / Chrome / Desktop) */
           <div className="space-y-4 pt-1 animate-in fade-in duration-200">
-            <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 text-xs text-emerald-900 dark:text-emerald-200 space-y-1">
+            <div className="p-3.5 bg-burgundy-50 dark:bg-burgundy-950/40 rounded-2xl border border-burgundy-200 dark:border-burgundy-800/60 text-xs text-burgundy-900 dark:text-burgundy-200 space-y-1">
               <p className="font-bold">✨ مميزات التثبيت:</p>
-              <ul className="list-disc list-inside text-[11px] space-y-0.5 text-emerald-800 dark:text-emerald-300">
+              <ul className="list-disc list-inside text-[11px] space-y-0.5 text-burgundy-800 dark:text-burgundy-300">
                 <li>العمل دون اتصال بالإنترنت وحفظ السجلات محلياً</li>
                 <li>تصفح سريع جداً بدون شريط المتصفح</li>
                 <li>وصول مباشر من الشاشة الرئيسية بلمسة واحدة</li>
@@ -268,9 +268,9 @@ export function PwaInstallPrompt() {
             <div className="flex gap-2">
               <Button
                 onClick={handleInstallClick}
-                className="flex-1 py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-black rounded-xl shadow-md text-xs gap-2"
+                className="flex-1 py-3 bg-burgundy-800 hover:bg-burgundy-900 text-white font-black rounded-xl shadow-md text-xs gap-2"
               >
-                <Download className="w-4 h-4 text-amber-300" />
+                <Download className="w-4 h-4 text-islamicGold-300" />
                 <span>تثبيت التطبيق الآن 📲</span>
               </Button>
               <Button

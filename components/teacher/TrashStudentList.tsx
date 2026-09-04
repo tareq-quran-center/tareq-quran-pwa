@@ -119,13 +119,13 @@ export function TrashStudentList({ initialStudents }: TrashStudentListProps) {
         <div
           className={`p-4 rounded-2xl text-sm font-bold flex items-center justify-between border shadow-sm transition-all animate-in fade-in duration-200 ${
             alertMessage.type === "success"
-              ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+              ? "bg-burgundy-50 dark:bg-burgundy-950/50 text-burgundy-900 dark:text-burgundy-300 border-burgundy-200 dark:border-burgundy-800"
               : "bg-rose-50 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-800"
           }`}
         >
           <div className="flex items-center gap-2.5">
             {alertMessage.type === "success" ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <CheckCircle2 className="w-5 h-5 text-burgundy-700 dark:text-burgundy-400 shrink-0" />
             ) : (
               <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />
             )}
@@ -242,10 +242,10 @@ export function TrashStudentList({ initialStudents }: TrashStudentListProps) {
                   {/* Total Completed Pages Snapshot */}
                   <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-700">
                     <span className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
-                      <BookOpen className="w-3.5 h-3.5 text-teal-600" />
+                      <BookOpen className="w-3.5 h-3.5 text-burgundy-700" />
                       <span>إجمالي الحفظ السابق:</span>
                     </span>
-                    <span className="font-mono font-black text-teal-700 dark:text-teal-400">
+                    <span className="font-mono font-black text-burgundy-800 dark:text-burgundy-300">
                       {totalPages > 0 ? `${totalPages.toFixed(1)} صفحة` : "0 صفحة"}
                     </span>
                   </div>
@@ -264,9 +264,9 @@ export function TrashStudentList({ initialStudents }: TrashStudentListProps) {
                   <Button
                     onClick={() => handleOpenRestoreConfirm(student)}
                     variant="outline"
-                    className="w-full min-h-[40px] gap-2 font-bold text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 shadow-sm transition-all rounded-xl"
+                    className="w-full min-h-[40px] gap-2 font-bold text-xs bg-burgundy-50 hover:bg-burgundy-100 text-burgundy-800 dark:bg-burgundy-950/60 dark:hover:bg-burgundy-900/80 dark:text-burgundy-300 border-burgundy-300 dark:border-burgundy-800 shadow-sm transition-all rounded-xl"
                   >
-                    <RotateCcw className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <RotateCcw className="w-4 h-4 text-burgundy-700 dark:text-burgundy-400" />
                     <span>استعادة الطالب إلى الحلقة 🔄</span>
                   </Button>
                 </CardFooter>
@@ -312,8 +312,8 @@ export function TrashStudentList({ initialStudents }: TrashStudentListProps) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-black text-base">
-                <RotateCcw className="w-5 h-5 text-emerald-600" />
+              <div className="flex items-center gap-2 text-burgundy-800 dark:text-burgundy-300 font-black text-base">
+                <RotateCcw className="w-5 h-5 text-burgundy-700" />
                 <span>تأكيد استعادة الطالب</span>
               </div>
               <button
@@ -329,7 +329,7 @@ export function TrashStudentList({ initialStudents }: TrashStudentListProps) {
             <div className="space-y-2">
               <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed font-medium">
                 هل أنت متأكد من رغبتك في استعادة الطالب{" "}
-                <strong className="text-emerald-800 dark:text-emerald-300 font-black">
+                <strong className="text-burgundy-900 dark:text-burgundy-300 font-black">
                   "{studentToRestore.full_name}"
                 </strong>{" "}
                 إلى كشوفات الحلقة النشطة؟
@@ -352,7 +352,7 @@ export function TrashStudentList({ initialStudents }: TrashStudentListProps) {
               <Button
                 onClick={handleConfirmRestore}
                 disabled={isLoading}
-                className="bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs gap-2 shadow-md shadow-emerald-700/20"
+                className="bg-burgundy-800 hover:bg-burgundy-900 text-white rounded-xl font-bold text-xs gap-2 shadow-md shadow-burgundy-800/20"
               >
                 <RotateCcw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
                 <span>{isLoading ? "جاري الاستعادة..." : "تأكيد الاستعادة ✅"}</span>

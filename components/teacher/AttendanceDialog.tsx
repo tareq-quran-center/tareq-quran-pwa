@@ -71,7 +71,7 @@ export function AttendanceDialog({
   };
 
   const statuses: Array<{ value: AttendanceStatusEnum; label: string; activeColor: string }> = [
-    { value: "حاضر", label: "حاضر ✅", activeColor: "bg-emerald-700 text-white border-emerald-700" },
+    { value: "حاضر", label: "حاضر ✅", activeColor: "bg-burgundy-800 text-white border-burgundy-800" },
     { value: "غائب", label: "غائب ❌", activeColor: "bg-rose-700 text-white border-rose-700" },
     { value: "مستأذن", label: "مستأذن 📄", activeColor: "bg-amber-700 text-white border-amber-700" },
     { value: "متأخر", label: "متأخر ⏰", activeColor: "bg-orange-700 text-white border-orange-700" },
@@ -82,7 +82,7 @@ export function AttendanceDialog({
       <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-          <div className="flex items-center gap-2 text-teal-800 dark:text-teal-300 font-bold text-lg">
+          <div className="flex items-center gap-2 text-burgundy-900 dark:text-burgundy-300 font-bold text-lg">
             <Calendar className="w-5 h-5" />
             <span>تسجيل حضور الطالب: {studentName}</span>
           </div>

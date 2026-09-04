@@ -257,7 +257,7 @@ export function StudentDetailClient({
   return (
     <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300">
       {notification && (
-        <div className="p-3 bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-lg animate-in slide-in-from-top duration-300 flex items-center justify-center gap-2">
+        <div className="p-3 bg-burgundy-800 text-white font-bold text-xs rounded-xl shadow-lg animate-in slide-in-from-top duration-300 flex items-center justify-center gap-2 border border-islamicGold-500/30">
           <span>{notification}</span>
         </div>
       )}
@@ -266,7 +266,7 @@ export function StudentDetailClient({
       <div>
         <Link
           href="/students"
-          className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-emerald-700 transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-burgundy-700 transition-colors"
         >
           <ArrowRight className="w-4 h-4" />
           <span>العودة إلى قائمة الطلاب</span>
@@ -274,13 +274,13 @@ export function StudentDetailClient({
       </div>
 
       {/* Redesigned Compact Student Profile Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 text-white p-4 sm:p-5 rounded-3xl shadow-xl border border-emerald-800/40 space-y-3">
+      <div className="relative overflow-hidden bg-gradient-to-br from-burgundy-950 via-burgundy-900 to-slate-950 text-white p-4 sm:p-5 rounded-3xl shadow-xl border border-islamicGold-500/40 space-y-3">
         {/* Decorative Pattern Background Overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(#c5a059_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none" />
 
         {/* Radial Glow Overlay */}
         <div className="absolute -top-24 -left-24 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-islamicGold-400/15 rounded-full blur-3xl pointer-events-none" />
 
         {/* Top Profile Row (Avatar + Info + Action Button) */}
         <div className="relative z-10 flex items-center justify-between gap-2.5 sm:gap-3 w-full">
@@ -312,14 +312,14 @@ export function StudentDetailClient({
                   {student.full_name}
                 </h2>
                 {student.academic_grade && (
-                  <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/10 text-emerald-200 border border-white/10 shrink-0">
+                  <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/10 text-islamicGold-300 border border-white/10 shrink-0">
                     {student.academic_grade}
                   </span>
                 )}
               </div>
 
               {/* Compact Badges Row */}
-              <div className="flex flex-wrap items-center gap-1.5 text-[10px] sm:text-[11px] text-emerald-200/90 font-medium">
+              <div className="flex flex-wrap items-center gap-1.5 text-[10px] sm:text-[11px] text-amber-200/90 font-medium">
                 {student.academic_grade && (
                   <span className="sm:hidden bg-white/10 px-1.5 py-0.5 rounded-lg text-[10px] font-bold border border-white/10 shrink-0">
                     🎓 {student.academic_grade}
@@ -388,7 +388,7 @@ export function StudentDetailClient({
             <CardTitle className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">
               إجمالي التسميعات
             </CardTitle>
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold shrink-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-800 dark:text-islamicGold-300 flex items-center justify-center font-bold shrink-0">
               <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </CardHeader>
@@ -428,7 +428,7 @@ export function StudentDetailClient({
             <CardTitle className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">
               آخر تسميع
             </CardTitle>
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 flex items-center justify-center font-bold shrink-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold shrink-0">
               <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </CardHeader>
@@ -458,11 +458,11 @@ export function StudentDetailClient({
           }}
           className={`py-3 px-4 sm:px-5 text-xs sm:text-sm font-extrabold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
             activeTab === "logs"
-              ? "border-emerald-700 text-emerald-800 dark:text-emerald-300"
+              ? "border-burgundy-700 text-burgundy-900 dark:text-burgundy-300"
               : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
-          <BookOpen className="w-4 h-4 text-emerald-600" />
+          <BookOpen className="w-4 h-4 text-burgundy-700 dark:text-burgundy-400" />
           <span>سجل الحفظ والمراجعة ({totalLogsCount})</span>
         </button>
 
@@ -473,11 +473,11 @@ export function StudentDetailClient({
           }}
           className={`py-3 px-4 sm:px-5 text-xs sm:text-sm font-extrabold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
             activeTab === "progress"
-              ? "border-emerald-700 text-emerald-800 dark:text-emerald-300"
+              ? "border-burgundy-700 text-burgundy-900 dark:text-burgundy-300"
               : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
-          <BookCheck className="w-4 h-4 text-teal-600" />
+          <BookCheck className="w-4 h-4 text-burgundy-700 dark:text-burgundy-400" />
           <span>تقدم حفظ السور ({surahProgressList.length})</span>
         </button>
 
@@ -488,11 +488,11 @@ export function StudentDetailClient({
           }}
           className={`py-3 px-4 sm:px-5 text-xs sm:text-sm font-extrabold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
             activeTab === "attendance"
-              ? "border-emerald-700 text-emerald-800 dark:text-emerald-300"
+              ? "border-burgundy-700 text-burgundy-900 dark:text-burgundy-300"
               : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
-          <Calendar className="w-4 h-4 text-teal-600" />
+          <Calendar className="w-4 h-4 text-burgundy-700 dark:text-burgundy-400" />
           <span>سجل الحضور والغياب ({attendance.length})</span>
         </button>
       </div>
@@ -510,7 +510,7 @@ export function StudentDetailClient({
                 setIsLogDialogOpen(true);
               }}
               size="sm"
-              className="gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl"
+              className="gap-2 bg-burgundy-800 hover:bg-burgundy-900 text-white font-bold rounded-xl border border-islamicGold-500/30"
             >
               <Plus className="w-4 h-4" />
               <span>إضافة تسميع</span>
@@ -544,7 +544,7 @@ export function StudentDetailClient({
                   }}
                   className="gap-2 rounded-xl"
                 >
-                  <Plus className="w-4 h-4 text-emerald-600" />
+                  <Plus className="w-4 h-4 text-burgundy-700 dark:text-burgundy-400" />
                   <span>سجل أول تسميع الآن</span>
                 </Button>
               </CardContent>
@@ -576,7 +576,7 @@ export function StudentDetailClient({
                 onClick={() => setViewMode("juz")}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${
                   viewMode === "juz"
-                    ? "bg-white dark:bg-slate-900 text-teal-800 dark:text-teal-300 shadow-xs"
+                    ? "bg-white dark:bg-slate-900 text-burgundy-900 dark:text-burgundy-200 shadow-xs"
                     : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
                 }`}
               >
@@ -587,7 +587,7 @@ export function StudentDetailClient({
                 onClick={() => setViewMode("surah")}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${
                   viewMode === "surah"
-                    ? "bg-white dark:bg-slate-900 text-teal-800 dark:text-teal-300 shadow-xs"
+                    ? "bg-white dark:bg-slate-900 text-burgundy-900 dark:text-burgundy-200 shadow-xs"
                     : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
                 }`}
               >
@@ -603,7 +603,7 @@ export function StudentDetailClient({
               onClick={() => setStatusFilter("all")}
               className={`px-3 py-1 rounded-xl text-xs font-bold transition-all shrink-0 ${
                 statusFilter === "all"
-                  ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
+                  ? "bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-900 dark:text-islamicGold-300 border border-burgundy-300 dark:border-burgundy-800"
                   : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900"
               }`}
             >
@@ -625,7 +625,7 @@ export function StudentDetailClient({
               onClick={() => setStatusFilter("completed")}
               className={`px-3 py-1 rounded-xl text-xs font-bold transition-all shrink-0 ${
                 statusFilter === "completed"
-                  ? "bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-800"
+                  ? "bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-900 dark:text-islamicGold-300 border border-burgundy-300 dark:border-burgundy-800"
                   : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900"
               }`}
             >
@@ -645,7 +645,7 @@ export function StudentDetailClient({
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="w-7 h-7 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200 font-black text-xs flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
+                          <span className="w-7 h-7 rounded-xl bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-900 dark:text-islamicGold-300 font-black text-xs flex items-center justify-center border border-burgundy-200 dark:border-burgundy-800">
                             {surah.surahId}
                           </span>
                           <div>
@@ -659,7 +659,7 @@ export function StudentDetailClient({
                         </div>
 
                         {surah.isCompleted ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-900 dark:text-islamicGold-300 border border-burgundy-300 dark:border-burgundy-800">
                             مكتمل 100% ✅
                           </span>
                         ) : (
@@ -674,8 +674,8 @@ export function StudentDetailClient({
                         <div
                           className={`h-full transition-all duration-300 rounded-full ${
                             surah.isCompleted
-                              ? "bg-gradient-to-r from-emerald-500 to-teal-500"
-                              : "bg-gradient-to-r from-amber-500 to-teal-500"
+                              ? "bg-gradient-to-r from-burgundy-700 via-islamicGold-500 to-islamicGold-400"
+                              : "bg-gradient-to-r from-amber-500 to-burgundy-700"
                           }`}
                           style={{ width: `${surah.percentage}%` }}
                         />
@@ -698,7 +698,7 @@ export function StudentDetailClient({
                   <button
                     type="button"
                     onClick={() => setShowAllProgress(!showAllProgress)}
-                    className="w-full py-2.5 px-4 text-xs font-bold text-teal-700 dark:text-teal-400 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/50 dark:hover:bg-teal-900/50 rounded-2xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+                    className="w-full py-2.5 px-4 text-xs font-bold text-burgundy-800 dark:text-burgundy-300 bg-burgundy-50 hover:bg-burgundy-100 dark:bg-burgundy-950/50 dark:hover:bg-burgundy-900/50 rounded-2xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
                   >
                     <span>
                       {showAllProgress ? "طي القائمة ⌃" : `عرض كافة السور (${filteredSurahList.length} سورة) ⌄`}
@@ -713,7 +713,7 @@ export function StudentDetailClient({
                   <BookCheck className="w-10 h-10 text-slate-300 mx-auto" />
                   <p className="text-slate-600 font-bold text-sm">لا توجد سور مطابقة للفلتر المحدد</p>
                   <Button variant="outline" onClick={() => setIsLogDialogOpen(true)} className="gap-2 rounded-xl">
-                    <Plus className="w-4 h-4 text-emerald-600" />
+                    <Plus className="w-4 h-4 text-burgundy-700 dark:text-burgundy-400" />
                     <span>سجل حفظ جديد الآن</span>
                   </Button>
                 </CardContent>
@@ -739,7 +739,7 @@ export function StudentDetailClient({
                         >
                           {/* Right: Circle Number + Juz Name */}
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <span className="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-200 font-black text-xs flex items-center justify-center border border-teal-200/80 dark:border-teal-800 shrink-0">
+                            <span className="w-8 h-8 rounded-xl bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-900 dark:text-islamicGold-300 font-black text-xs flex items-center justify-center border border-burgundy-200/80 dark:border-burgundy-800 shrink-0">
                               {juz.juzNumber}
                             </span>
                             <div className="min-w-0">
@@ -755,7 +755,7 @@ export function StudentDetailClient({
                           {/* Middle: Badge & Left: Interactive Arrow */}
                           <div className="flex items-center gap-2 shrink-0">
                             {juz.isCompleted ? (
-                              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-900 dark:text-islamicGold-300 border border-burgundy-300 dark:border-burgundy-800">
                                 مكتمل 100% ✅
                               </span>
                             ) : juz.status === "in_progress" ? (
@@ -770,7 +770,7 @@ export function StudentDetailClient({
 
                             <ChevronDown
                               className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
-                                isExpanded ? "rotate-180 text-teal-600 dark:text-teal-400" : ""
+                                isExpanded ? "rotate-180 text-burgundy-700 dark:text-burgundy-400" : ""
                               }`}
                             />
                           </div>
@@ -789,9 +789,9 @@ export function StudentDetailClient({
                               <div
                                 className={`h-full transition-all duration-300 rounded-full ${
                                   juz.isCompleted
-                                    ? "bg-gradient-to-r from-emerald-500 to-teal-500"
+                                    ? "bg-gradient-to-r from-burgundy-700 via-islamicGold-500 to-islamicGold-400"
                                     : juz.status === "in_progress"
-                                    ? "bg-gradient-to-r from-amber-500 to-teal-500"
+                                    ? "bg-gradient-to-r from-amber-500 to-burgundy-700"
                                     : "bg-slate-300 dark:bg-slate-600"
                                 }`}
                                 style={{ width: `${juz.percentage}%` }}
@@ -819,7 +819,7 @@ export function StudentDetailClient({
                   <button
                     type="button"
                     onClick={() => setShowAllProgress(!showAllProgress)}
-                    className="w-full py-2.5 px-4 text-xs font-bold text-teal-700 dark:text-teal-400 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/50 dark:hover:bg-teal-900/50 rounded-2xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+                    className="w-full py-2.5 px-4 text-xs font-bold text-burgundy-800 dark:text-burgundy-300 bg-burgundy-50 hover:bg-burgundy-100 dark:bg-burgundy-950/50 dark:hover:bg-burgundy-900/50 rounded-2xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
                   >
                     <span>
                       {showAllProgress ? "طي القائمة ⌃" : `عرض كافة الأجزاء (${filteredJuzList.length} جزء) ⌄`}
@@ -834,7 +834,7 @@ export function StudentDetailClient({
                   <BookCheck className="w-10 h-10 text-slate-300 mx-auto" />
                   <p className="text-slate-600 font-bold text-sm">لا توجد أجزاء مطابقة للفلتر المحدد</p>
                   <Button variant="outline" onClick={() => setIsLogDialogOpen(true)} className="gap-2 rounded-xl">
-                    <Plus className="w-4 h-4 text-emerald-600" />
+                    <Plus className="w-4 h-4 text-burgundy-700 dark:text-burgundy-400" />
                     <span>سجل حفظ جديد الآن</span>
                   </Button>
                 </CardContent>
@@ -854,7 +854,7 @@ export function StudentDetailClient({
             <Button
               onClick={() => setIsAttendanceDialogOpen(true)}
               size="sm"
-              className="gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl"
+              className="gap-2 bg-burgundy-800 hover:bg-burgundy-900 text-white font-bold rounded-xl border border-islamicGold-500/30"
             >
               <Calendar className="w-4 h-4" />
               <span>تسجيل حضور</span>
@@ -903,7 +903,7 @@ export function StudentDetailClient({
                 <Calendar className="w-10 h-10 text-slate-300 mx-auto" />
                 <p className="text-slate-600 font-bold text-sm">لا يوجد سجل حضور مسجل بعد</p>
                 <Button variant="outline" onClick={() => setIsAttendanceDialogOpen(true)} className="gap-2 rounded-xl">
-                  <Calendar className="w-4 h-4 text-emerald-600" />
+                  <Calendar className="w-4 h-4 text-burgundy-700 dark:text-burgundy-400" />
                   <span>سجل حضور اليوم</span>
                 </Button>
               </CardContent>
@@ -1023,15 +1023,15 @@ export function StudentDetailClient({
                     await handleCopyParentLink();
                     setIsActionMenuOpen(false);
                   }}
-                  className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100/80 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 border border-emerald-200/80 dark:border-emerald-900/60 text-emerald-900 dark:text-emerald-200 font-bold text-xs transition-all active:scale-[0.99]"
+                  className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-burgundy-50 hover:bg-burgundy-100/80 dark:bg-burgundy-950/40 dark:hover:bg-burgundy-900/60 border border-burgundy-200/80 dark:border-burgundy-900/60 text-burgundy-900 dark:text-burgundy-200 font-bold text-xs transition-all active:scale-[0.99]"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold shrink-0 shadow-xs">
-                      {isCopiedToken ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-emerald-600" />}
+                    <div className="w-9 h-9 rounded-xl bg-burgundy-100 dark:bg-burgundy-900/60 text-burgundy-700 dark:text-islamicGold-300 flex items-center justify-center font-bold shrink-0 shadow-xs">
+                      {isCopiedToken ? <Check className="w-4 h-4 text-burgundy-700 dark:text-islamicGold-400" /> : <Copy className="w-4 h-4 text-burgundy-700 dark:text-islamicGold-400" />}
                     </div>
                     <div className="text-right">
                       <p className="font-black text-sm">{isCopiedToken ? "تم نسخ الرابط!" : "نسخ رابط متابعة ولي الأمر 📋"}</p>
-                      <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80 font-normal">
+                      <p className="text-[11px] text-burgundy-800/80 dark:text-burgundy-300/80 font-normal">
                         نسخ الرابط المباشر للبوابة لإرساله لولي الأمر
                       </p>
                     </div>
@@ -1103,7 +1103,7 @@ export function StudentDetailClient({
       {/* Floating Success Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[110] bg-slate-900/95 dark:bg-slate-100/95 text-white dark:text-slate-900 text-xs sm:text-sm font-black px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-4 duration-200 flex items-center gap-2 border border-slate-700/50 dark:border-slate-300/50 pointer-events-none">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-600 shrink-0" />
+          <CheckCircle2 className="w-4 h-4 text-islamicGold-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}

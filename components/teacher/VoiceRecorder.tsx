@@ -199,9 +199,9 @@ export function VoiceRecorder({
         <button
           type="button"
           onClick={startRecording}
-          className="w-full py-2.5 px-3.5 rounded-xl border border-dashed border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 dark:hover:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-98"
+          className="w-full py-2.5 px-3.5 rounded-xl border border-dashed border-burgundy-300 dark:border-burgundy-800 bg-burgundy-50/50 dark:bg-burgundy-950/30 hover:bg-burgundy-100/60 dark:hover:bg-burgundy-950/50 text-burgundy-800 dark:text-burgundy-300 text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-98"
         >
-          <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-sm">
+          <div className="w-6 h-6 rounded-full bg-burgundy-800 text-white flex items-center justify-center shadow-sm">
             <Mic className="w-3.5 h-3.5" />
           </div>
           <span>تسجيل تلاوة الطالب المتميزة 🎙️ (صوت)</span>
@@ -233,22 +233,22 @@ export function VoiceRecorder({
 
       {/* Stopped / Recorded Preview State */}
       {!isRecording && audioBlob && (
-        <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 flex items-center justify-between gap-2 shadow-sm">
+        <div className="p-3 rounded-2xl bg-burgundy-50 dark:bg-burgundy-950/60 border border-burgundy-300 dark:border-burgundy-800 flex items-center justify-between gap-2 shadow-sm">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <button
               type="button"
               onClick={togglePlayAudio}
-              className="w-8 h-8 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white flex items-center justify-center shadow-md shrink-0 transition-transform active:scale-90"
+              className="w-8 h-8 rounded-xl bg-burgundy-800 hover:bg-burgundy-900 text-white flex items-center justify-center shadow-md shrink-0 transition-transform active:scale-90"
             >
               {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
             </button>
 
             <div className="flex flex-col min-w-0">
-              <span className="text-xs font-black text-emerald-900 dark:text-emerald-200 flex items-center gap-1">
-                <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="text-xs font-black text-burgundy-900 dark:text-burgundy-200 flex items-center gap-1">
+                <Volume2 className="w-3.5 h-3.5 text-burgundy-700" />
                 <span>تم تسجيل التلاوة بنجاح ✨</span>
               </span>
-              <span className="text-[10px] text-emerald-700/80 dark:text-emerald-400 font-mono font-bold">
+              <span className="text-[10px] text-burgundy-800/80 dark:text-burgundy-400 font-mono font-bold">
                 {isPlaying ? formatSeconds(playbackTime) : "0:00"} / {formatSeconds(duration)}
               </span>
             </div>

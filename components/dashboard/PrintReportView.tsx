@@ -100,10 +100,10 @@ export function PrintReportView({ reportItems, periodLabel }: PrintReportViewPro
               <td className="p-2 border border-slate-300 text-center font-bold">{index + 1}</td>
               <td className="p-2 border border-slate-300 font-bold text-slate-900">{item.student.full_name}</td>
               <td className="p-2 border border-slate-300 text-center">{item.student.academic_grade || "غير محدد"}</td>
-              <td className="p-2 border border-slate-300 text-center font-bold text-emerald-950 dir-ltr">
+              <td className="p-2 border border-slate-300 text-center font-bold text-burgundy-950 dir-ltr">
                 {item.attendanceText}
               </td>
-              <td className="p-2 border border-slate-300 text-center font-extrabold text-emerald-900">
+              <td className="p-2 border border-slate-300 text-center font-extrabold text-burgundy-900">
                 {item.pagesCount > 0 ? `${item.pagesCount} صفحة` : "0 صفحة"}
               </td>
               <td className="p-2 border border-slate-300 text-center font-mono dir-ltr">

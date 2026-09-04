@@ -180,7 +180,7 @@ export function StudentList({
   return (
     <div className="space-y-6">
       {notification && (
-        <div className="p-3 bg-teal-800 text-white font-bold text-xs rounded-xl shadow-lg animate-in slide-in-from-top duration-300 flex items-center justify-center gap-2">
+        <div className="p-3 bg-burgundy-900 text-white font-bold text-xs rounded-xl shadow-lg animate-in slide-in-from-top duration-300 flex items-center justify-center gap-2">
           <span>{notification}</span>
         </div>
       )}
@@ -190,7 +190,7 @@ export function StudentList({
         <div
           className={`p-4 rounded-xl text-sm font-semibold flex items-center justify-between transition-all ${
             alertMessage.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+              ? "bg-burgundy-50 text-burgundy-900 border border-burgundy-200"
               : "bg-rose-50 text-rose-800 border border-rose-200"
           }`}
         >
@@ -239,10 +239,10 @@ export function StudentList({
               lightHaptic();
               setIsQuickAttendanceOpen(true);
             }}
-            className="h-9 px-2 sm:px-3 gap-1.5 shadow-sm border-teal-200 dark:border-teal-900 text-teal-800 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-xl text-xs font-bold justify-center"
+            className="h-9 px-2 sm:px-3 gap-1.5 shadow-sm border-burgundy-200 dark:border-burgundy-900 text-burgundy-900 dark:text-burgundy-300 hover:bg-burgundy-50 dark:hover:bg-burgundy-950/40 rounded-xl text-xs font-bold justify-center"
             title="تحضير جميع طلاب الحلقة اليوم"
           >
-            <CalendarCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
+            <CalendarCheck className="w-3.5 h-3.5 text-burgundy-700 dark:text-burgundy-400 shrink-0" />
             <span className="truncate">تحضير الحلقة</span>
           </Button>
 
@@ -253,7 +253,7 @@ export function StudentList({
               lightHaptic();
               handleOpenAdd();
             }}
-            className="h-9 px-2 sm:px-3 gap-1.5 shadow-sm bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold justify-center"
+            className="h-9 px-2 sm:px-3 gap-1.5 shadow-sm bg-burgundy-800 hover:bg-burgundy-900 text-white rounded-xl text-xs font-bold justify-center"
             title="إضافة طالب جديد إلى كشف الحلقة"
           >
             <UserPlus className="w-3.5 h-3.5 shrink-0" />
@@ -294,7 +294,7 @@ export function StudentList({
       ) : (
         /* Empty State */
         <div className="border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl p-12 text-center bg-white dark:bg-slate-900 shadow-sm space-y-4">
-          <div className="w-16 h-16 rounded-full bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300 flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 rounded-full bg-burgundy-50 dark:bg-burgundy-950 text-burgundy-800 dark:text-burgundy-300 flex items-center justify-center mx-auto">
             <Users className="w-8 h-8" />
           </div>
           <div>

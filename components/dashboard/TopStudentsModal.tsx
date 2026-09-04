@@ -305,7 +305,7 @@ export function TopStudentsModal({
                         {rankInfo.icon}
                       </div>
 
-                      <div className="w-9 h-9 rounded-2xl bg-white dark:bg-slate-800 text-teal-800 dark:text-teal-200 flex items-center justify-center font-black text-xs shrink-0 overflow-hidden border border-slate-200 dark:border-slate-700 shadow-inner">
+                      <div className="w-9 h-9 rounded-2xl bg-white dark:bg-slate-800 text-burgundy-900 dark:text-burgundy-200 flex items-center justify-center font-black text-xs shrink-0 overflow-hidden border border-slate-200 dark:border-slate-700 shadow-inner">
                         {item.student.avatar_url ? (
                           <img
                             src={item.student.avatar_url}
@@ -334,7 +334,7 @@ export function TopStudentsModal({
                   </div>
 
                   <div className="text-left shrink-0">
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 text-xs sm:text-sm font-black border border-emerald-300 dark:border-emerald-800">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 text-xs sm:text-sm font-black border border-amber-300 dark:border-amber-800">
                       📖 {item.totalPages} صفحة
                     </span>
                   </div>
@@ -354,9 +354,9 @@ export function TopStudentsModal({
           <button
             type="button"
             onClick={handlePrint}
-            className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-md flex items-center justify-center gap-2 text-base active:scale-98 transition-all"
+            className="w-full py-3.5 bg-burgundy-800 hover:bg-burgundy-900 border border-islamicGold-400/50 text-white font-bold rounded-2xl shadow-md flex items-center justify-center gap-2 text-base active:scale-98 transition-all"
           >
-            <Printer className="w-5 h-5" />
+            <Printer className="w-5 h-5 text-islamicGold-300" />
             <span>طباعة لوحة الشرف 🖨️</span>
           </button>
         </div>
@@ -413,15 +413,15 @@ export function TopStudentsModal({
               🏆 لوحة الشرف والتميز ({getTimeframeLabel(timeframe, activeTab === "all")}) 🏆
             </span>
           </div>
-          <h1 className="text-2xl font-black text-emerald-950">
+          <h1 className="text-2xl font-black text-burgundy-950">
             {getPrintTitle(timeframe, activeTab === "all")}
           </h1>
           <p className="text-xs font-bold text-slate-600 mt-1">
             الطلاب الأوائل الأكثر إنجازاً في التسميع والحفظ —{" "}
-            <span className="text-emerald-900 font-black">
+            <span className="text-burgundy-900 font-black">
               {getTimeframeLabel(timeframe, activeTab === "all")}
             </span>{" "}
-            — <span className="text-emerald-800 font-extrabold">{currentDateFormatted}</span>
+            — <span className="text-burgundy-800 font-extrabold">{currentDateFormatted}</span>
           </p>
         </div>
 
@@ -450,7 +450,7 @@ export function TopStudentsModal({
                     <td className="p-2.5 border border-slate-300 text-center font-bold text-slate-700">
                       {item.student.academic_grade || "غير محدد"}
                     </td>
-                    <td className="p-2.5 border border-slate-300 text-center font-black text-emerald-900 text-sm">
+                    <td className="p-2.5 border border-slate-300 text-center font-black text-burgundy-900 text-sm">
                       📖 {item.totalPages} صفحة
                     </td>
                   </tr>

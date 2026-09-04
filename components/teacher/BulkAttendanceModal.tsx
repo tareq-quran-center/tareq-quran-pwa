@@ -105,7 +105,7 @@ export function BulkAttendanceModal({
   };
 
   const statuses: Array<{ value: AttendanceStatusEnum; label: string; activeClass: string }> = [
-    { value: "حاضر", label: "حاضر", activeClass: "bg-emerald-700 text-white" },
+    { value: "حاضر", label: "حاضر", activeClass: "bg-burgundy-800 text-white" },
     { value: "غائب", label: "غائب", activeClass: "bg-rose-700 text-white" },
     { value: "مستأذن", label: "مستأذن", activeClass: "bg-amber-700 text-white" },
     { value: "متأخر", label: "متأخر", activeClass: "bg-orange-700 text-white" },
@@ -116,7 +116,7 @@ export function BulkAttendanceModal({
       <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 shrink-0">
-          <div className="flex items-center gap-2 text-teal-800 dark:text-teal-300 font-bold text-lg">
+          <div className="flex items-center gap-2 text-burgundy-900 dark:text-burgundy-300 font-bold text-lg">
             <UserCheck className="w-5 h-5" />
             <span>تسجيل الحضور الجماعي للحلقة</span>
           </div>
@@ -135,7 +135,7 @@ export function BulkAttendanceModal({
         {/* Date and Bulk Set Actions */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50 dark:bg-slate-850 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-teal-600" />
+            <Calendar className="w-4 h-4 text-burgundy-700" />
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300">التاريخ:</span>
             <Input
               type="date"
@@ -149,7 +149,7 @@ export function BulkAttendanceModal({
             <span className="text-xs text-slate-500 ml-1">تحديد الكل:</span>
             <button
               onClick={() => handleSetAll("حاضر")}
-              className="px-2 py-1 text-xs rounded bg-emerald-100 text-emerald-800 hover:bg-emerald-200 font-bold"
+              className="px-2 py-1 text-xs rounded bg-burgundy-100 text-burgundy-900 hover:bg-burgundy-200 font-bold"
             >
               الكل حاضر
             </button>

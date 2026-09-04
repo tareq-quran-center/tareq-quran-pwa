@@ -35,14 +35,14 @@ export function formatPageCount(count?: number | null): string {
 }
 
 export const GRADE_LABELS: Record<EvaluationGradeEnum, { label: string; color: string }> = {
-  ممتاز: { label: "ممتاز", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
-  جيد_جدا: { label: "جيد جداً", color: "text-teal-700 bg-teal-50 border-teal-200" },
-  جيد: { label: "جيد", color: "text-amber-700 bg-amber-50 border-amber-200" },
+  ممتاز: { label: "ممتاز", color: "text-burgundy-900 bg-burgundy-50 border-burgundy-300 dark:bg-burgundy-950/60 dark:text-islamicGold-300 dark:border-burgundy-800" },
+  جيد_جدا: { label: "جيد جداً", color: "text-amber-800 bg-amber-50 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800" },
+  جيد: { label: "جيد", color: "text-orange-800 bg-orange-50 border-orange-300 dark:bg-orange-950/60 dark:text-orange-300 dark:border-orange-800" },
   يحتاج_تحسين: { label: "يحتاج تحسين", color: "text-rose-700 bg-rose-50 border-rose-200" },
 };
 
 export const ATTENDANCE_LABELS: Record<AttendanceStatusEnum, { label: string; color: string }> = {
-  حاضر: { label: "حاضر", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
+  حاضر: { label: "حاضر", color: "text-burgundy-900 bg-burgundy-50 border-burgundy-300 dark:bg-burgundy-950/60 dark:text-islamicGold-300 dark:border-burgundy-800" },
   غائب: { label: "غائب", color: "text-rose-700 bg-rose-50 border-rose-200" },
   مستأذن: { label: "مستأذن", color: "text-amber-700 bg-amber-50 border-amber-200" },
   متأخر: { label: "متأخر", color: "text-orange-700 bg-orange-50 border-orange-200" },
@@ -50,9 +50,9 @@ export const ATTENDANCE_LABELS: Record<AttendanceStatusEnum, { label: string; co
 };
 
 export const LOG_TYPE_LABELS: Record<LogTypeEnum, { label: string; color: string }> = {
-  جديد: { label: "حفظ جديد", color: "text-teal-800 bg-teal-100" },
-  مراجعة_صغرى: { label: "مراجعة صغرى", color: "text-blue-800 bg-blue-100" },
-  مراجعة_كبرى: { label: "مراجعة كبرى", color: "text-purple-800 bg-purple-100" },
+  جديد: { label: "حفظ جديد", color: "text-burgundy-900 bg-burgundy-100 dark:bg-burgundy-950/80 dark:text-islamicGold-300" },
+  مراجعة_صغرى: { label: "مراجعة صغرى", color: "text-blue-800 bg-blue-100 dark:bg-blue-950/80 dark:text-blue-300" },
+  مراجعة_كبرى: { label: "مراجعة كبرى", color: "text-purple-800 bg-purple-100 dark:bg-purple-950/80 dark:text-purple-300" },
 };
 
 export const QURAN_SURAHS: Array<{ number: number; name: string; ayahs: number }> = [

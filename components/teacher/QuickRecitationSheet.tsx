@@ -312,15 +312,15 @@ export function QuickRecitationSheet({
         <div className="sm:hidden w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-2.5 mb-1 shrink-0" />
 
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-950/40 dark:to-emerald-950/40 shrink-0">
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-burgundy-50 to-amber-50/40 dark:from-burgundy-950/40 dark:to-slate-900 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-black shadow-md shadow-teal-600/20 shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-burgundy-800 text-islamicGold-300 flex items-center justify-center font-black shadow-md shadow-burgundy-900/20 border border-islamicGold-500/30 shrink-0">
               <Zap className="w-5 h-5 fill-current" />
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-1.5">
                 <span>تسميع سريع:</span>
-                <span className="text-teal-700 dark:text-teal-400">{studentName}</span>
+                <span className="text-burgundy-800 dark:text-burgundy-300">{studentName}</span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 📅 {todayFormatted}
@@ -368,8 +368,8 @@ export function QuickRecitationSheet({
                     onClick={() => handleTypeSelect(t.id)}
                     className={`min-h-[42px] px-2.5 py-2 rounded-xl text-xs font-black border transition-all ${
                       isSelected
-                        ? "bg-teal-600 text-white border-teal-600 shadow-md shadow-teal-600/20 scale-[1.01]"
-                        : "bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-teal-400"
+                        ? "bg-burgundy-800 text-white border-burgundy-800 shadow-md shadow-burgundy-900/20 scale-[1.01] ring-1 ring-islamicGold-500/40"
+                        : "bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-burgundy-400"
                     }`}
                   >
                     {t.label}
@@ -383,7 +383,7 @@ export function QuickRecitationSheet({
           <div className="space-y-2.5 bg-slate-50/80 dark:bg-slate-800/40 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800">
             {/* Primary Surah */}
             <div className="space-y-1">
-              <Label htmlFor="quick_surah_start" className="text-xs font-black text-teal-900 dark:text-teal-300">
+              <Label htmlFor="quick_surah_start" className="text-xs font-black text-burgundy-950 dark:text-burgundy-200">
                 {isCrossSurah ? "سورة البداية *" : "السورة الكريمة *"}
               </Label>
               <div className="relative">
@@ -391,7 +391,7 @@ export function QuickRecitationSheet({
                   id="quick_surah_start"
                   value={surahStart}
                   onChange={(e) => handlePrimarySurahChange(e.target.value)}
-                  className="w-full h-10 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none transition-all"
+                  className="w-full h-10 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-burgundy-600 appearance-none transition-all"
                 >
                   {QURAN_SURAHS.map((s) => (
                     <option key={s.id} value={s.name}>
@@ -408,7 +408,7 @@ export function QuickRecitationSheet({
             {/* End Surah (if Cross-Surah is active) */}
             {isCrossSurah && (
               <div className="space-y-1 animate-in fade-in duration-200">
-                <Label htmlFor="quick_surah_end" className="text-xs font-black text-teal-900 dark:text-teal-300">
+                <Label htmlFor="quick_surah_end" className="text-xs font-black text-burgundy-950 dark:text-burgundy-200">
                   سورة النهاية *
                 </Label>
                 <div className="relative">
@@ -416,7 +416,7 @@ export function QuickRecitationSheet({
                     id="quick_surah_end"
                     value={surahEnd}
                     onChange={(e) => handleEndSurahChange(e.target.value)}
-                    className="w-full h-10 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none transition-all"
+                    className="w-full h-10 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-burgundy-600 appearance-none transition-all"
                   >
                     {QURAN_SURAHS.map((s) => (
                       <option key={s.id} value={s.name}>
@@ -477,7 +477,7 @@ export function QuickRecitationSheet({
                     setAyaEnd(startSurahObj.numberOfAyahs);
                   }
                 }}
-                className="flex items-center gap-1.5 text-xs font-bold text-teal-700 dark:text-teal-400 hover:underline"
+                className="flex items-center gap-1.5 text-xs font-bold text-burgundy-800 dark:text-burgundy-300 hover:underline"
               >
                 <ArrowRightLeft className="w-3.5 h-3.5" />
                 <span>{isCrossSurah ? "إلغاء التسميع الممتد (نفس السورة)" : "+ تسميع ممتد عبر أكثر من سورة (Cross-Surah)"}</span>
@@ -486,10 +486,10 @@ export function QuickRecitationSheet({
           </div>
 
           {/* 3. Live Smart Recitation Summary Card */}
-          <div className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/30 p-3 rounded-2xl border border-teal-200 dark:border-teal-900/60 flex items-center justify-between gap-2 flex-wrap">
+          <div className="bg-gradient-to-r from-burgundy-50 to-amber-50/50 dark:from-burgundy-950/40 dark:to-slate-900 p-3 rounded-2xl border border-burgundy-200/80 dark:border-burgundy-900/60 flex items-center justify-between gap-2 flex-wrap">
             <div className="space-y-0.5 text-xs font-bold text-slate-700 dark:text-slate-200">
               <div className="flex items-center gap-1.5">
-                <span className="text-teal-800 dark:text-teal-300 font-black">📖 السورة:</span>
+                <span className="text-burgundy-900 dark:text-burgundy-200 font-black">📖 السورة:</span>
                 <span>{isCrossSurah ? `${surahStart} ➔ ${surahEnd}` : surahStart}</span>
               </div>
               <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
@@ -500,8 +500,8 @@ export function QuickRecitationSheet({
             </div>
 
             <div className="text-left">
-              <span className="text-[10px] text-teal-700 dark:text-teal-400 block font-bold">الصفحات المكافئة:</span>
-              <span className="text-base font-black font-mono text-teal-900 dark:text-teal-200 bg-white/80 dark:bg-slate-900/80 px-2.5 py-0.5 rounded-lg border border-teal-200/80 dark:border-teal-800 shadow-sm inline-block">
+              <span className="text-[10px] text-burgundy-800 dark:text-burgundy-300 block font-bold">الصفحات المكافئة:</span>
+              <span className="text-base font-black font-mono text-burgundy-950 dark:text-islamicGold-300 bg-white/80 dark:bg-slate-900/80 px-2.5 py-0.5 rounded-lg border border-burgundy-200/80 dark:border-burgundy-800 shadow-sm inline-block">
                 {calculatedPages} صفحة
               </span>
             </div>
@@ -515,8 +515,8 @@ export function QuickRecitationSheet({
             <div className="grid grid-cols-4 gap-1.5">
               {(
                 [
-                  { id: "ممتاز", label: "ممتاز ⭐", color: "from-emerald-500 to-teal-600 text-white" },
-                  { id: "جيد_جدا", label: "جيد جداً 👍", color: "from-teal-500 to-cyan-600 text-white" },
+                  { id: "ممتاز", label: "ممتاز ⭐", color: "from-burgundy-700 to-burgundy-900 text-white border border-islamicGold-500/40" },
+                  { id: "جيد_جدا", label: "جيد جداً 👍", color: "from-amber-600 to-amber-700 text-white" },
                   { id: "جيد", label: "جيد ✨", color: "from-amber-500 to-amber-600 text-white" },
                   { id: "يحتاج_تحسين", label: "يحتاج تحسين ⚠️", color: "from-rose-500 to-rose-600 text-white" },
                 ] as const
@@ -547,7 +547,7 @@ export function QuickRecitationSheet({
             type="button"
             onClick={handleSubmit}
             disabled={isLoading}
-            className="w-full min-h-[50px] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60 text-white font-black rounded-2xl shadow-lg shadow-teal-700/20 active:scale-[0.98] transition-all text-base gap-2"
+            className="w-full min-h-[50px] bg-gradient-to-r from-burgundy-800 to-burgundy-900 hover:from-burgundy-900 hover:to-burgundy-950 disabled:opacity-60 text-white font-black rounded-2xl shadow-lg shadow-burgundy-950/20 active:scale-[0.98] transition-all text-base gap-2 border border-islamicGold-500/40"
           >
             {isLoading ? (
               <>

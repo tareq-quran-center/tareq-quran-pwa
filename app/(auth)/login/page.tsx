@@ -143,8 +143,8 @@ export default function LoginPage() {
           )}
 
           {successMessage && (
-            <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
+            <div className="mb-4 p-3 rounded-lg bg-burgundy-50 border border-burgundy-200 text-burgundy-900 text-sm flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 shrink-0 text-burgundy-700" />
               <span>{successMessage}</span>
             </div>
           )}

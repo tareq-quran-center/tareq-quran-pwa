@@ -147,10 +147,10 @@ export function ShareAchievementModal({
         {/* Scrollable Content */}
         <div className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
           {/* Visual Digital Certificate Card */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-950 text-white p-5 shadow-xl border border-emerald-700/50">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-burgundy-950 via-burgundy-900 to-slate-950 text-white p-5 shadow-xl border border-islamicGold-500/40">
             {/* Background Glow Overlay */}
             <div className="absolute -top-16 -left-16 w-40 h-40 bg-amber-400/20 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-16 -right-16 w-40 h-40 bg-emerald-400/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-16 -right-16 w-40 h-40 bg-islamicGold-400/20 rounded-full blur-2xl pointer-events-none" />
 
             <div className="relative z-10 space-y-3">
               <div className="flex items-center justify-between">
@@ -158,7 +158,7 @@ export function ShareAchievementModal({
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>وسام تميز قرآني</span>
                 </span>
-                <span className="text-xs text-emerald-200 font-bold">
+                <span className="text-xs text-islamicGold-300 font-bold">
                   {unlockedBadgesCount} / {badges.length} أوسمة مكتسبة
                 </span>
               </div>
@@ -182,20 +182,20 @@ export function ShareAchievementModal({
 
                 <div className="space-y-0.5">
                   <h3 className="text-xl font-black tracking-tight">{student.full_name}</h3>
-                  <p className="text-xs text-emerald-200/90 font-bold">
+                  <p className="text-xs text-amber-200/90 font-bold">
                     {student.academic_grade || "طالب حلقة القرآن"}
                   </p>
                 </div>
               </div>
 
               {/* Stats Bar */}
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-emerald-700/50 text-xs">
-                <div className="bg-emerald-950/60 rounded-xl p-2 text-center border border-emerald-700/30">
-                  <p className="text-emerald-300/80 text-[10px] font-bold">مجموع التسميع</p>
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-burgundy-700/50 text-xs">
+                <div className="bg-burgundy-950/70 rounded-xl p-2 text-center border border-islamicGold-500/30">
+                  <p className="text-islamicGold-300/90 text-[10px] font-bold">مجموع التسميع</p>
                   <p className="text-base font-black text-white">{totalPages} صفحة</p>
                 </div>
-                <div className="bg-emerald-950/60 rounded-xl p-2 text-center border border-emerald-700/30">
-                  <p className="text-emerald-300/80 text-[10px] font-bold">نسبة الانضباط</p>
+                <div className="bg-burgundy-950/70 rounded-xl p-2 text-center border border-islamicGold-500/30">
+                  <p className="text-islamicGold-300/90 text-[10px] font-bold">نسبة الانضباط</p>
                   <p className="text-base font-black text-white">{monthlyAttendanceRate}%</p>
                 </div>
               </div>
@@ -204,10 +204,10 @@ export function ShareAchievementModal({
 
           {/* Recorded Recitation Highlight Player (if available) */}
           {recentAudioLog?.audio_url && (
-            <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300/80 dark:border-emerald-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+            <div className="p-3.5 rounded-2xl bg-burgundy-50 dark:bg-burgundy-950/50 border border-burgundy-200/80 dark:border-burgundy-900/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
               <div className="space-y-0.5">
-                <span className="text-xs font-black text-emerald-950 dark:text-emerald-200 flex items-center gap-1.5">
-                  <Volume2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span className="text-xs font-black text-burgundy-950 dark:text-burgundy-200 flex items-center gap-1.5">
+                  <Volume2 className="w-4 h-4 text-burgundy-700 shrink-0" />
                   <span>تلاوة مسجلة: سورة {recentAudioLog.surah_start}</span>
                 </span>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400">
@@ -221,7 +221,7 @@ export function ShareAchievementModal({
           {/* Badges Collection Grid */}
           <div className="space-y-2">
             <h4 className="text-xs font-black text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <ShieldCheck className="w-4 h-4 text-islamicGold-600 dark:text-islamicGold-400" />
               <span>الأوسمة والشارات الرقمية</span>
             </h4>
 
@@ -242,7 +242,7 @@ export function ShareAchievementModal({
                         {badge.title}
                       </p>
                       {badge.isUnlocked && (
-                        <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 shrink-0">
+                        <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-800 dark:text-islamicGold-300 border border-islamicGold-500/30 shrink-0">
                           مكتسب ✅
                         </span>
                       )}
@@ -266,9 +266,9 @@ export function ShareAchievementModal({
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2 shrink-0">
           <Button
             onClick={handleOpenWhatsApp}
-            className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-md gap-2 text-sm active:scale-98 transition-all"
+            className="w-full py-3.5 bg-burgundy-800 hover:bg-burgundy-900 text-white font-bold rounded-2xl shadow-md gap-2 text-sm active:scale-98 transition-all border border-islamicGold-500/40"
           >
-            <MessageCircle className="w-5 h-5 fill-current" />
+            <MessageCircle className="w-5 h-5 fill-current text-islamicGold-400" />
             <span>إرسال تهنئة لولي الأمر عبر واتساب 💬</span>
           </Button>
 
@@ -276,7 +276,7 @@ export function ShareAchievementModal({
             variant={copied ? "default" : "outline"}
             onClick={handleCopyMessage}
             className={`w-full py-3 rounded-2xl font-bold gap-2 text-xs transition-all ${
-              copied ? "bg-emerald-700 text-white" : "border-slate-200 dark:border-slate-700"
+              copied ? "bg-burgundy-800 text-white border-burgundy-800" : "border-slate-200 dark:border-slate-700"
             }`}
           >
             {copied ? (

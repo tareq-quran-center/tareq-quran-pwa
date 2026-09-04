@@ -318,7 +318,7 @@ export function LiveRecitationModal({
       {/* Top Header Controls */}
       <div className="sticky top-0 bg-slate-900/90 border-b border-slate-800 z-10 p-3 sm:p-4 shrink-0 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-2xl bg-emerald-600/30 border border-emerald-500/40 text-emerald-400 flex items-center justify-center font-bold">
+          <div className="w-9 h-9 rounded-2xl bg-burgundy-900/60 border border-islamicGold-500/40 text-islamicGold-400 flex items-center justify-center font-bold">
             <Mic className="w-5 h-5 animate-pulse" />
           </div>
           <div>
@@ -331,7 +331,7 @@ export function LiveRecitationModal({
 
         {/* Position Counter Badge */}
         {!isFinished && safeStudentsLength > 0 && (
-          <div className="px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 font-black text-xs sm:text-sm">
+          <div className="px-3 py-1 rounded-full bg-burgundy-950/90 border border-islamicGold-500/40 text-islamicGold-300 font-black text-xs sm:text-sm">
             طالب {currentIndex + 1} من {safeStudentsLength}
           </div>
         )}
@@ -347,7 +347,7 @@ export function LiveRecitationModal({
       {/* Top Progress Bar Indicator */}
       <div className="w-full bg-slate-800 h-1.5 shrink-0 overflow-hidden">
         <div
-          className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all duration-300 ease-out"
+          className="bg-gradient-to-r from-burgundy-600 via-islamicGold-500 to-islamicGold-400 h-full transition-all duration-300 ease-out"
           style={{ width: `${progressPercentage}%` }}
         />
       </div>
@@ -357,7 +357,7 @@ export function LiveRecitationModal({
         {isFinished || !currentStudent ? (
           /* Completion Screen */
           <div className="py-10 text-center space-y-6 animate-in zoom-in-95 duration-300">
-            <div className="w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-500/60 text-emerald-400 mx-auto flex items-center justify-center text-4xl shadow-xl">
+            <div className="w-20 h-20 rounded-full bg-burgundy-900/40 border-2 border-islamicGold-500/60 text-islamicGold-400 mx-auto flex items-center justify-center text-4xl shadow-xl">
               🎉
             </div>
 
@@ -372,7 +372,7 @@ export function LiveRecitationModal({
             <div className="grid grid-cols-2 gap-3 max-w-md mx-auto pt-2">
               <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-center">
                 <span className="text-xs text-slate-400 font-bold block mb-1">الطلاب المكتملون</span>
-                <span className="text-xl font-black text-emerald-400">
+                <span className="text-xl font-black text-islamicGold-400">
                   {sessionCompletedCount} / {safeStudentsLength}
                 </span>
               </div>
@@ -384,7 +384,7 @@ export function LiveRecitationModal({
 
             <Button
               onClick={handleFinishClose}
-              className="w-full max-w-md py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl shadow-lg text-base"
+              className="w-full max-w-md py-3.5 bg-burgundy-800 hover:bg-burgundy-900 text-white font-black rounded-2xl shadow-lg text-base border border-islamicGold-500/40"
             >
               إغلاق والعودة للرئيسية 🏠
             </Button>
@@ -404,7 +404,7 @@ export function LiveRecitationModal({
             <div className="p-4 rounded-3xl bg-slate-900 border border-slate-800 shadow-md space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-800/50 border border-emerald-600/40 text-emerald-200 flex items-center justify-center font-black text-lg shrink-0 shadow-inner">
+                  <div className="w-12 h-12 rounded-2xl bg-burgundy-900/60 border border-islamicGold-500/40 text-islamicGold-300 flex items-center justify-center font-black text-lg shrink-0 shadow-inner">
                     {currentStudent.full_name.charAt(0)}
                   </div>
                   <div>
@@ -437,7 +437,7 @@ export function LiveRecitationModal({
                   }}
                   className={`py-2.5 px-3 rounded-2xl text-xs font-black border transition-all ${
                     logType === "جديد"
-                      ? "bg-emerald-600 border-emerald-500 text-white shadow-md"
+                      ? "bg-burgundy-800 border-islamicGold-500/60 text-white shadow-md ring-1 ring-islamicGold-500/40"
                       : "bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-850"
                   }`}
                 >
@@ -451,7 +451,7 @@ export function LiveRecitationModal({
                   }}
                   className={`py-2.5 px-3 rounded-2xl text-xs font-black border transition-all ${
                     logType === "مراجعة_صغرى"
-                      ? "bg-teal-600 border-teal-500 text-white shadow-md"
+                      ? "bg-burgundy-900 border-burgundy-700 text-white shadow-md"
                       : "bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-850"
                   }`}
                 >
@@ -465,7 +465,7 @@ export function LiveRecitationModal({
                   }}
                   className={`py-2.5 px-3 rounded-2xl text-xs font-black border transition-all ${
                     logType === "مراجعة_كبرى"
-                      ? "bg-indigo-600 border-indigo-500 text-white shadow-md"
+                      ? "bg-burgundy-900 border-burgundy-700 text-white shadow-md"
                       : "bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-850"
                   }`}
                 >
@@ -478,7 +478,7 @@ export function LiveRecitationModal({
             <div className="space-y-1.5 p-4 rounded-3xl bg-slate-900 border border-slate-800">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-400">عدد الصفحات المنجزة 📄</label>
-                <span className="text-lg font-black text-emerald-400">{pageCount} صفحة</span>
+                <span className="text-lg font-black text-islamicGold-400">{pageCount} صفحة</span>
               </div>
 
               {/* +/- Stepper Controls */}
@@ -514,7 +514,7 @@ export function LiveRecitationModal({
                     }}
                     className={`flex-1 py-1 text-[11px] font-bold rounded-xl border transition-all ${
                       pageCount === preset
-                        ? "bg-emerald-950 border-emerald-600 text-emerald-300"
+                        ? "bg-burgundy-950 border-islamicGold-500/50 text-islamicGold-300"
                         : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
                     }`}
                   >
@@ -549,7 +549,7 @@ export function LiveRecitationModal({
                       const calculated = calculateRecitationPages(selectedName, targetEnd);
                       setPageCount(calculated);
                     }}
-                    className="w-full p-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-100"
+                    className="w-full p-2.5 rounded-2xl bg-slate-950 border border-slate-800 text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-burgundy-600 appearance-none"
                   >
                     {QURAN_SURAHS.map((s) => {
                       const norm = normalizeSurahName(s.name);
@@ -583,7 +583,7 @@ export function LiveRecitationModal({
                       const calculated = calculateRecitationPages(surahStart, selectedName);
                       setPageCount(calculated);
                     }}
-                    className="w-full p-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-100"
+                    className="w-full p-2.5 rounded-2xl bg-slate-950 border border-slate-800 text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-burgundy-600 appearance-none"
                   >
                     {QURAN_SURAHS.map((s) => {
                       const norm = normalizeSurahName(s.name);
@@ -606,13 +606,13 @@ export function LiveRecitationModal({
 
               {/* Informative Progress Banner when Surah is in-progress (partial) */}
               {!isSurahAlreadyMemorized && selectedSurahProgress && selectedSurahProgress.memorizedPages > 0 && (
-                <div className="p-3.5 rounded-2xl bg-teal-500/15 border border-teal-500/40 text-teal-200 text-xs font-bold flex items-start gap-2.5 shadow-sm animate-in fade-in duration-200">
+                <div className="p-3.5 rounded-2xl bg-burgundy-950/60 border border-islamicGold-500/30 text-amber-200 text-xs font-bold flex items-start gap-2.5 shadow-sm animate-in fade-in duration-200">
                   <span className="text-base shrink-0">⏳</span>
                   <div className="space-y-1 leading-relaxed">
                     <p>
-                      تم حفظ <strong className="text-teal-100 font-black">{selectedSurahProgress.memorizedPages} من {selectedSurahProgress.totalPages} صفحات</strong> من سورة {selectedSurahProgress.surahName} ({selectedSurahProgress.percentage}%).
+                      تم حفظ <strong className="text-islamicGold-300 font-black">{selectedSurahProgress.memorizedPages} من {selectedSurahProgress.totalPages} صفحات</strong> من سورة {selectedSurahProgress.surahName} ({selectedSurahProgress.percentage}%).
                     </p>
-                    <p className="text-[11px] text-teal-300/90 font-medium">
+                    <p className="text-[11px] text-amber-200/90 font-medium">
                       يمكنك مواصلة تسجيل (حفظ جديد) للصفحات المتبقية لإتمام حفظ السورة كاملة.
                     </p>
                   </div>
@@ -629,11 +629,11 @@ export function LiveRecitationModal({
                   onClick={() => setGrade("ممتاز")}
                   className={`py-3 px-2 rounded-2xl text-xs font-black border transition-all flex flex-col items-center gap-1 ${
                     grade === "ممتاز"
-                      ? "bg-emerald-600 border-emerald-400 text-white ring-2 ring-emerald-400/40 shadow-md"
+                      ? "bg-burgundy-800 border-islamicGold-500 text-white ring-2 ring-islamicGold-400/40 shadow-md"
                       : "bg-slate-900 border-slate-800 text-slate-400"
                   }`}
                 >
-                  <span className="text-base">🟢</span>
+                  <span className="text-base">⭐</span>
                   <span>ممتاز</span>
                 </button>
 
@@ -720,7 +720,7 @@ export function LiveRecitationModal({
               type="button"
               disabled={isSubmitting}
               onClick={handleSaveAndNext}
-              className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl shadow-lg gap-2 text-sm"
+              className="flex-1 py-3 bg-burgundy-800 hover:bg-burgundy-900 text-white font-black rounded-2xl shadow-lg gap-2 text-sm border border-islamicGold-500/30"
             >
               {isSubmitting ? (
                 <div className="flex items-center justify-center gap-2">

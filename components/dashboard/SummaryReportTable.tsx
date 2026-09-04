@@ -186,7 +186,7 @@ export function SummaryReportTable({ students, logs, attendance }: SummaryReport
         <CardHeader className="p-3.5 sm:p-6 pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between gap-2 sm:gap-4">
           <div>
             <CardTitle className="text-sm sm:text-lg font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5 sm:gap-2">
-              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 shrink-0" />
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-burgundy-700 shrink-0" />
               <span>تقرير متابعة طلاب الحلقة 📊</span>
             </CardTitle>
             <CardDescription className="text-[10px] sm:text-xs text-slate-500 mt-0.5">
@@ -198,9 +198,9 @@ export function SummaryReportTable({ students, logs, attendance }: SummaryReport
             onClick={handlePrint}
             variant="outline"
             size="sm"
-            className="gap-1.5 sm:gap-2 border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 font-bold rounded-xl shrink-0 text-xs sm:text-sm py-1.5 px-2.5 sm:py-2 sm:px-3"
+            className="gap-1.5 sm:gap-2 border-burgundy-300 dark:border-burgundy-800 text-burgundy-900 dark:text-burgundy-300 hover:bg-burgundy-50 dark:hover:bg-burgundy-950/50 font-black rounded-xl shrink-0 text-xs sm:text-sm py-1.5 px-2.5 sm:py-2 sm:px-3"
           >
-            <Printer className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <Printer className="w-4 h-4 text-burgundy-700 dark:text-burgundy-400 shrink-0" />
             <span className="hidden sm:inline">تصدير تقرير الإدارة (PDF / طباعة) 🖨️</span>
             <span className="sm:hidden">طباعة 🖨️</span>
           </Button>
@@ -212,7 +212,7 @@ export function SummaryReportTable({ students, logs, attendance }: SummaryReport
             {/* Custom Date Range Selector */}
             <div className="flex flex-wrap items-center gap-2 p-1.5 sm:p-2 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700">
               <div className="flex items-center gap-1 text-[11px] sm:text-xs font-black text-slate-700 dark:text-slate-200 px-1">
-                <Calendar className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <Calendar className="w-3.5 h-3.5 text-burgundy-700 shrink-0" />
                 <span>فترة مخصصة:</span>
               </div>
 
@@ -285,7 +285,7 @@ export function SummaryReportTable({ students, logs, attendance }: SummaryReport
                         <div className="flex items-center gap-1.5">
                           <Link
                             href={`/students/${item.student.id}`}
-                            className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline transition-colors break-words line-clamp-2 sm:line-clamp-none"
+                            className="hover:text-burgundy-800 dark:hover:text-burgundy-300 hover:underline transition-colors break-words line-clamp-2 sm:line-clamp-none"
                           >
                             {item.student.full_name}
                           </Link>
@@ -317,10 +317,10 @@ export function SummaryReportTable({ students, logs, attendance }: SummaryReport
                                 <button
                                   type="button"
                                   onClick={() => handleToggleAttendance(item.student.id)}
-                                  className="inline-flex items-center justify-center gap-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-sm transition-all cursor-pointer select-none"
+                                  className="inline-flex items-center justify-center gap-1 bg-burgundy-800 hover:bg-burgundy-900 active:scale-95 text-white font-bold text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-sm transition-all cursor-pointer select-none border border-islamicGold-500/40"
                                   title="حاضر - انقر للتبديل إلى غائب"
                                 >
-                                  <span>🟢 حاضر</span>
+                                  <span>✨ حاضر</span>
                                 </button>
                               );
                             }
@@ -361,9 +361,9 @@ export function SummaryReportTable({ students, logs, attendance }: SummaryReport
                           </span>
                         )}
                       </td>
-                      <td className="p-2 sm:p-3 text-center font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                      <td className="p-2 sm:p-3 text-center font-black whitespace-nowrap">
                         {item.pagesCount > 0 ? (
-                          <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[10px] sm:text-xs font-black">
+                          <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-burgundy-50 dark:bg-burgundy-950/60 text-burgundy-900 dark:text-burgundy-200 border border-burgundy-200/60 dark:border-burgundy-800/60 text-[10px] sm:text-xs font-black">
                             📖 {item.pagesCount} صفحة
                           </span>
                         ) : (

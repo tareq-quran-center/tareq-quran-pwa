@@ -33,14 +33,14 @@ export function BottomNav() {
               href={item.href}
               className={`flex flex-col items-center justify-center flex-1 h-full py-1 px-2 rounded-xl transition-all duration-200 ${
                 isActive
-                  ? "text-emerald-700 dark:text-emerald-400 font-extrabold"
+                  ? "text-burgundy-900 dark:text-burgundy-300 font-black"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium"
               }`}
             >
               <div
                 className={`p-1.5 rounded-xl transition-all ${
                   isActive
-                    ? "bg-emerald-100/80 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 scale-105"
+                    ? "bg-burgundy-100/90 dark:bg-burgundy-950/80 text-burgundy-900 dark:text-burgundy-200 scale-105 border border-burgundy-200/60 dark:border-burgundy-800/60 shadow-xs"
                     : "bg-transparent"
                 }`}
               >

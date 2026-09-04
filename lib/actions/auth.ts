@@ -130,3 +130,53 @@ export async function logoutTeacher(): Promise<void> {
   revalidatePath("/", "layout");
   redirect("/login");
 }
+
+export async function getCurrentUserProfile(): Promise<{
+  user: any;
+  profile: {
+    id: string;
+    full_name: string;
+    phone: string | null;
+    role: "admin" | "teacher" | string;
+    is_active: boolean;
+  } | null;
+  isAdmin: boolean;
+}> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { user: null, profile: null, isAdmin: false };
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const role = (profile as any)?.role || "teacher";
+    const isActive = (profile as any)?.is_active ?? true;
+    const isAdmin = role === "admin" && isActive;
+
+    return {
+      user,
+      profile: profile
+        ? {
+            id: profile.id,
+            full_name: profile.full_name,
+            phone: profile.phone,
+            role,
+            is_active: isActive,
+          }
+        : null,
+      isAdmin,
+    };
+  } catch {
+    return { user: null, profile: null, isAdmin: false };
+  }
+}
+

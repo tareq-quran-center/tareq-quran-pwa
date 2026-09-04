@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, LogOut, WifiOff, RefreshCw } from "lucide-react";
+import { LayoutDashboard, Users, LogOut, WifiOff, RefreshCw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logoutTeacher } from "@/lib/actions/auth";
 import { useNetworkSync } from "@/lib/hooks/useNetworkSync";
@@ -16,6 +16,7 @@ export function Header() {
   const navItems = [
     { href: "/dashboard", label: "اللوحة الرئيسية", icon: LayoutDashboard },
     { href: "/students", label: "قائمة الطلاب", icon: Users },
+    { href: "/admin", label: "لوحة المدير", icon: ShieldCheck },
   ];
 
   return (
@@ -87,7 +88,7 @@ export function Header() {
           ) : (
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-burgundy-50 dark:bg-slate-800 border border-burgundy-100 dark:border-slate-700 text-xs font-bold text-burgundy-900 dark:text-burgundy-300">
               <span className="w-2 h-2 rounded-full bg-islamicGold-500 animate-pulse"></span>
-              <span>معلم الحلقة</span>
+              <span>{pathname?.startsWith("/admin") ? "مدير المركز 👑" : "معلم الحلقة 📖"}</span>
             </div>
           )}
 

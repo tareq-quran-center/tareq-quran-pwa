@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, Sparkles, UserCheck, Facebook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MosqueLogo } from "@/components/common/MosqueLogo";
+import { HomeTrackSearch } from "@/components/track/HomeTrackSearch";
 
 export default function HomePage() {
   return (
@@ -70,26 +71,21 @@ export default function HomePage() {
           المنصة الإلكترونية الرسمية لمتابعة حفظ وتسميع القرآن الكريم، وإدارة سجلات الحضور والتقييم اليومي لطلاب حلقات مركز طارق القرآني بكل يسر واحترافية.
         </p>
 
-        {/* Single Primary Action Button: دخول بوابة المعلمين */}
-        <div className="w-full max-w-md flex flex-col items-center gap-4">
+        {/* Actions Section */}
+        <div className="w-full max-w-md flex flex-col items-center gap-5">
+          {/* Quick Parent Tracking Box */}
+          <HomeTrackSearch />
+
+          {/* Teacher & Admin Login Button */}
           <Link href="/login" className="w-full">
             <Button
               size="lg"
               className="w-full h-14 text-base sm:text-lg font-black bg-gradient-to-r from-burgundy-900 via-burgundy-800 to-burgundy-900 hover:from-burgundy-800 hover:to-burgundy-700 text-white rounded-2xl shadow-xl shadow-burgundy-950/25 border border-islamicGold-400/50 gap-3 group transition-all duration-300 active:scale-[0.98]"
             >
               <UserCheck className="w-5 h-5 text-islamicGold-300 group-hover:scale-110 transition-transform" />
-              <span>دخول بوابة المعلمين</span>
+              <span>دخول بوابة المعلمين والإدارة</span>
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
             </Button>
-          </Link>
-
-          {/* Discreet Parent Quick Access */}
-          <Link
-            href="/parent"
-            className="text-xs sm:text-sm font-bold text-slate-500 hover:text-burgundy-800 dark:text-slate-400 dark:hover:text-burgundy-300 transition-colors py-1 flex items-center gap-1.5"
-          >
-            <span>هل أنت ولي أمر؟ اضغط هنا لمتابعة إنجاز ابنك</span>
-            <span className="text-islamicGold-600 dark:text-islamicGold-400">←</span>
           </Link>
         </div>
       </main>

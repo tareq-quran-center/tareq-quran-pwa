@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users } from "lucide-react";
+import { LayoutDashboard, Users, ShieldCheck } from "lucide-react";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -17,6 +17,11 @@ export function BottomNav() {
       href: "/students",
       label: "الطلاب",
       icon: Users,
+    },
+    {
+      href: "/admin",
+      label: "المدير",
+      icon: ShieldCheck,
     },
   ];
 

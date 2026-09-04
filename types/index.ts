@@ -86,3 +86,108 @@ export interface ParentProgressPayload {
     notes: string | null;
   }>;
 }
+
+export interface HalaqaWithDetails {
+  id: string;
+  name: string;
+  created_by: string | null;
+  created_at: string;
+  teacher_id: string | null;
+  teacher_name: string | null;
+  teacher_phone: string | null;
+  students_count: number;
+  attendance_rate: number;
+  total_pages: number;
+}
+
+export interface TeacherWithHalaqat {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  role: "admin" | "teacher" | string;
+  is_active: boolean;
+  created_at: string;
+  halaqat: Array<{ id: string; name: string }>;
+  students_count: number;
+}
+
+export interface AdminCenterOverview {
+  totalStudents: number;
+  totalHalaqat: number;
+  totalTeachers: number;
+  attendanceRate: number;
+  totalPagesMemorized: number;
+  totalRecitations: number;
+  todayAttendanceCount: number;
+}
+
+export interface StudentTrackData {
+  success: boolean;
+  error?: string;
+  student?: {
+    id: string;
+    full_name: string;
+    parent_token: string;
+    parent_phone?: string | null;
+    academic_grade?: string | null;
+    school_name?: string | null;
+    join_date?: string | null;
+    avatar_url?: string | null;
+  };
+  halaqa?: {
+    id: string;
+    name: string;
+  } | null;
+  teacher?: {
+    id: string;
+    full_name: string;
+    phone?: string | null;
+  } | null;
+  attendanceRate: number;
+  totalDays: number;
+  presentDays: number;
+  latestHifz?: {
+    surah_start: string;
+    aya_start: number;
+    surah_end: string;
+    aya_end: number;
+    grade: string;
+    date: string;
+    page_count?: number | null;
+  } | null;
+  latestRevision?: {
+    surah_start: string;
+    aya_start: number;
+    surah_end: string;
+    aya_end: number;
+    grade: string;
+    date: string;
+    page_count?: number | null;
+  } | null;
+  todayEvaluation?: {
+    log_type: string;
+    grade: string;
+    notes?: string | null;
+    date: string;
+  } | null;
+  teacherNotes?: string | null;
+  recentLogs?: Array<{
+    id: string;
+    log_type: string;
+    surah_start: string;
+    aya_start: number;
+    surah_end: string;
+    aya_end: number;
+    grade: string;
+    notes?: string | null;
+    date: string;
+    page_count?: number | null;
+  }>;
+  recentAttendance?: Array<{
+    id: string;
+    date: string;
+    status: string;
+    notes?: string | null;
+  }>;
+}
+

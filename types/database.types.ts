@@ -263,18 +263,24 @@ export type Database = {
           id: string;
           full_name: string;
           phone: string | null;
+          role?: "admin" | "teacher" | string | null;
+          is_active?: boolean | null;
           created_at: string;
         };
         Insert: {
           id: string;
           full_name: string;
           phone?: string | null;
+          role?: "admin" | "teacher" | string | null;
+          is_active?: boolean | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           full_name?: string;
           phone?: string | null;
+          role?: "admin" | "teacher" | string | null;
+          is_active?: boolean | null;
           created_at?: string;
         };
         Relationships: [

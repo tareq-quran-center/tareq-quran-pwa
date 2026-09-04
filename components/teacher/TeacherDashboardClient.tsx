@@ -22,6 +22,16 @@ export function TeacherDashboardClient() {
               متابعة دقيقة للحفظ والمراجعة والحضور اليومي • مركز طارق القرآني
             </p>
           </div>
+
+          <div className="flex items-center gap-2">
+            <a
+              href="/admin"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-islamicGold-400/50 text-white text-xs font-bold transition-all shadow-xs backdrop-blur-xs"
+            >
+              <span>لوحة المدير</span>
+              <span className="text-islamicGold-300">👑</span>
+            </a>
+          </div>
         </div>
       </div>
     </>

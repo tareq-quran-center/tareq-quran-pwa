@@ -31,10 +31,9 @@ export async function getStudents(): Promise<ActionResult<StudentRow[]>> {
     }
 
     // 1. Query directly from public.students table under RLS (active students only)
-    const { data: students, error: studentsError } = await supabase
+    const { data: rawStudents, error: studentsError } = await supabase
       .from("students")
       .select("*")
-      .is("deleted_at", null)
       .order("full_name", { ascending: true });
 
     if (studentsError) {
@@ -43,6 +42,8 @@ export async function getStudents(): Promise<ActionResult<StudentRow[]>> {
         error: "فشل جلب قائمة الطلاب: " + studentsError.message,
       };
     }
+
+    const students = (rawStudents || []).filter((s) => !(s as any).deleted_at);
 
     // 2. Fetch active memorization logs summary to compute all-time total pages & recitations
     const studentIds = (students || []).map((s) => s.id);
@@ -767,7 +768,6 @@ export async function getTeacherReportData(options?: TeacherReportDataOptions): 
     const studentsPromise = supabase
       .from("students")
       .select("*")
-      .is("deleted_at", null)
       .order("full_name", { ascending: true });
 
     // 2. Fetch Time-scoped Attendance Records (under teacher RLS)
@@ -806,7 +806,7 @@ export async function getTeacherReportData(options?: TeacherReportDataOptions): 
       logsPromise,
     ]);
 
-    const rawStudents = studentsRes.data || [];
+    const rawStudents = (studentsRes.data || []).filter((s) => !(s as any).deleted_at);
     const studentIds = rawStudents.map((s) => s.id);
     const logs = logsRes.data || [];
 

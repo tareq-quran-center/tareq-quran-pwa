@@ -28,63 +28,40 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
 
     if (uuidRegex.test(cleanCode)) {
       // Lookup by parent_token or student id
-      let tokenRes = await supabase
+      const { data: byToken } = await supabase
         .from("students")
         .select("*")
         .eq("parent_token", cleanCode)
-        .is("deleted_at", null)
         .maybeSingle();
 
-      if (tokenRes.error) {
-        tokenRes = await supabase
-          .from("students")
-          .select("*")
-          .eq("parent_token", cleanCode)
-          .maybeSingle();
-      }
-
-      if (tokenRes.data) {
-        student = tokenRes.data;
+      if (byToken) {
+        student = byToken;
       } else {
-        let idRes = await supabase
+        const { data: byId } = await supabase
           .from("students")
           .select("*")
           .eq("id", cleanCode)
-          .is("deleted_at", null)
           .maybeSingle();
-
-        if (idRes.error) {
-          idRes = await supabase
-            .from("students")
-            .select("*")
-            .eq("id", cleanCode)
-            .maybeSingle();
-        }
-        student = idRes.data;
+        student = byId;
       }
     } else {
       // Lookup by phone number
       const phoneValidation = validateAndFormatJordanianPhone(cleanCode);
       if (phoneValidation.isValid) {
-        let phoneRes = await supabase
+        const { data: byPhone } = await supabase
           .from("students")
           .select("*")
           .in("parent_phone", phoneValidation.variations)
-          .is("deleted_at", null)
           .limit(1);
 
-        if (phoneRes.error) {
-          phoneRes = await supabase
-            .from("students")
-            .select("*")
-            .in("parent_phone", phoneValidation.variations)
-            .limit(1);
-        }
-
-        if (phoneRes.data && phoneRes.data.length > 0) {
-          student = phoneRes.data[0];
+        if (byPhone && byPhone.length > 0) {
+          student = byPhone[0];
         }
       }
+    }
+
+    if (student && (student as any).deleted_at) {
+      student = null;
     }
 
     if (!student) {

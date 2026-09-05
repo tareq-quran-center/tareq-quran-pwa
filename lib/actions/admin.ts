@@ -74,44 +74,24 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
       .from("group_members")
       .select("*");
 
-    // 4. Fetch all active students across center (with graceful fallback if deleted_at column is missing)
-    let safeStudents: any[] = [];
-    const studentsRes = await supabase
+    // 4. Fetch all students across center (filter deleted_at in JS if present)
+    const { data: rawStudents, error: studentsError } = await supabase
       .from("students")
       .select("*")
-      .is("deleted_at", null)
       .order("full_name", { ascending: true });
 
-    if (studentsRes.error) {
-      // Fallback: query without deleted_at
-      const fallbackStudents = await supabase
-        .from("students")
-        .select("*")
-        .order("full_name", { ascending: true });
-
-      if (fallbackStudents.error) {
-        return { success: false, error: "فشل جلب الطلاب: " + fallbackStudents.error.message };
-      }
-      safeStudents = fallbackStudents.data || [];
-    } else {
-      safeStudents = studentsRes.data || [];
+    if (studentsError) {
+      return { success: false, error: "فشل جلب الطلاب: " + studentsError.message };
     }
 
-    // 5. Fetch all memorization logs summary (with graceful fallback if deleted_at column is missing)
-    let safeLogs: any[] = [];
-    const logsRes = await supabase
+    const safeStudents = (rawStudents || []).filter((s) => !(s as any).deleted_at);
+
+    // 5. Fetch all memorization logs summary (filter deleted_at in JS if present)
+    const { data: rawLogs } = await supabase
       .from("memorization_logs")
-      .select("id, student_id, teacher_id, page_count, grade, log_type, created_at")
-      .is("deleted_at", null);
+      .select("id, student_id, teacher_id, page_count, grade, log_type, created_at");
 
-    if (logsRes.error) {
-      const fallbackLogs = await supabase
-        .from("memorization_logs")
-        .select("id, student_id, teacher_id, page_count, grade, log_type, created_at");
-      safeLogs = fallbackLogs.data || [];
-    } else {
-      safeLogs = logsRes.data || [];
-    }
+    const safeLogs = (rawLogs || []).filter((l) => !(l as any).deleted_at);
 
     // 6. Fetch recent attendance records (last 30 days)
     const thirtyDaysAgo = new Date();

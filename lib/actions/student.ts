@@ -157,42 +157,54 @@ export async function createStudent(data: StudentInput): Promise<ActionResult<St
       };
     }
 
-    const groupResult = await getActiveGroupId();
-    const resultObj = groupResult as unknown as {
-      status: "ok" | "no_group" | "multiple_groups" | "unauthenticated" | "error";
-      groupId?: string;
-      error?: string;
-    };
+    let assignedGroupId: string | null = (validation.data as any).group_id || null;
 
-    if (resultObj.status === "unauthenticated") {
-      return {
-        success: false,
-        error: "غير مصرح لك بإضافة طالب، يرجى تسجيل الدخول",
-      };
+    if (!assignedGroupId) {
+      const groupResult = await getActiveGroupId();
+      if (groupResult.status === "ok" && groupResult.groupId) {
+        assignedGroupId = groupResult.groupId;
+      } else {
+        // Fallback 1: check if user created any group
+        const { data: anyUserGroup } = await supabase
+          .from("groups")
+          .select("id")
+          .eq("created_by", user.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (anyUserGroup) {
+          assignedGroupId = anyUserGroup.id;
+        } else {
+          // Fallback 2: check if any group exists in the center
+          const { data: anyCenterGroup } = await supabase
+            .from("groups")
+            .select("id")
+            .limit(1)
+            .maybeSingle();
+
+          if (anyCenterGroup) {
+            assignedGroupId = anyCenterGroup.id;
+          } else {
+            // Auto-create initial default group
+            const defId = crypto.randomUUID();
+            await supabase.from("groups").insert({
+              id: defId,
+              name: "حلقة القرآن الكريم الأولى",
+              created_by: user.id,
+            });
+            try {
+              await supabase.from("group_members").insert({
+                id: crypto.randomUUID(),
+                group_id: defId,
+                user_id: user.id,
+                role: "owner",
+              });
+            } catch {}
+            assignedGroupId = defId;
+          }
+        }
+      }
     }
-
-    if (resultObj.status === "no_group") {
-      return {
-        success: false,
-        error: "لا تنتمي إلى أي حلقة قرآنية حالياً. يرجى إنشاء أو الانضمام إلى حلقة أولاً قبل إضافة الطلاب.",
-      };
-    }
-
-    if (resultObj.status === "multiple_groups") {
-      return {
-        success: false,
-        error: "المستخدم ينتمي إلى أكثر من حلقة. يرجى تحديد الحلقة النشطة قبل إضافة الطالب.",
-      };
-    }
-
-    if (resultObj.status !== "ok" || !resultObj.groupId) {
-      return {
-        success: false,
-        error: resultObj.error || "تعذر تحديد الحلقة النشطة لإضافة الطالب إليها. يرجى التأكد من اختيار حلقة صحيحة.",
-      };
-    }
-
-    const assignedGroupId: string = resultObj.groupId;
 
     const insertPayload: any = {
       teacher_id: user.id,

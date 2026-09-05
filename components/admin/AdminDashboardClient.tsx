@@ -168,14 +168,14 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
           teacher_id: halaqaTeacherInput || undefined,
         });
         if (res.success && res.data) {
-          showToast("تم إنشاء الحلقة بنجاح");
+          showToast("تم إنشاء وتفعيل الحلقة بنجاح ✅");
           setHalaqat((prev) => [
             ...prev,
             {
               id: res.data.id,
               name: res.data.name,
               created_by: res.data.created_by,
-              created_at: res.data.created_at,
+              created_at: res.data.created_at || new Date().toISOString(),
               teacher_id: halaqaTeacherInput || null,
               teacher_name:
                 teachers.find((t) => t.id === halaqaTeacherInput)?.full_name || "غير معين",
@@ -185,6 +185,8 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
               total_pages: 0,
             },
           ]);
+          setHalaqaNameInput("");
+          setHalaqaTeacherInput("");
           setIsHalaqaModalOpen(false);
         } else {
           showToast(res.error || "فشل الإنشاء");

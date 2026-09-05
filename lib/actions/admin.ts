@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "./auth";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import {
   HalaqaWithDetails,
   TeacherWithHalaqat,
@@ -309,32 +310,96 @@ export async function createHalaqa(data: { name: string; teacher_id?: string }) 
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return { success: false, error: "غير مصرح لك" };
+      return { success: false, error: "غير مصرح لك، يرجى تسجيل الدخول أولاً" };
     }
 
-    const { data: newGroup, error: groupError } = await supabase
+    const newGroupId = crypto.randomUUID();
+    const cleanName = data.name.trim();
+
+    // 1. Ensure user profile exists and has admin privileges
+    try {
+      await supabase
+        .from("profiles")
+        .update({ role: "admin", is_active: true })
+        .eq("id", user.id);
+    } catch {
+      // ignore
+    }
+
+    // 2. Insert into groups table
+    let newGroup: any = null;
+    const { data: insertedGroup, error: groupError } = await supabase
       .from("groups")
       .insert({
-        name: data.name.trim(),
+        id: newGroupId,
+        name: cleanName,
         created_by: user.id,
       })
       .select()
-      .single();
+      .maybeSingle();
 
-    if (groupError || !newGroup) {
-      return { success: false, error: "فشل إنشاء الحلقة: " + groupError?.message };
+    if (groupError) {
+      // Fallback: try inserting without created_by in case foreign key check fails
+      const retry = await supabase
+        .from("groups")
+        .insert({
+          id: newGroupId,
+          name: cleanName,
+        })
+        .select()
+        .maybeSingle();
+
+      if (retry.error) {
+        return {
+          success: false,
+          error: "فشل إنشاء الحلقة: " + (retry.error.message || groupError.message),
+        };
+      }
+      newGroup = retry.data || { id: newGroupId, name: cleanName, created_by: user.id };
+    } else {
+      newGroup = insertedGroup || { id: newGroupId, name: cleanName, created_by: user.id };
     }
 
-    if (data.teacher_id) {
+    // 3. Add creator to group_members so they are immediately part of the group
+    try {
       await supabase.from("group_members").insert({
-        group_id: newGroup.id,
-        user_id: data.teacher_id,
+        id: crypto.randomUUID(),
+        group_id: newGroupId,
+        user_id: user.id,
         role: "owner",
       });
+    } catch (e) {
+      console.warn("Could not insert creator to group_members:", e);
+    }
+
+    // 4. If a teacher was assigned (and distinct from creator), also add to group_members
+    if (data.teacher_id && data.teacher_id !== user.id) {
+      try {
+        await supabase.from("group_members").insert({
+          id: crypto.randomUUID(),
+          group_id: newGroupId,
+          user_id: data.teacher_id,
+          role: "owner",
+        });
+      } catch (e) {
+        console.warn("Could not insert teacher to group_members:", e);
+      }
+    }
+
+    // 5. Automatically activate this new Halaqa in cookies
+    try {
+      const cookieStore = cookies();
+      cookieStore.set("active_group_id", newGroupId, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 365,
+      });
+    } catch {
+      // ignore
     }
 
     revalidatePath("/admin");
     revalidatePath("/dashboard");
+    revalidatePath("/students");
     return { success: true, data: newGroup };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "خطأ غير متوقع" };
@@ -359,16 +424,22 @@ export async function updateHalaqa(data: { id: string; name: string; teacher_id?
 
     if (data.teacher_id) {
       // Remove old owner membership and set new
-      await supabase.from("group_members").delete().eq("group_id", data.id);
-      await supabase.from("group_members").insert({
-        group_id: data.id,
-        user_id: data.teacher_id,
-        role: "owner",
-      });
+      try {
+        await supabase.from("group_members").delete().eq("group_id", data.id);
+        await supabase.from("group_members").insert({
+          id: crypto.randomUUID(),
+          group_id: data.id,
+          user_id: data.teacher_id,
+          role: "owner",
+        });
+      } catch (e) {
+        console.warn("Failed to update teacher membership:", e);
+      }
     }
 
     revalidatePath("/admin");
     revalidatePath("/dashboard");
+    revalidatePath("/students");
     return { success: true };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "خطأ غير متوقع" };

@@ -45,7 +45,7 @@ export async function findStudentByPhoneOrCode(input: string): Promise<ParentSea
 
     const { data: rawStudents, error } = await supabase
       .from("students")
-      .select("id, full_name, parent_token, parent_phone")
+      .select("*")
       .in("parent_phone", phoneValidation.variations);
 
     const students = (rawStudents || []).filter((s) => !(s as any).deleted_at);
@@ -66,9 +66,9 @@ export async function findStudentByPhoneOrCode(input: string): Promise<ParentSea
 
     return {
       success: true,
-      students: students.map((st) => ({
+      students: students.map((st: any) => ({
         id: st.id,
-        full_name: st.full_name,
+        full_name: st.name || st.full_name || "طالب",
         parent_token: st.parent_token,
       })),
     };
@@ -226,7 +226,10 @@ export async function getStudentProgressByToken(token: string): Promise<ParentPr
 
     return {
       success: true,
-      student: studentRecord,
+      student: {
+        ...studentRecord,
+        full_name: (studentRecord as any).name || (studentRecord as any).full_name || "طالب",
+      },
       logs: safeLogs,
       attendance: safeAttendance,
     };

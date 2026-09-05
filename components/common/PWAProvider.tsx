@@ -11,12 +11,18 @@ import { BeforeInstallPromptEvent } from "@/types/pwa";
  */
 export function PWAProvider() {
   useEffect(() => {
-    // 1. Service Worker Registration
+    // 1. Service Worker Registration & Forced Refresh of Stale Caches
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       const handleLoad = () => {
-        navigator.serviceWorker.register("/sw.js").catch(() => {
-          // Graceful fallback
-        });
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then((reg) => {
+            // Proactively check for newer service worker
+            reg.update().catch(() => {});
+          })
+          .catch(() => {
+            // Graceful fallback
+          });
       };
 
       if (document.readyState === "complete") {

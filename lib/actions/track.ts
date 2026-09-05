@@ -180,7 +180,7 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
       success: true,
       student: {
         id: student.id,
-        full_name: student.full_name,
+        full_name: student.name || student.full_name || "طالب",
         parent_token: student.parent_token,
         parent_phone: student.parent_phone,
         academic_grade: student.academic_grade,

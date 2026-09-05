@@ -12,7 +12,7 @@ export default async function AdminPage() {
   const data = await getAdminCenterData();
 
   if (!data.success) {
-    if (data.error?.includes("تسجيل الدخول") || data.error?.includes("غير مصرح")) {
+    if (data.error === "AUTH_REQUIRED" || data.error?.includes("تسجيل الدخول") || data.error?.includes("غير مصرح")) {
       redirect("/login");
     }
 

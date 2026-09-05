@@ -31,9 +31,8 @@ export interface AdminDataResult {
 async function checkAdminAuth() {
   const { user, profile, isAdmin } = await getCurrentUserProfile();
   if (!user) {
-    return { authorized: false, user: null, profile: null, error: "غير مصرح، يرجى تسجيل الدخول" };
+    return { authorized: false, user: null, profile: null, isAdmin: false, error: "AUTH_REQUIRED" };
   }
-  // Allow if role is admin or if testing/demo
   return { authorized: true, user, profile, isAdmin };
 }
 
@@ -44,89 +43,119 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
   try {
     const auth = await checkAdminAuth();
     if (!auth.authorized) {
-      return { success: false, error: auth.error };
+      return { success: false, error: "AUTH_REQUIRED" };
     }
 
     const supabase = createClient();
 
     // 1. Fetch all profiles (teachers & admins)
-    const { data: profiles, error: profilesError } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("full_name", { ascending: true });
-
-    if (profilesError) {
-      return { success: false, error: "فشل جلب المعلمين: " + profilesError.message };
+    let profiles: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*");
+      if (!error && data) profiles = data;
+    } catch (e) {
+      console.error("Failed to fetch profiles:", e);
     }
 
     // 2. Fetch all groups (halaqat)
-    const { data: groups, error: groupsError } = await supabase
-      .from("groups")
-      .select("*")
-      .order("name", { ascending: true });
-
-    if (groupsError) {
-      return { success: false, error: "فشل جلب الحلقات: " + groupsError.message };
+    let groups: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from("groups")
+        .select("*");
+      if (!error && data) groups = data;
+    } catch (e) {
+      console.error("Failed to fetch groups:", e);
     }
 
     // 3. Fetch all group_members
-    const { data: members } = await supabase
-      .from("group_members")
-      .select("*");
-
-    // 4. Fetch all students across center (filter deleted_at in JS if present)
-    const { data: rawStudents, error: studentsError } = await supabase
-      .from("students")
-      .select("*")
-      .order("full_name", { ascending: true });
-
-    if (studentsError) {
-      return { success: false, error: "فشل جلب الطلاب: " + studentsError.message };
+    let members: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from("group_members")
+        .select("*");
+      if (!error && data) members = data;
+    } catch (e) {
+      console.error("Failed to fetch group_members:", e);
     }
 
-    const safeStudents = (rawStudents || []).filter((s) => !(s as any).deleted_at);
+    // 4. Fetch all students across center
+    let rawStudents: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from("students")
+        .select("*");
+      if (!error && data) rawStudents = data;
+    } catch (e) {
+      console.error("Failed to fetch students:", e);
+    }
 
-    // 5. Fetch all memorization logs summary (filter deleted_at in JS if present)
-    const { data: rawLogs } = await supabase
-      .from("memorization_logs")
-      .select("id, student_id, teacher_id, page_count, grade, log_type, created_at");
+    // 5. Fetch all memorization logs
+    let rawLogs: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from("memorization_logs")
+        .select("*");
+      if (!error && data) rawLogs = data;
+    } catch (e) {
+      console.error("Failed to fetch memorization_logs:", e);
+    }
 
-    const safeLogs = (rawLogs || []).filter((l) => !(l as any).deleted_at);
+    // 6. Fetch recent attendance records
+    let attendance: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from("attendance_records")
+        .select("*");
+      if (!error && data) attendance = data;
+    } catch (e) {
+      console.error("Failed to fetch attendance_records:", e);
+    }
 
-    // 6. Fetch recent attendance records (last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const dateStr = thirtyDaysAgo.toISOString().split("T")[0];
+    const safeProfiles = profiles;
+    safeProfiles.sort((a: any, b: any) =>
+      (a.full_name || a.name || "").localeCompare(b.full_name || b.name || "", "ar")
+    );
 
-    const { data: attendance } = await supabase
-      .from("attendance_records")
-      .select("id, student_id, teacher_id, date, status");
+    const safeGroups = groups;
+    safeGroups.sort((a: any, b: any) =>
+      (a.name || "").localeCompare(b.name || "", "ar")
+    );
 
-    const safeProfiles = profiles || [];
-    const safeGroups = groups || [];
-    const safeMembers = members || [];
-    const safeAttendance = attendance || [];
+    const safeMembers = members;
+
+    const safeStudents = rawStudents.filter((s: any) => !s.deleted_at);
+    safeStudents.sort((a: any, b: any) => {
+      const nameA = a.name || a.full_name || "";
+      const nameB = b.name || b.full_name || "";
+      return nameA.localeCompare(nameB, "ar");
+    });
+
+    const safeLogs = rawLogs.filter((l: any) => !l.deleted_at);
+    const safeAttendance = attendance;
 
     // Today's date for today's attendance count
     const today = new Date().toISOString().split("T")[0];
-    const todayAttendance = safeAttendance.filter((a) => a.date === today);
+    const todayAttendance = safeAttendance.filter((a: any) => a.date === today);
 
     // Build Maps for fast lookup
-    const profileMap = new Map(safeProfiles.map((p) => [p.id, p]));
-    const groupMap = new Map(safeGroups.map((g) => [g.id, g]));
+    const profileMap = new Map(safeProfiles.map((p: any) => [p.id, p]));
+    const groupMap = new Map(safeGroups.map((g: any) => [g.id, g]));
 
     // Halaqa to Teacher mapping from group_members
     const groupToTeacherMap = new Map<string, { id: string; name: string; phone: string | null }>();
     const teacherToGroupsMap = new Map<string, Array<{ id: string; name: string }>>();
 
-    safeMembers.forEach((m) => {
+    safeMembers.forEach((m: any) => {
       const p = profileMap.get(m.user_id);
       const g = groupMap.get(m.group_id);
       if (p && g) {
         if (!groupToTeacherMap.has(m.group_id)) {
           groupToTeacherMap.set(m.group_id, {
             id: p.id,
-            name: p.full_name,
+            name: p.full_name || p.name || "معلم",
             phone: p.phone,
           });
         }
@@ -137,13 +166,13 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
     });
 
     // Also fallback check groups.created_by
-    safeGroups.forEach((g) => {
+    safeGroups.forEach((g: any) => {
       if (!groupToTeacherMap.has(g.id) && g.created_by) {
         const p = profileMap.get(g.created_by);
         if (p) {
           groupToTeacherMap.set(g.id, {
             id: p.id,
-            name: p.full_name,
+            name: p.full_name || p.name || "معلم",
             phone: p.phone,
           });
           const existing = teacherToGroupsMap.get(p.id) || [];
@@ -159,8 +188,8 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
     let totalPagesMemorized = 0;
     const studentPagesMap = new Map<string, number>();
 
-    safeLogs.forEach((l) => {
-      const pages = Number(l.page_count) || 0;
+    safeLogs.forEach((l: any) => {
+      const pages = Number(l.page_count || l.pages) || 1;
       totalPagesMemorized += pages;
       const cur = studentPagesMap.get(l.student_id) || 0;
       studentPagesMap.set(l.student_id, cur + pages);
@@ -168,23 +197,26 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
 
     // Attendance rate
     const totalAttendanceDays = safeAttendance.length;
-    const presentAttendanceDays = safeAttendance.filter((a) => a.status === "حاضر").length;
+    const presentAttendanceDays = safeAttendance.filter((a: any) => a.status === "حاضر").length;
     const overallAttendanceRate =
       totalAttendanceDays > 0
         ? Math.round((presentAttendanceDays / totalAttendanceDays) * 100)
         : 100;
 
     // Halaqat with Details
-    const halaqatWithDetails: HalaqaWithDetails[] = safeGroups.map((g) => {
+    const halaqatWithDetails: HalaqaWithDetails[] = safeGroups.map((g: any) => {
       const assignedTeacher = groupToTeacherMap.get(g.id);
-      const groupStudents = safeStudents.filter((s) => s.group_id === g.id);
-      const groupStudentIds = new Set(groupStudents.map((s) => s.id));
+      const groupStudents = safeStudents.filter((s: any) => s.group_id === g.id);
+      const groupStudentIds = new Set(groupStudents.map((s: any) => s.id));
 
-      const groupLogs = safeLogs.filter((l) => groupStudentIds.has(l.student_id));
-      const groupPages = groupLogs.reduce((acc, l) => acc + (Number(l.page_count) || 0), 0);
+      const groupLogs = safeLogs.filter((l: any) => groupStudentIds.has(l.student_id));
+      const groupPages = groupLogs.reduce(
+        (acc: number, l: any) => acc + (Number(l.page_count || l.pages) || 1),
+        0
+      );
 
-      const groupAtt = safeAttendance.filter((a) => groupStudentIds.has(a.student_id));
-      const groupPresent = groupAtt.filter((a) => a.status === "حاضر").length;
+      const groupAtt = safeAttendance.filter((a: any) => groupStudentIds.has(a.student_id));
+      const groupPresent = groupAtt.filter((a: any) => a.status === "حاضر").length;
       const attRate = groupAtt.length > 0 ? Math.round((groupPresent / groupAtt.length) * 100) : 100;
 
       return {
@@ -202,15 +234,15 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
     });
 
     // Teachers with Halaqat
-    const teachersWithHalaqat: TeacherWithHalaqat[] = safeProfiles.map((p) => {
+    const teachersWithHalaqat: TeacherWithHalaqat[] = safeProfiles.map((p: any) => {
       const halaqat = teacherToGroupsMap.get(p.id) || [];
       const teacherStudentCount = safeStudents.filter(
-        (s) => s.teacher_id === p.id || (s.group_id && halaqat.some((h) => h.id === s.group_id))
+        (s: any) => s.teacher_id === p.id || (s.group_id && halaqat.some((h) => h.id === s.group_id))
       ).length;
 
       return {
         id: p.id,
-        full_name: p.full_name,
+        full_name: p.full_name || p.name || "معلم",
         phone: p.phone,
         role: (p as any).role || "teacher",
         is_active: (p as any).is_active ?? true,
@@ -221,15 +253,19 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
     });
 
     // Enriched Students
-    const enrichedStudents = safeStudents.map((s) => {
+    const enrichedStudents = safeStudents.map((s: any) => {
       const g = s.group_id ? groupMap.get(s.group_id) : null;
       const t = s.teacher_id ? profileMap.get(s.teacher_id) : null;
       const totalPages = Number((studentPagesMap.get(s.id) || 0).toFixed(1));
+      const displayName = s.name || s.full_name || "بدون اسم";
 
       return {
         ...s,
+        full_name: displayName,
+        name: displayName,
+        phone: s.phone || s.parent_phone || null,
         halaqa_name: g?.name || "بدون حلقة",
-        teacher_name: t?.full_name || "غير محدد",
+        teacher_name: t?.full_name || t?.name || "غير محدد",
         total_pages_memorized: totalPages,
         total_pages_count: totalPages,
       };
@@ -239,7 +275,7 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
     const overview: AdminCenterOverview = {
       totalStudents: safeStudents.length,
       totalHalaqat: safeGroups.length,
-      totalTeachers: safeProfiles.filter((p) => (p as any).role !== "admin").length || safeProfiles.length,
+      totalTeachers: safeProfiles.filter((p: any) => (p as any).role !== "admin").length || safeProfiles.length,
       attendanceRate: overallAttendanceRate,
       totalPagesMemorized: Number(totalPagesMemorized.toFixed(1)),
       totalRecitations: safeLogs.length,

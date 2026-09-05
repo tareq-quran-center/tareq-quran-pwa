@@ -33,8 +33,7 @@ export async function getStudents(): Promise<ActionResult<StudentRow[]>> {
     // 1. Query directly from public.students table under RLS (active students only)
     const { data: rawStudents, error: studentsError } = await supabase
       .from("students")
-      .select("*")
-      .order("full_name", { ascending: true });
+      .select("*");
 
     if (studentsError) {
       return {
@@ -43,7 +42,14 @@ export async function getStudents(): Promise<ActionResult<StudentRow[]>> {
       };
     }
 
-    const students = (rawStudents || []).filter((s) => !(s as any).deleted_at);
+    const students = (rawStudents || [])
+      .filter((s) => !(s as any).deleted_at)
+      .map((s: any) => ({
+        ...s,
+        full_name: s.name || s.full_name || "طالب",
+        name: s.name || s.full_name || "طالب",
+      }))
+      .sort((a: any, b: any) => (a.full_name || "").localeCompare(b.full_name || "", "ar"));
 
     // 2. Fetch active memorization logs summary to compute all-time total pages & recitations
     const studentIds = (students || []).map((s) => s.id);
@@ -188,20 +194,16 @@ export async function createStudent(data: StudentInput): Promise<ActionResult<St
 
     const assignedGroupId: string = resultObj.groupId;
 
-    const insertPayload: StudentInsert = {
+    const insertPayload: any = {
       teacher_id: user.id,
       group_id: assignedGroupId,
-      full_name: validation.data.full_name,
+      name: validation.data.full_name,
       parent_phone: normalizedPhone,
-      academic_grade: validation.data.academic_grade || null,
-      school_name: validation.data.school_name || null,
-      address: validation.data.address || null,
-      father_job: validation.data.father_job || null,
-      avatar_url: validation.data.avatar_url || null,
-      join_date: validation.data.join_date || new Date().toISOString().split("T")[0],
       parent_token: crypto.randomUUID(),
-      deleted_at: null,
     };
+    if ((validation.data as any).notes) {
+      insertPayload.notes = (validation.data as any).notes;
+    }
 
     const { data: newStudent, error } = await supabase
       .from("students")
@@ -216,11 +218,16 @@ export async function createStudent(data: StudentInput): Promise<ActionResult<St
       };
     }
 
+    const normalizedStudent = {
+      ...newStudent,
+      full_name: (newStudent as any).name || newStudent.full_name || validation.data.full_name,
+    };
+
     revalidatePath("/students");
     revalidatePath("/dashboard");
     return {
       success: true,
-      data: newStudent,
+      data: normalizedStudent as StudentRow,
     };
   } catch (err) {
     return {
@@ -270,16 +277,13 @@ export async function updateStudent(id: string, data: StudentInput): Promise<Act
       };
     }
 
-    const updatePayload: StudentUpdate = {
-      full_name: validation.data.full_name,
+    const updatePayload: any = {
+      name: validation.data.full_name,
       parent_phone: normalizedPhone,
-      academic_grade: validation.data.academic_grade || null,
-      school_name: validation.data.school_name || null,
-      address: validation.data.address || null,
-      father_job: validation.data.father_job || null,
-      avatar_url: validation.data.avatar_url || null,
-      ...(validation.data.join_date ? { join_date: validation.data.join_date } : {}),
     };
+    if ((validation.data as any).notes !== undefined) {
+      updatePayload.notes = (validation.data as any).notes;
+    }
 
     const { data: updatedStudent, error } = await supabase
       .from("students")
@@ -295,6 +299,11 @@ export async function updateStudent(id: string, data: StudentInput): Promise<Act
       };
     }
 
+    const normalizedUpdated = {
+      ...updatedStudent,
+      full_name: (updatedStudent as any).name || updatedStudent.full_name || validation.data.full_name,
+    };
+
     revalidatePath("/students");
     revalidatePath("/dashboard");
     revalidatePath(`/students/${id}`);
@@ -303,7 +312,7 @@ export async function updateStudent(id: string, data: StudentInput): Promise<Act
     }
     return {
       success: true,
-      data: updatedStudent,
+      data: normalizedUpdated as StudentRow,
     };
   } catch (err) {
     return {
@@ -767,8 +776,7 @@ export async function getTeacherReportData(options?: TeacherReportDataOptions): 
     // 1. Fetch Active Students directly from public.students table under RLS
     const studentsPromise = supabase
       .from("students")
-      .select("*")
-      .order("full_name", { ascending: true });
+      .select("*");
 
     // 2. Fetch Time-scoped Attendance Records (under teacher RLS)
     let attendanceQuery = supabase
@@ -806,7 +814,13 @@ export async function getTeacherReportData(options?: TeacherReportDataOptions): 
       logsPromise,
     ]);
 
-    const rawStudents = (studentsRes.data || []).filter((s) => !(s as any).deleted_at);
+    const rawStudents = (studentsRes.data || [])
+      .filter((s) => !(s as any).deleted_at)
+      .map((s: any) => ({
+        ...s,
+        full_name: s.name || s.full_name || "طالب",
+        name: s.name || s.full_name || "طالب",
+      }));
     const studentIds = rawStudents.map((s) => s.id);
     const logs = logsRes.data || [];
 
@@ -819,7 +833,7 @@ export async function getTeacherReportData(options?: TeacherReportDataOptions): 
     } else if (studentIds.length > 0) {
       const { data: allLogsData } = await supabase
         .from("memorization_logs")
-        .select("student_id, page_count, surah_start, surah_end, aya_start, aya_end, deleted_at")
+        .select("*")
         .in("student_id", studentIds);
       allLogsSummary = allLogsData || [];
     }

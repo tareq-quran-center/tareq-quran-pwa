@@ -39,9 +39,10 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  // Protect teacher-only private subroutes
+  // Protect teacher-only and admin private subroutes
   const isProtectedTeacherRoute =
     path.startsWith("/dashboard") ||
+    path.startsWith("/admin") ||
     path.startsWith("/students") ||
     path.startsWith("/quran") ||
     path.startsWith("/trash");

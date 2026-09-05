@@ -53,6 +53,8 @@ const withPWA = withPWAInit({
           sameOrigin &&
           (request.mode === "navigate" ||
             pathname === "/" ||
+            pathname.startsWith("/admin") ||
+            pathname.startsWith("/track") ||
             pathname.startsWith("/students") ||
             pathname.startsWith("/dashboard") ||
             pathname.startsWith("/parent") ||

@@ -72,14 +72,35 @@ export function VoiceRecorder({
         throw new Error("المتصفح لا يدعم تسجيل الصوت المباشر");
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1, // Mono voice channel for minimal payload
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
 
-      // Determine supported mimeType
-      let options: MediaRecorderOptions = {};
-      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
-        options = { mimeType: "audio/webm;codecs=opus" };
-      } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
-        options = { mimeType: "audio/mp4" };
+      // Determine best supported mimeType (WebM/Opus for Android/Chrome/Firefox, MP4/AAC for iOS Safari)
+      let mimeType = "";
+      if (typeof MediaRecorder !== "undefined") {
+        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+          mimeType = "audio/webm;codecs=opus";
+        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          mimeType = "audio/mp4";
+        } else if (MediaRecorder.isTypeSupported("audio/aac")) {
+          mimeType = "audio/aac";
+        } else if (MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")) {
+          mimeType = "audio/ogg;codecs=opus";
+        }
+      }
+
+      // 24 kbps mono audioBitrate (~180 KB per minute of speech)
+      const options: MediaRecorderOptions = {
+        audioBitsPerSecond: 24000,
+      };
+      if (mimeType) {
+        options.mimeType = mimeType;
       }
 
       const mediaRecorder = new MediaRecorder(stream, options);

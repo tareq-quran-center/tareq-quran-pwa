@@ -168,6 +168,7 @@ export interface StudentTrackData {
     grade: string;
     date: string;
     page_count?: number | null;
+    audio_url?: string | null;
   } | null;
   latestRevision?: {
     surah_start: string;
@@ -177,12 +178,14 @@ export interface StudentTrackData {
     grade: string;
     date: string;
     page_count?: number | null;
+    audio_url?: string | null;
   } | null;
   todayEvaluation?: {
     log_type: string;
     grade: string;
     notes?: string | null;
     date: string;
+    audio_url?: string | null;
   } | null;
   teacherNotes?: string | null;
   recentLogs?: Array<{
@@ -196,6 +199,7 @@ export interface StudentTrackData {
     notes?: string | null;
     date: string;
     page_count?: number | null;
+    audio_url?: string | null;
   }>;
   recentAttendance?: Array<{
     id: string;

@@ -175,6 +175,7 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
           grade: latestHifzLog.grade,
           date: latestHifzLog.date || latestHifzLog.created_at,
           page_count: latestHifzLog.page_count,
+          audio_url: latestHifzLog.audio_url || null,
         }
       : null;
 
@@ -191,6 +192,7 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
           grade: latestRevLog.grade,
           date: latestRevLog.date || latestRevLog.created_at,
           page_count: latestRevLog.page_count,
+          audio_url: latestRevLog.audio_url || null,
         }
       : null;
 
@@ -207,6 +209,7 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
           grade: todayLog.grade,
           notes: todayLog.notes,
           date: todayLog.date || todayLog.created_at,
+          audio_url: todayLog.audio_url || null,
         }
       : null;
 

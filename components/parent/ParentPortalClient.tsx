@@ -15,7 +15,7 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ParentProgressPayload } from "@/types";
 import { GRADE_LABELS, ATTENDANCE_LABELS, LOG_TYPE_LABELS, formatArabicDate, formatPageCount, getStudentInitial } from "@/lib/utils";
-import { AudioPlayer } from "@/components/common/AudioPlayer";
+import { CompactAudioPlayer } from "@/components/common/CompactAudioPlayer";
 import { SocialLinks } from "@/components/common/SocialLinks";
 import {
   getStudentSurahProgressMap,
@@ -197,6 +197,40 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
             </div>
           </CardContent>
         </Card>
+
+        {/* Featured Latest Audio Recitation Banner */}
+        {(() => {
+          const latestAudioLog = safeLogs.find((l) => l.audio_url);
+          if (!latestAudioLog || !latestAudioLog.audio_url) return null;
+          return (
+            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-burgundy-950 via-burgundy-900 to-burgundy-950 text-white shadow-md border-2 border-islamicGold-400/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in duration-300">
+              <div className="space-y-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-base">🎙️</span>
+                  <span className="text-xs sm:text-sm font-black text-islamicGold-300">
+                    آخر تلاوة مسجلة للطالب:
+                  </span>
+                  <span className="text-xs font-bold text-white bg-white/15 px-2.5 py-0.5 rounded-lg border border-white/10">
+                    سورة {latestAudioLog.surah_start}
+                  </span>
+                  <span className="text-[11px] text-burgundy-200 font-medium">
+                    ({formatArabicDate(latestAudioLog.created_at)})
+                  </span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-burgundy-200/90 font-medium">
+                  استمع إلى تلاوة ابنكم المسجلة والموثقة من قبل معلم الحلقة مباشرة
+                </p>
+              </div>
+              <div className="shrink-0 w-full sm:w-auto">
+                <CompactAudioPlayer
+                  src={latestAudioLog.audio_url}
+                  title={`تلاوة ${latestAudioLog.surah_start}`}
+                  className="bg-white/15 border-white/25 text-white w-full sm:w-auto"
+                />
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Unified Compact KPI Stats Grid (Single 3-Column Row) */}
         <div className="grid grid-cols-3 gap-2 sm:gap-4">
@@ -613,15 +647,14 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                           </div>
 
                           {log?.audio_url && (
-                            <div className="pt-1.5 space-y-1.5 bg-burgundy-50/60 dark:bg-burgundy-950/30 p-3 rounded-2xl border border-burgundy-200/80 dark:border-burgundy-800/80">
-                              <span className="text-xs font-black text-burgundy-900 dark:text-burgundy-200 flex items-center gap-1">
+                            <div className="pt-2 space-y-1.5 bg-burgundy-50/70 dark:bg-burgundy-950/40 p-3 rounded-2xl border border-burgundy-200/80 dark:border-burgundy-800/80">
+                              <span className="text-xs font-black text-burgundy-900 dark:text-burgundy-200 flex items-center gap-1.5">
                                 <span>🎙️ استمع لتلاوة ابنكم المسجلة:</span>
                               </span>
-                              <audio
-                                controls
-                                className="w-full h-9 rounded-xl shadow-xs"
+                              <CompactAudioPlayer
                                 src={log.audio_url}
-                                preload="none"
+                                title={`تلاوة سورة ${log.surah_start}`}
+                                className="w-full"
                               />
                             </div>
                           )}

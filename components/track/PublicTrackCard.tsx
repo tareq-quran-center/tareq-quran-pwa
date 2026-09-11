@@ -23,6 +23,7 @@ import {
   Snowflake,
 } from "lucide-react";
 import { getStudentInitial } from "@/lib/utils";
+import { CompactAudioPlayer } from "@/components/common/CompactAudioPlayer";
 
 interface PublicTrackCardProps {
   data: StudentTrackData;
@@ -262,6 +263,11 @@ export function PublicTrackCard({ data }: PublicTrackCardProps) {
               {todayEvaluation.notes}
             </p>
           )}
+          {todayEvaluation.audio_url && (
+            <div className="mt-3">
+              <CompactAudioPlayer src={todayEvaluation.audio_url} title="🎙️ استمع لتلاوة تقييم اليوم" className="w-full" />
+            </div>
+          )}
         </div>
       )}
 
@@ -309,6 +315,11 @@ export function PublicTrackCard({ data }: PublicTrackCardProps) {
                 <Clock className="w-3.5 h-3.5" />
                 <span>تاريخ التسميع: {latestHifz.date?.split("T")[0] || "مؤخراً"}</span>
               </div>
+              {latestHifz.audio_url && (
+                <div className="pt-1">
+                  <CompactAudioPlayer src={latestHifz.audio_url} title="🎙️ تلاوة الحفظ" className="w-full" />
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-6 text-xs text-slate-400">
@@ -354,10 +365,15 @@ export function PublicTrackCard({ data }: PublicTrackCardProps) {
                 <Clock className="w-3.5 h-3.5" />
                 <span>تاريخ المراجعة: {latestRevision.date?.split("T")[0] || "مؤخراً"}</span>
               </div>
+              {latestRevision.audio_url && (
+                <div className="pt-1">
+                  <CompactAudioPlayer src={latestRevision.audio_url} title="🎙️ تلاوة المراجعة" className="w-full" />
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-6 text-xs text-slate-400">
-              لم تُسجل مراجعة للطالب حتى الآن
+              لم يُسجل مراجعة للطالب حتى الآن
             </div>
           )}
         </div>
@@ -398,19 +414,24 @@ export function PublicTrackCard({ data }: PublicTrackCardProps) {
               recentLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs"
+                  className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs space-y-2"
                 >
-                  <div className="space-y-0.5">
-                    <span className="font-bold text-slate-800 dark:text-slate-200 block">
-                      سورة {log.surah_start} ({log.aya_start}-{log.aya_end})
-                    </span>
-                    <span className="text-[10px] text-slate-500">
-                      {log.log_type} • {log.date?.split("T")[0]}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <span className="font-bold text-slate-800 dark:text-slate-200 block">
+                        سورة {log.surah_start} ({log.aya_start}-{log.aya_end})
+                      </span>
+                      <span className="text-[10px] text-slate-500">
+                        {log.log_type} • {log.date?.split("T")[0]}
+                      </span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full font-black text-[10px] border ${getGradeBadge(log.grade)}`}>
+                      {log.grade}
                     </span>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full font-black text-[10px] border ${getGradeBadge(log.grade)}`}>
-                    {log.grade}
-                  </span>
+                  {log.audio_url && (
+                    <CompactAudioPlayer src={log.audio_url} title={`تلاوة ${log.surah_start}`} className="w-full" />
+                  )}
                 </div>
               ))
             ) : (

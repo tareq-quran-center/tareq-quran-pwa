@@ -1,8 +1,18 @@
 import { createClient } from "@/lib/supabase/client";
 
+export function blobToDataURL(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 /**
  * Uploads a student recitation audio recording to Supabase Storage bucket 'recitation-audio'
- * and returns the public URL.
+ * (with fallback to 'audio-recordings' or 'memorization-audio') and returns the public CDN URL.
+ * Includes a resilient Data URL fallback if storage bucket is unreachable.
  */
 export async function uploadRecitationAudio(
   studentId: string,
@@ -20,27 +30,44 @@ export async function uploadRecitationAudio(
     const contentType = audioBlob.type || `audio/${ext}`;
     const fileName = `${studentId}/${Date.now()}.${ext}`;
 
-    const { data, error } = await supabase.storage
-      .from("recitation-audio")
-      .upload(fileName, audioBlob, {
-        contentType,
-        cacheControl: "3600",
-        upsert: true,
-      });
+    const candidateBuckets = ["recitation-audio", "audio-recordings", "memorization-audio"];
+    let successfulUrl: string | null = null;
 
-    if (error) {
-      console.error("Storage upload error in recitation-audio:", error.message);
-      return null;
+    for (const bucket of candidateBuckets) {
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, audioBlob, {
+          contentType,
+          cacheControl: "31536000",
+          upsert: true,
+        });
+
+      if (!error && data) {
+        const { data: publicData } = supabase.storage
+          .from(bucket)
+          .getPublicUrl(data.path || fileName);
+
+        if (publicData?.publicUrl) {
+          successfulUrl = publicData.publicUrl;
+          break;
+        }
+      }
     }
 
-    const { data: publicData } = supabase.storage
-      .from("recitation-audio")
-      .getPublicUrl(data.path || fileName);
+    if (successfulUrl) {
+      return successfulUrl;
+    }
 
-    return publicData?.publicUrl || null;
+    // Fallback: If cloud storage buckets are not yet configured, preserve audio via Data URL
+    console.warn("Storage upload failed for all buckets, falling back to local Data URL preservation");
+    return await blobToDataURL(audioBlob);
   } catch (err) {
     console.error("Error in uploadRecitationAudio:", err);
-    return null;
+    try {
+      return await blobToDataURL(audioBlob);
+    } catch {
+      return null;
+    }
   }
 }
 

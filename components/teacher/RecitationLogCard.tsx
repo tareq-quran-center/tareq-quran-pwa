@@ -6,6 +6,7 @@ import { MemorizationLogRow } from "@/types";
 import { GRADE_LABELS, LOG_TYPE_LABELS, formatArabicDate, formatPageCount } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { CompactAudioPlayer } from "@/components/common/CompactAudioPlayer";
 
 export interface RecitationLogCardProps {
   log: MemorizationLogRow | (Record<string, any> & { id: string });
@@ -70,14 +71,10 @@ export function RecitationLogCard({
             <span className="text-burgundy-800 dark:text-burgundy-300">{log.surah_end || log.surah_start}</span> (آية {log.aya_end || 1})
           </div>
 
-          {/* Inline Audio Player */}
+          {/* Inline Compact Audio Player */}
           {audioUrl && (
-            <div className="mt-3 p-2.5 rounded-xl bg-burgundy-50 dark:bg-burgundy-950/40 border border-burgundy-200 dark:border-burgundy-800/60 w-full max-w-lg">
-              <div className="flex items-center gap-2 mb-1.5 text-xs font-semibold text-burgundy-900 dark:text-burgundy-300">
-                <Volume2 className="w-3.5 h-3.5" />
-                <span>🎙️ تلاوة الطالب المسجلة</span>
-              </div>
-              <audio controls src={audioUrl} className="w-full h-8" preload="metadata" />
+            <div className="mt-2.5">
+              <CompactAudioPlayer src={audioUrl} title="تلاوة الطالب المسجلة" />
             </div>
           )}
 

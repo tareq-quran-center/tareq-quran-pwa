@@ -59,6 +59,7 @@ export default async function AdminPage() {
           students: data.students,
           seasons: data.seasons,
           currentUserIsAdmin: data.currentUserIsAdmin,
+          currentUserId: user?.id || data.currentUserId,
         }}
       />
     </div>

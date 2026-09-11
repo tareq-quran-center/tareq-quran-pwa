@@ -32,6 +32,7 @@ export interface AdminDataResult {
     }
   >;
   currentUserIsAdmin?: boolean;
+  currentUserId?: string;
 }
 
 /**
@@ -344,6 +345,7 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
       teachers: teachersWithHalaqat,
       students: enrichedStudents,
       currentUserIsAdmin: auth.isAdmin,
+      currentUserId: auth.user?.id,
     };
   } catch (err) {
     return {
@@ -588,6 +590,19 @@ export async function updateTeacher(
   }
 ) {
   try {
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) {
+      return { success: false, error: "غير مصرح، هذه العملية تتطلب صلاحية مدير المركز" };
+    }
+
+    if (data.role !== undefined && auth.user?.id === id && data.role !== "admin") {
+      return { success: false, error: "لا يمكنك خفض رتبة حسابك الإداري الحالي" };
+    }
+
+    if (data.is_active === false && auth.user?.id === id) {
+      return { success: false, error: "لا يمكنك تعطيل حسابك الإداري الحالي" };
+    }
+
     const supabase = createClient();
 
     const updatePayload: {

@@ -65,10 +65,12 @@ interface AdminDashboardClientProps {
     >;
     seasons?: SeasonRow[];
     currentUserIsAdmin?: boolean;
+    currentUserId?: string;
   };
 }
 
 export function AdminDashboardClient({ initialData }: AdminDashboardClientProps) {
+  const currentUserId = initialData.currentUserId;
   const [activeTab, setActiveTab] = useState<
     "overview" | "halaqat" | "teachers" | "students" | "reports"
   >("overview");
@@ -334,6 +336,10 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
   // Handlers: Teachers
   // ==========================================
   const handleToggleTeacherActive = async (id: string, currentActive: boolean) => {
+    if (currentUserId && id === currentUserId) {
+      showToast("لا يمكنك تعطيل حسابك الإداري الحالي");
+      return;
+    }
     const nextState = !currentActive;
     const res = await toggleTeacherActive(id, nextState);
     if (res.success) {
@@ -347,6 +353,10 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
   };
 
   const handleToggleAdminRole = async (id: string, currentRole: string) => {
+    if (currentUserId && id === currentUserId) {
+      showToast("لا يمكنك تغيير صلاحية حسابك الإداري الحالي");
+      return;
+    }
     const nextRole = currentRole === "admin" ? "teacher" : "admin";
     if (!confirm(`هل أنت متأكد من تغيير صلاحية المستخدم إلى ${nextRole === "admin" ? "مدير" : "معلم"}؟`)) return;
     const res = await updateTeacher(id, { role: nextRole });
@@ -414,6 +424,10 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
   };
 
   const handleConfirmDeleteTeacher = (teacher: TeacherWithHalaqat) => {
+    if (currentUserId && teacher.id === currentUserId) {
+      showToast("لا يمكنك حذف حسابك الإداري الحالي");
+      return;
+    }
     setTeacherToDelete(teacher);
   };
 
@@ -931,83 +945,107 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-bold">
-                {teachers.map((t) => (
-                  <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                    <td className="py-3 px-3 font-black text-slate-900 dark:text-slate-100">
-                      {t.full_name}
-                    </td>
-                    <td className="py-3 px-3 text-slate-600 dark:text-slate-400">
-                      {t.phone || "—"}
-                    </td>
-                    <td className="py-3 px-3 text-center">
-                      <button
-                        onClick={() => handleToggleAdminRole(t.id, t.role)}
-                        title="انقر لتغيير الصلاحية"
-                        className={`px-2.5 py-1 rounded-full text-[11px] font-black border transition-colors ${
-                          t.role === "admin"
-                            ? "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-300"
-                            : "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300"
-                        }`}
-                      >
-                        {t.role === "admin" ? "مدير مركز 👑" : "معلم حلقة 📖"}
-                      </button>
-                    </td>
-                    <td className="py-3 px-3">
-                      {t.halaqat && t.halaqat.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {t.halaqat.map((h) => (
-                            <span
-                              key={h.id}
-                              className="px-2 py-0.5 rounded-lg bg-burgundy-50 dark:bg-burgundy-950/60 text-burgundy-900 dark:text-burgundy-300 text-[10px] font-bold border border-burgundy-200/50"
-                            >
-                              {h.name}
+                {teachers.map((t) => {
+                  const isCurrentAdmin = Boolean(currentUserId && t.id === currentUserId);
+                  return (
+                    <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                      <td className="py-3 px-3 font-black text-slate-900 dark:text-slate-100">
+                        <div className="flex items-center gap-1.5">
+                          <span>{t.full_name}</span>
+                          {isCurrentAdmin && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 font-bold border border-amber-300/40">
+                              (أنت)
                             </span>
-                          ))}
+                          )}
                         </div>
-                      ) : (
-                        <span className="text-slate-400">بدون حلقات</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3 text-center">{t.students_count} طالب</td>
-                    <td className="py-3 px-3 text-center">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black ${
-                          t.is_active
-                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                            : "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
-                        }`}
-                      >
-                        {t.is_active ? "نشط" : "معطل"}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button
-                          onClick={() => handleToggleTeacherActive(t.id, t.is_active)}
-                          size="sm"
-                          variant="ghost"
-                          className={`h-7 px-2 text-[11px] font-bold rounded-lg ${
+                      </td>
+                      <td className="py-3 px-3 text-slate-600 dark:text-slate-400">
+                        {t.phone || "—"}
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        {isCurrentAdmin ? (
+                          <span
+                            className="inline-block px-2.5 py-1 rounded-full text-[11px] font-black border bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-300 cursor-default select-none shadow-xs"
+                          >
+                            مدير مركز 👑
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleToggleAdminRole(t.id, t.role)}
+                            title="انقر لتغيير الصلاحية"
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-black border transition-colors cursor-pointer ${
+                              t.role === "admin"
+                                ? "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-300"
+                                : "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300"
+                            }`}
+                          >
+                            {t.role === "admin" ? "مدير مركز 👑" : "معلم حلقة 📖"}
+                          </button>
+                        )}
+                      </td>
+                      <td className="py-3 px-3">
+                        {t.halaqat && t.halaqat.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {t.halaqat.map((h) => (
+                              <span
+                                key={h.id}
+                                className="px-2 py-0.5 rounded-lg bg-burgundy-50 dark:bg-burgundy-950/60 text-burgundy-900 dark:text-burgundy-300 text-[10px] font-bold border border-burgundy-200/50"
+                              >
+                                {h.name}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">بدون حلقات</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-center">{t.students_count} طالب</td>
+                      <td className="py-3 px-3 text-center">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black ${
                             t.is_active
-                              ? "text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
-                              : "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                              : "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
                           }`}
                         >
-                          {t.is_active ? "تعطيل" : "تفعيل"}
-                        </Button>
-                        <Button
-                          onClick={() => handleConfirmDeleteTeacher(t)}
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 px-2 text-[11px] font-bold rounded-lg text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40"
-                          title="حذف المعلم بالكامل"
-                        >
-                          <Trash2 className="w-3.5 h-3.5 ml-1 text-rose-500" />
-                          <span>حذف</span>
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {t.is_active ? "نشط" : "معطل"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        {isCurrentAdmin ? (
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500 font-bold select-none">
+                            الحساب الحالي
+                          </span>
+                        ) : (
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              onClick={() => handleToggleTeacherActive(t.id, t.is_active)}
+                              size="sm"
+                              variant="ghost"
+                              className={`h-7 px-2 text-[11px] font-bold rounded-lg ${
+                                t.is_active
+                                  ? "text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                  : "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                              }`}
+                            >
+                              {t.is_active ? "تعطيل" : "تفعيل"}
+                            </Button>
+                            <Button
+                              onClick={() => handleConfirmDeleteTeacher(t)}
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2 text-[11px] font-bold rounded-lg text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40"
+                              title="حذف المعلم بالكامل"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 ml-1 text-rose-500" />
+                              <span>حذف</span>
+                            </Button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

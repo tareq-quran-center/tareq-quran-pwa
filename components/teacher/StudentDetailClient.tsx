@@ -291,7 +291,10 @@ export function StudentDetailClient({
 
   // Calculate stats
   const totalLogsCount = logs.length;
-  const presentCount = attendance.filter((a) => a.status === "حاضر" || a.status === "متأخر").length;
+  const presentCount = attendance.filter((a) => {
+    const s = a.status as string;
+    return s === "حاضر" || s === "متأخر" || s === "present" || s === "late";
+  }).length;
   const attendancePercentage =
     attendance.length > 0 ? Math.round((presentCount / attendance.length) * 100) : 100;
 

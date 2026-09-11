@@ -107,10 +107,11 @@ export function TeacherDashboardView({
     let totalExcused = 0;
 
     filteredAttendance.forEach((a) => {
-      if (a.status === "حاضر") totalPresent++;
-      else if (a.status === "غائب") totalAbsent++;
-      else if (a.status === "متأخر") totalLate++;
-      else if (a.status === "مستأذن") totalExcused++;
+      const s = a.status as string;
+      if (s === "حاضر" || s === "present") totalPresent++;
+      else if (s === "غائب" || s === "absent") totalAbsent++;
+      else if (s === "متأخر" || s === "late") totalLate++;
+      else if (s === "مستأذن" || s === "excused") totalExcused++;
     });
 
     const totalRecorded = totalPresent + totalAbsent + totalLate + totalExcused;

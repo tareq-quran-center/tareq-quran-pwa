@@ -5,6 +5,12 @@ import { createClient } from "@/lib/supabase/server";
 import { attendanceSchema, AttendanceInput } from "@/lib/validations/log";
 import { AttendanceRecordRow, AttendanceRecordInsert } from "@/types";
 import { revalidatePath } from "next/cache";
+import {
+  STATUS_ARABIC_TO_ENGLISH,
+  STATUS_ENGLISH_TO_ARABIC,
+  normalizeAttendanceStatus,
+  normalizeAttendanceRecord,
+} from "@/lib/attendanceUtils";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -89,6 +95,26 @@ export async function recordAttendance(data: AttendanceInput): Promise<ActionRes
         continue;
       }
 
+      // 3. Status check constraint mismatch (Arabic vs English enum in database)
+      if (
+        error?.message?.includes("attendance_records_status_check") ||
+        error?.message?.includes("status_check") ||
+        error?.message?.includes("violates check constraint")
+      ) {
+        const currStatus = currentPayload.status;
+        if (currStatus && STATUS_ARABIC_TO_ENGLISH[currStatus]) {
+          const enStatus = STATUS_ARABIC_TO_ENGLISH[currStatus];
+          console.warn(`[recordAttendance] Status check constraint failed for '${currStatus}'. Switching to English '${enStatus}' and retrying...`);
+          currentPayload.status = enStatus;
+          continue;
+        } else if (currStatus && STATUS_ENGLISH_TO_ARABIC[currStatus]) {
+          const arStatus = STATUS_ENGLISH_TO_ARABIC[currStatus];
+          console.warn(`[recordAttendance] Status check constraint failed for '${currStatus}'. Switching to Arabic '${arStatus}' and retrying...`);
+          currentPayload.status = arStatus;
+          continue;
+        }
+      }
+
       break;
     }
 
@@ -99,12 +125,14 @@ export async function recordAttendance(data: AttendanceInput): Promise<ActionRes
       };
     }
 
+    const safeRecord = normalizeAttendanceRecord(record);
+
     revalidatePath(`/students/${validation.data.student_id}`);
     revalidatePath("/dashboard");
     revalidatePath("/students");
     return {
       success: true,
-      data: record,
+      data: safeRecord,
     };
   } catch (err) {
     return {
@@ -289,6 +317,21 @@ export async function recordBulkAttendance(records: AttendanceInput[]): Promise<
         continue;
       }
 
+      // 2. Status check constraint mismatch (Arabic vs English)
+      if (
+        error?.message?.includes("attendance_records_status_check") ||
+        error?.message?.includes("status_check") ||
+        error?.message?.includes("violates check constraint")
+      ) {
+        console.warn(`[recordBulkAttendance] Status check constraint failed. Translating statuses and retrying...`);
+        currentPayload = currentPayload.map((item) => {
+          const s = item.status;
+          const translated = STATUS_ARABIC_TO_ENGLISH[s] || STATUS_ENGLISH_TO_ARABIC[s] || s;
+          return { ...item, status: translated };
+        });
+        continue;
+      }
+
       break;
     }
 
@@ -353,7 +396,7 @@ export async function getStudentAttendance(
 
     return {
       success: true,
-      data: records || [],
+      data: (records || []).map(normalizeAttendanceRecord),
     };
   } catch (err) {
     return {
@@ -400,7 +443,7 @@ export async function getDailyAttendanceOverview(
 
     return {
       success: true,
-      data: records || [],
+      data: (records || []).map(normalizeAttendanceRecord),
     };
   } catch (err) {
     return {

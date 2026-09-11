@@ -41,12 +41,17 @@ export const GRADE_LABELS: Record<EvaluationGradeEnum, { label: string; color: s
   يحتاج_تحسين: { label: "يحتاج تحسين", color: "text-rose-700 bg-rose-50 border-rose-200" },
 };
 
-export const ATTENDANCE_LABELS: Record<AttendanceStatusEnum, { label: string; color: string }> = {
+export const ATTENDANCE_LABELS: Record<string, { label: string; color: string }> = {
   حاضر: { label: "حاضر", color: "text-burgundy-900 bg-burgundy-50 border-burgundy-300 dark:bg-burgundy-950/60 dark:text-islamicGold-300 dark:border-burgundy-800" },
   غائب: { label: "غائب", color: "text-rose-700 bg-rose-50 border-rose-200" },
   مستأذن: { label: "مستأذن", color: "text-amber-700 bg-amber-50 border-amber-200" },
   متأخر: { label: "متأخر", color: "text-orange-700 bg-orange-50 border-orange-200" },
   "لم يرصد": { label: "لم يرصد", color: "text-slate-600 bg-slate-100 border-slate-200" },
+  present: { label: "حاضر", color: "text-burgundy-900 bg-burgundy-50 border-burgundy-300 dark:bg-burgundy-950/60 dark:text-islamicGold-300 dark:border-burgundy-800" },
+  absent: { label: "غائب", color: "text-rose-700 bg-rose-50 border-rose-200" },
+  excused: { label: "مستأذن", color: "text-amber-700 bg-amber-50 border-amber-200" },
+  late: { label: "متأخر", color: "text-orange-700 bg-orange-50 border-orange-200" },
+  unrecorded: { label: "لم يرصد", color: "text-slate-600 bg-slate-100 border-slate-200" },
 };
 
 export const LOG_TYPE_LABELS: Record<LogTypeEnum, { label: string; color: string }> = {

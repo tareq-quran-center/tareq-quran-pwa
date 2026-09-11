@@ -8,7 +8,10 @@ const evaluationGradeEnum = z.enum(["ممتاز", "جيد_جدا", "جيد", "ي
   errorMap: () => ({ message: "يرجى اختيار تقييم صحيح" }),
 });
 
-const attendanceStatusEnum = z.enum(["حاضر", "غائب", "مستأذن", "متأخر", "لم يرصد"], {
+const attendanceStatusEnum = z.enum([
+  "حاضر", "غائب", "مستأذن", "متأخر", "لم يرصد",
+  "present", "absent", "late", "excused", "unrecorded",
+], {
   errorMap: () => ({ message: "يرجى اختيار حالة حضور صحيحة" }),
 });
 

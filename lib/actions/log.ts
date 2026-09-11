@@ -14,6 +14,16 @@ export interface ActionResult<T = void> {
   error?: string;
 }
 
+const GRADE_NUMERIC_MAP: Record<string, number> = {
+  "ممتاز": 5,
+  "جيد_جدا": 4,
+  "جيد جداً": 4,
+  "جيد": 3,
+  "مقبول": 2,
+  "يحتاج_تحسين": 2,
+  "ضعيف": 1,
+};
+
 /**
  * Creates a new memorization log for a student.
  * - Handles optional fields resiliently (never sends undefined).
@@ -46,6 +56,8 @@ export async function createMemorizationLog(data: MemorizationLogInput): Promise
     const surahObj = SURAHS.find((s) => s.name === validation.data.surah_start);
     const surahNum = surahObj ? surahObj.number : 1;
 
+    const numericRating = GRADE_NUMERIC_MAP[validation.data.grade] ?? 5;
+
     // Build base payload with dual naming compatibility
     const basePayload: Record<string, any> = {
       student_id: validation.data.student_id,
@@ -60,7 +72,7 @@ export async function createMemorizationLog(data: MemorizationLogInput): Promise
       from_verse: validation.data.aya_start,
       to_verse: validation.data.aya_end,
       grade: validation.data.grade,
-      rating: validation.data.grade,
+      rating: numericRating,
       date: new Date().toISOString().substring(0, 10),
     };
 
@@ -99,7 +111,8 @@ export async function createMemorizationLog(data: MemorizationLogInput): Promise
       }
 
       lastError = error;
-      // Match missing column from PostgREST error message
+
+      // 1. Match missing column from PostgREST error message
       const missingMatch = error?.message?.match(/Could not find the '([^']+)' column of 'memorization_logs'/i);
       if (missingMatch && missingMatch[1]) {
         const missingCol = missingMatch[1];
@@ -108,7 +121,25 @@ export async function createMemorizationLog(data: MemorizationLogInput): Promise
         continue;
       }
 
-      // Break on any non-column error
+      // 2. Handle integer syntax errors (e.g. if rating or another column encounters type mismatch)
+      if (error?.message?.includes("invalid input syntax for type integer")) {
+        if ("rating" in currentPayload) {
+          console.warn("[createMemorizationLog] Integer syntax error detected. Stripping 'rating' and retrying...");
+          delete currentPayload.rating;
+          continue;
+        }
+      }
+
+      // 3. Fallback: column does not exist on table relation
+      const colNotFoundMatch = error?.message?.match(/column "([^"]+)" of relation "memorization_logs" does not exist/i);
+      if (colNotFoundMatch && colNotFoundMatch[1]) {
+        const missingCol = colNotFoundMatch[1];
+        console.warn(`[createMemorizationLog] Column '${missingCol}' does not exist on table. Stripping and retrying...`);
+        delete currentPayload[missingCol];
+        continue;
+      }
+
+      // Break on any non-column / non-syntax error
       break;
     }
 
@@ -175,6 +206,8 @@ export async function updateMemorizationLog(
     const surahObj = SURAHS.find((s) => s.name === validation.data.surah_start);
     const surahNum = surahObj ? surahObj.number : 1;
 
+    const numericRating = GRADE_NUMERIC_MAP[validation.data.grade] ?? 5;
+
     const basePayload: Record<string, any> = {
       log_type: validation.data.log_type,
       type: validation.data.log_type,
@@ -186,7 +219,7 @@ export async function updateMemorizationLog(
       from_verse: validation.data.aya_start,
       to_verse: validation.data.aya_end,
       grade: validation.data.grade,
-      rating: validation.data.grade,
+      rating: numericRating,
     };
 
     if (validation.data.notes !== undefined) {
@@ -229,6 +262,8 @@ export async function updateMemorizationLog(
       }
 
       lastError = error;
+
+      // 1. Match missing column from PostgREST error message
       const missingMatch = error?.message?.match(/Could not find the '([^']+)' column of 'memorization_logs'/i);
       if (missingMatch && missingMatch[1]) {
         const missingCol = missingMatch[1];
@@ -237,6 +272,25 @@ export async function updateMemorizationLog(
         continue;
       }
 
+      // 2. Handle integer syntax errors (e.g. if rating encounters type mismatch)
+      if (error?.message?.includes("invalid input syntax for type integer")) {
+        if ("rating" in currentPayload) {
+          console.warn("[updateMemorizationLog] Integer syntax error detected. Stripping 'rating' and retrying...");
+          delete currentPayload.rating;
+          continue;
+        }
+      }
+
+      // 3. Fallback: column does not exist on table relation
+      const colNotFoundMatch = error?.message?.match(/column "([^"]+)" of relation "memorization_logs" does not exist/i);
+      if (colNotFoundMatch && colNotFoundMatch[1]) {
+        const missingCol = colNotFoundMatch[1];
+        console.warn(`[updateMemorizationLog] Column '${missingCol}' does not exist on table. Stripping and retrying...`);
+        delete currentPayload[missingCol];
+        continue;
+      }
+
+      // Break on any non-column / non-syntax error
       break;
     }
 

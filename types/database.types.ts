@@ -101,7 +101,7 @@ export type Database = {
           assistant_name: string | null;
           audio_url: string | null;
           notes: string | null;
-          rating: string | null;
+          rating: number | string | null;
           deleted_at: string | null;
           created_at: string;
         };
@@ -121,7 +121,7 @@ export type Database = {
           assistant_name?: string | null;
           audio_url?: string | null;
           notes?: string | null;
-          rating?: string | null;
+          rating?: number | string | null;
           deleted_at?: string | null;
           created_at?: string;
         };
@@ -141,7 +141,7 @@ export type Database = {
           assistant_name?: string | null;
           audio_url?: string | null;
           notes?: string | null;
-          rating?: string | null;
+          rating?: number | string | null;
           deleted_at?: string | null;
           created_at?: string;
         };

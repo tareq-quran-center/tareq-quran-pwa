@@ -55,13 +55,44 @@ UPDATE public.memorization_logs
 SET to_verse = aya_end
 WHERE to_verse IS NULL AND aya_end IS NOT NULL;
 
-UPDATE public.memorization_logs
-SET grade = rating
-WHERE grade IS NULL AND rating IS NOT NULL;
+-- Safely synchronize grade and rating depending on whether rating is integer or text
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'memorization_logs' AND column_name = 'rating' 
+    AND data_type IN ('integer', 'smallint', 'bigint', 'numeric')
+  ) THEN
+    UPDATE public.memorization_logs
+    SET rating = CASE 
+      WHEN grade IN ('ممتاز') THEN 5
+      WHEN grade IN ('جيد_جدا') THEN 4
+      WHEN grade IN ('جيد') THEN 3
+      ELSE 2
+    END
+    WHERE rating IS NULL AND grade IS NOT NULL;
 
-UPDATE public.memorization_logs
-SET rating = grade
-WHERE rating IS NULL AND grade IS NOT NULL;
+    UPDATE public.memorization_logs
+    SET grade = CASE 
+      WHEN rating >= 5 THEN 'ممتاز'
+      WHEN rating = 4 THEN 'جيد_جدا'
+      WHEN rating = 3 THEN 'جيد'
+      ELSE 'يحتاج_تحسين'
+    END
+    WHERE grade IS NULL AND rating IS NOT NULL;
+  ELSE
+    UPDATE public.memorization_logs
+    SET grade = rating::text
+    WHERE grade IS NULL AND rating IS NOT NULL;
+
+    UPDATE public.memorization_logs
+    SET rating = grade::text
+    WHERE rating IS NULL AND grade IS NOT NULL;
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  -- Non-fatal: continue migration if sync fails
+  RAISE NOTICE 'grade/rating sync skipped: %', SQLERRM;
+END $$;
 
 -- 3. Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_memorization_logs_student_id

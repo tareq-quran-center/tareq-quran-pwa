@@ -35,7 +35,22 @@ export function normalizeMemorizationLogRow(row: any): MemorizationLogRow {
 
   // Determine type & grade
   const logType = row.log_type || row.type || "جديد";
-  const grade = row.grade || row.rating || "ممتاز";
+  let grade = row.grade;
+  if (!grade && row.rating !== undefined && row.rating !== null) {
+    if (typeof row.rating === "number") {
+      const NUM_TO_GRADE: Record<number, string> = {
+        5: "ممتاز",
+        4: "جيد_جدا",
+        3: "جيد",
+        2: "يحتاج_تحسين",
+        1: "يحتاج_تحسين",
+      };
+      grade = NUM_TO_GRADE[row.rating] || "ممتاز";
+    } else {
+      grade = row.rating;
+    }
+  }
+  if (!grade) grade = "ممتاز";
 
   return {
     ...row,

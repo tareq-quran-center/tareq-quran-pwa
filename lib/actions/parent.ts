@@ -251,12 +251,42 @@ export async function getStudentProgressByToken(token: string): Promise<ParentPr
       }
     }
 
+    // ==========================================
+    // المرحلة الرابعة: استعلام الأبناء الإخوة المسجلين بنفس الهاتف (مستقل)
+    // ==========================================
+    let safeSiblings: Array<{ id: string; full_name: string; parent_token: string; avatar_url?: string | null }> = [];
+    const phoneToSearch = studentRecord.parent_phone || (studentRecord as any).phone;
+    if (phoneToSearch) {
+      try {
+        const { data: siblingList } = await supabase
+          .from("students")
+          .select("id, name, parent_token, avatar_url")
+          .eq("parent_phone", phoneToSearch)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false });
+
+        if (siblingList && siblingList.length > 1) {
+          safeSiblings = siblingList.map((st: any) => ({
+            id: st.id,
+            full_name: st.name || "طالب",
+            parent_token: st.parent_token,
+            avatar_url: st.avatar_url,
+          }));
+        }
+      } catch (err) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn("[getStudentProgressByToken] Siblings query warning (non-fatal):", err);
+        }
+      }
+    }
+
     return {
       success: true,
       student: {
         ...studentRecord,
         full_name: (studentRecord as any).name || (studentRecord as any).full_name || "طالب",
       },
+      siblings: safeSiblings,
       logs: safeLogs,
       attendance: safeAttendance,
     };

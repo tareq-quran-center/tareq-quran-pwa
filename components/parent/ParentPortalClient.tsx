@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import {
   BookOpen,
   Calendar,
@@ -11,6 +12,7 @@ import {
   ChevronUp,
   Sparkles,
   HeartHandshake,
+  Users,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ParentProgressPayload } from "@/types";
@@ -28,9 +30,10 @@ interface ParentPortalClientProps {
   student: NonNullable<ParentProgressPayload["student"]>;
   logs: NonNullable<ParentProgressPayload["logs"]>;
   attendance: NonNullable<ParentProgressPayload["attendance"]>;
+  siblings?: ParentProgressPayload["siblings"];
 }
 
-export function ParentPortalClient({ student, logs, attendance }: ParentPortalClientProps) {
+export function ParentPortalClient({ student, logs, attendance, siblings }: ParentPortalClientProps) {
   const [expandedLogIds, setExpandedLogIds] = useState<Set<string>>(new Set());
   const [expandedJuzId, setExpandedJuzId] = useState<number | null>(null);
   const [isAttendanceExpanded, setIsAttendanceExpanded] = useState(false);
@@ -118,6 +121,39 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8">
       <div className="max-w-3xl mx-auto space-y-6">
+        {/* Multi-Sibling Switcher Banner */}
+        {siblings && siblings.length > 1 && (
+          <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-2.5 animate-in fade-in duration-300">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300">
+              <Users className="w-4 h-4 text-burgundy-700 dark:text-burgundy-300" />
+              <span>الأبناء المسجلون في المركز بهذا الرقم ({siblings.length}):</span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {siblings.map((sib) => {
+                const isCurrent = sib.id === student.id || sib.parent_token === (student as any).parent_token;
+                return (
+                  <Link
+                    key={sib.id}
+                    href={`/parent/${sib.parent_token}`}
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-black transition-all ${
+                      isCurrent
+                        ? "bg-burgundy-900 text-white shadow-md ring-2 ring-islamicGold-400/50"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-burgundy-50 dark:hover:bg-burgundy-950/50 hover:text-burgundy-900 border border-slate-200/60 dark:border-slate-700"
+                    }`}
+                  >
+                    <span>{sib.full_name}</span>
+                    {isCurrent ? (
+                      <span className="w-2 h-2 rounded-full bg-islamicGold-400 animate-pulse" />
+                    ) : (
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">عرض الملف ←</span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Sleek Profile Hero Header */}
         <Card className="border-burgundy-800/40 bg-gradient-to-br from-burgundy-950 via-burgundy-900 to-burgundy-950 text-white shadow-2xl overflow-hidden relative rounded-3xl">
           {/* Background Decorative Radial Glows */}

@@ -6,16 +6,35 @@ import Link from "next/link";
 import { MosqueLogo } from "@/components/common/MosqueLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Sparkles, ArrowLeft } from "lucide-react";
+import { Search, Sparkles, ArrowLeft, Loader2, AlertCircle } from "lucide-react";
+import { getStudentTrackData } from "@/lib/actions/track";
 
 export default function TrackSearchPage() {
   const [code, setCode] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     const clean = code.trim();
-    if (clean) {
+    if (!clean || isLoading) return;
+
+    setIsLoading(true);
+    setErrorMsg(null);
+
+    try {
+      const data = await getStudentTrackData(clean);
+      if (data.success && data.student?.parent_token) {
+        router.push(`/parent/${data.student.parent_token}`);
+      } else {
+        setErrorMsg(
+          data.error || "لم يتم العثور على طالب مرتبط بهذا الرمز أو رقم الهاتف، يرجى التأكد من الرقم."
+        );
+        setIsLoading(false);
+      }
+    } catch {
+      // Fallback: server redirect via /track/[code]
       router.push(`/track/${encodeURIComponent(clean)}`);
     }
   };
@@ -52,25 +71,46 @@ export default function TrackSearchPage() {
           </p>
         </div>
 
+        {errorMsg && (
+          <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center gap-2.5 text-right animate-in fade-in">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+            <span className="flex-1">{errorMsg}</span>
+          </div>
+        )}
+
         <form onSubmit={handleSearch} className="space-y-3">
           <div className="relative">
             <Input
               type="text"
               placeholder="رمز المتابعة أو رقم الهاتف (مثال: 0791234567)"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="h-12 text-center text-sm font-bold rounded-2xl border-slate-300 dark:border-slate-700 focus:border-burgundy-800"
+              onChange={(e) => {
+                setCode(e.target.value);
+                if (errorMsg) setErrorMsg(null);
+              }}
+              disabled={isLoading}
+              className="h-12 text-center text-sm font-bold rounded-2xl border-slate-300 dark:border-slate-700 focus:border-burgundy-800 disabled:opacity-60"
               required
             />
           </div>
 
           <Button
             type="submit"
-            className="w-full h-12 bg-burgundy-900 hover:bg-burgundy-800 text-white font-black rounded-2xl gap-2 shadow-md"
+            disabled={isLoading}
+            className="w-full h-12 bg-burgundy-900 hover:bg-burgundy-800 text-white font-black rounded-2xl gap-2 shadow-md disabled:opacity-60"
           >
-            <Search className="w-4 h-4 text-islamicGold-300" />
-            <span>عرض تقرير الإنجاز</span>
-            <ArrowLeft className="w-4 h-4" />
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 text-islamicGold-300 animate-spin" />
+                <span>جاري البحث والتحميل...</span>
+              </>
+            ) : (
+              <>
+                <Search className="w-4 h-4 text-islamicGold-300" />
+                <span>عرض تقرير الإنجاز</span>
+                <ArrowLeft className="w-4 h-4" />
+              </>
+            )}
           </Button>
         </form>
       </main>

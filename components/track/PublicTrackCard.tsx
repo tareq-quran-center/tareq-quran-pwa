@@ -118,7 +118,7 @@ export function PublicTrackCard({ data }: PublicTrackCardProps) {
               return (
                 <Link
                   key={sib.id}
-                  href={`/track/${sib.parent_token}`}
+                  href={`/parent/${sib.parent_token}`}
                   className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all ${
                     isCurrent
                       ? "bg-burgundy-900 text-white shadow-md ring-2 ring-islamicGold-500"

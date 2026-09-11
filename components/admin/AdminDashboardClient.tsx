@@ -1124,11 +1124,11 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                       </td>
                       <td className="py-3 px-3 text-center">
                         <Link
-                          href={`/track/${s.parent_token}`}
+                          href={`/parent/${s.parent_token}`}
                           target="_blank"
                           className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-burgundy-50 hover:bg-burgundy-100 dark:bg-burgundy-950 dark:hover:bg-burgundy-900 text-burgundy-900 dark:text-burgundy-200 text-[11px] font-bold border border-burgundy-200/60 transition-colors"
                         >
-                          <span>عرض البطاقة</span>
+                          <span>معاينة البوابة</span>
                           <ExternalLink className="w-3 h-3" />
                         </Link>
                       </td>

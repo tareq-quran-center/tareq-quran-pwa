@@ -72,6 +72,12 @@ export interface ParentProgressPayload {
     image?: string | null;
     created_at: string;
   };
+  siblings?: Array<{
+    id: string;
+    full_name: string;
+    parent_token: string;
+    avatar_url?: string | null;
+  }>;
   logs?: Array<{
     id: string;
     log_type: LogTypeEnum;

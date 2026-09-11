@@ -53,7 +53,7 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
       if (student && student.parent_phone) {
         const { data: siblingList } = await supabase
           .from("students")
-          .select("id, name, full_name, parent_token, avatar_url")
+          .select("id, name, parent_token, avatar_url")
           .eq("parent_phone", student.parent_phone)
           .is("deleted_at", null)
           .order("created_at", { ascending: false });
@@ -61,7 +61,7 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
         if (siblingList && siblingList.length > 1) {
           siblings = siblingList.map((st: any) => ({
             id: st.id,
-            full_name: st.name || st.full_name || "طالب",
+            full_name: st.name || "طالب",
             parent_token: st.parent_token,
             avatar_url: st.avatar_url,
           }));

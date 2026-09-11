@@ -74,12 +74,17 @@ export default async function ParentPortalPage({ params }: ParentPortalPageProps
     );
   }
 
-  const { student, logs = [], attendance = [] } = payload;
+  const { student, logs = [], attendance = [], siblings = [] } = payload;
 
   return (
     <>
       <meta name="referrer" content="strict-origin-when-cross-origin" />
-      <ParentPortalClient student={student} logs={logs} attendance={attendance} />
+      <ParentPortalClient
+        student={student}
+        logs={logs}
+        attendance={attendance}
+        siblings={siblings}
+      />
     </>
   );
 }

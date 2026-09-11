@@ -13,7 +13,6 @@ import {
   createHalaqa,
   updateHalaqa,
   deleteHalaqa,
-  updateTeacher,
   toggleTeacherActive,
   createTeacher,
   deleteTeacher,
@@ -349,24 +348,6 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
       );
     } else {
       showToast(res.error || "فشل تغيير حالة المعلم");
-    }
-  };
-
-  const handleToggleAdminRole = async (id: string, currentRole: string) => {
-    if (currentUserId && id === currentUserId) {
-      showToast("لا يمكنك تغيير صلاحية حسابك الإداري الحالي");
-      return;
-    }
-    const nextRole = currentRole === "admin" ? "teacher" : "admin";
-    if (!confirm(`هل أنت متأكد من تغيير صلاحية المستخدم إلى ${nextRole === "admin" ? "مدير" : "معلم"}؟`)) return;
-    const res = await updateTeacher(id, { role: nextRole });
-    if (res.success) {
-      showToast("تم تعديل الصلاحية بنجاح");
-      setTeachers((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, role: nextRole } : t))
-      );
-    } else {
-      showToast(res.error || "فشل تعديل الصلاحية");
     }
   };
 
@@ -963,25 +944,15 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                         {t.phone || "—"}
                       </td>
                       <td className="py-3 px-3 text-center">
-                        {isCurrentAdmin ? (
-                          <span
-                            className="inline-block px-2.5 py-1 rounded-full text-[11px] font-black border bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-300 cursor-default select-none shadow-xs"
-                          >
-                            مدير مركز 👑
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => handleToggleAdminRole(t.id, t.role)}
-                            title="انقر لتغيير الصلاحية"
-                            className={`px-2.5 py-1 rounded-full text-[11px] font-black border transition-colors cursor-pointer ${
-                              t.role === "admin"
-                                ? "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-300"
-                                : "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300"
-                            }`}
-                          >
-                            {t.role === "admin" ? "مدير مركز 👑" : "معلم حلقة 📖"}
-                          </button>
-                        )}
+                        <span
+                          className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-black border cursor-default select-none transition-colors ${
+                            t.role === "admin"
+                              ? "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-300 shadow-xs"
+                              : "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300"
+                          }`}
+                        >
+                          {t.role === "admin" ? "مدير مركز 👑" : "معلم حلقة 📖"}
+                        </span>
                       </td>
                       <td className="py-3 px-3">
                         {t.halaqat && t.halaqat.length > 0 ? (

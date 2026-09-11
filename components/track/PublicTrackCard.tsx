@@ -106,6 +106,34 @@ export function PublicTrackCard({ data }: PublicTrackCardProps) {
 
   return (
     <div className="max-w-2xl mx-auto w-full space-y-6 animate-in fade-in duration-300">
+      {/* Sibling Switcher Banner (if multiple active students under this parent phone) */}
+      {data.siblings && data.siblings.length > 1 && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-sm space-y-2">
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
+            الأبناء المسجلون في المركز بهذا الرقم ({data.siblings.length}):
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {data.siblings.map((sib) => {
+              const isCurrent = sib.id === student.id;
+              return (
+                <Link
+                  key={sib.id}
+                  href={`/track/${sib.parent_token}`}
+                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all ${
+                    isCurrent
+                      ? "bg-burgundy-900 text-white shadow-md ring-2 ring-islamicGold-500"
+                      : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
+                  }`}
+                >
+                  <span>{sib.full_name}</span>
+                  {isCurrent && <span className="text-[10px] text-islamicGold-300 font-black">✓ المعروض</span>}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Center Identity Header Card */}
       <div className="relative overflow-hidden bg-gradient-to-br from-burgundy-950 via-burgundy-900 to-burgundy-950 text-white rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-islamicGold-500/40">
         <div className="absolute inset-0 bg-[radial-gradient(#C5A059_1.5px,transparent_1.5px)] [background-size:20px_20px] opacity-15 pointer-events-none" />

@@ -26,13 +26,15 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
   try {
     const supabase = createClient();
     let student: any = null;
+    let siblings: Array<{ id: string; full_name: string; parent_token: string; avatar_url?: string | null }> = [];
 
     if (uuidRegex.test(cleanCode)) {
-      // Lookup by parent_token or student id
+      // Lookup by parent_token or student id (only active students)
       const { data: byToken } = await supabase
         .from("students")
         .select("*")
         .eq("parent_token", cleanCode)
+        .is("deleted_at", null)
         .maybeSingle();
 
       if (byToken) {
@@ -42,27 +44,87 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
           .from("students")
           .select("*")
           .eq("id", cleanCode)
+          .is("deleted_at", null)
           .maybeSingle();
         student = byId;
+      }
+
+      // Discover siblings sharing same parent_phone if available
+      if (student && student.parent_phone) {
+        const { data: siblingList } = await supabase
+          .from("students")
+          .select("id, name, full_name, parent_token, avatar_url")
+          .eq("parent_phone", student.parent_phone)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false });
+
+        if (siblingList && siblingList.length > 1) {
+          siblings = siblingList.map((st: any) => ({
+            id: st.id,
+            full_name: st.name || st.full_name || "طالب",
+            parent_token: st.parent_token,
+            avatar_url: st.avatar_url,
+          }));
+        }
       }
     } else {
       // Lookup by phone number
       const phoneValidation = validateAndFormatJordanianPhone(cleanCode);
-      if (phoneValidation.isValid) {
-        const { data: byPhone } = await supabase
-          .from("students")
-          .select("*")
-          .in("parent_phone", phoneValidation.variations)
-          .limit(1);
+      const searchVariations: string[] = phoneValidation.isValid
+        ? [...phoneValidation.variations]
+        : [cleanCode];
 
-        if (byPhone && byPhone.length > 0) {
-          student = byPhone[0];
+      // Generate robust digit-based variations
+      const digitsOnly = cleanCode.replace(/\D/g, "");
+      if (digitsOnly) {
+        if (!searchVariations.includes(digitsOnly)) searchVariations.push(digitsOnly);
+        if (!digitsOnly.startsWith("0") && !searchVariations.includes(`0${digitsOnly}`)) {
+          searchVariations.push(`0${digitsOnly}`);
+        }
+        if (digitsOnly.startsWith("0") && !searchVariations.includes(digitsOnly.slice(1))) {
+          searchVariations.push(digitsOnly.slice(1));
+        }
+        const coreNum = digitsOnly.replace(/^(?:962|00962|0)/, "");
+        if (coreNum && !searchVariations.includes(`+962${coreNum}`)) {
+          searchVariations.push(`+962${coreNum}`);
         }
       }
-    }
 
-    if (student && (student as any).deleted_at) {
-      student = null;
+      // 1. Search in parent_phone (strictly filter out deleted students)
+      const { data: byParentPhone } = await supabase
+        .from("students")
+        .select("*")
+        .in("parent_phone", searchVariations)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+
+      if (byParentPhone && byParentPhone.length > 0) {
+        student = byParentPhone[0];
+        siblings = byParentPhone.map((st: any) => ({
+          id: st.id,
+          full_name: st.name || st.full_name || "طالب",
+          parent_token: st.parent_token,
+          avatar_url: st.avatar_url,
+        }));
+      } else {
+        // 2. Fallback: Search in student phone column
+        const { data: byPhoneCol } = await supabase
+          .from("students")
+          .select("*")
+          .in("phone", searchVariations)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false });
+
+        if (byPhoneCol && byPhoneCol.length > 0) {
+          student = byPhoneCol[0];
+          siblings = byPhoneCol.map((st: any) => ({
+            id: st.id,
+            full_name: st.name || st.full_name || "طالب",
+            parent_token: st.parent_token,
+            avatar_url: st.avatar_url,
+          }));
+        }
+      }
     }
 
     if (!student) {
@@ -161,7 +223,7 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
 
     // Calculate Attendance Rate
     const totalDays = safeAtt.length;
-    const presentDays = safeAtt.filter((a) => a.status === "حاضر").length;
+    const presentDays = safeAtt.filter((a) => a.status === "حاضر" || (a.status as string) === "present").length;
     const attendanceRate = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 100;
 
     // Find latest Hifz (جديد)
@@ -230,6 +292,7 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
         join_date: student.join_date,
         avatar_url: student.avatar_url,
       },
+      siblings: siblings.length > 1 ? siblings : undefined,
       halaqa,
       season,
       teacher,

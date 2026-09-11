@@ -44,14 +44,40 @@ export async function findStudentByPhoneOrCode(input: string): Promise<ParentSea
   try {
     const supabase = createClient();
 
-    const { data: rawStudents, error } = await supabase
+    const searchVariations = [...phoneValidation.variations];
+    const digitsOnly = input.replace(/\D/g, "");
+    if (digitsOnly && !searchVariations.includes(digitsOnly)) {
+      searchVariations.push(digitsOnly);
+    }
+    const coreNum = digitsOnly.replace(/^(?:962|00962|0)/, "");
+    if (coreNum) {
+      if (!searchVariations.includes(coreNum)) searchVariations.push(coreNum);
+      if (!searchVariations.includes(`0${coreNum}`)) searchVariations.push(`0${coreNum}`);
+      if (!searchVariations.includes(`+962${coreNum}`)) searchVariations.push(`+962${coreNum}`);
+    }
+
+    let { data: rawStudents, error } = await supabase
       .from("students")
       .select("*")
-      .in("parent_phone", phoneValidation.variations);
+      .in("parent_phone", searchVariations)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
 
-    const students = (rawStudents || []).filter((s) => !(s as any).deleted_at);
+    if (!rawStudents || rawStudents.length === 0) {
+      const { data: byPhoneCol } = await supabase
+        .from("students")
+        .select("*")
+        .in("phone", searchVariations)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+      if (byPhoneCol && byPhoneCol.length > 0) {
+        rawStudents = byPhoneCol;
+      }
+    }
 
-    if (error || !students || students.length === 0) {
+    const students = rawStudents || [];
+
+    if (error || students.length === 0) {
       return {
         success: false,
         error: "رقم الهاتف غير مسجل في كشوفات الحلقة، يرجى التواصل مع المعلم",

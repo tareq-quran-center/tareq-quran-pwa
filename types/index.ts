@@ -144,6 +144,12 @@ export interface StudentTrackData {
     join_date?: string | null;
     avatar_url?: string | null;
   };
+  siblings?: Array<{
+    id: string;
+    full_name: string;
+    parent_token: string;
+    avatar_url?: string | null;
+  }>;
   halaqa?: {
     id: string;
     name: string;

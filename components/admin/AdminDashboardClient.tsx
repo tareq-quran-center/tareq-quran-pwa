@@ -15,6 +15,8 @@ import {
   deleteHalaqa,
   updateTeacher,
   toggleTeacherActive,
+  createTeacher,
+  deleteTeacher,
   transferStudentHalaqa,
   claimAdminRole,
 } from "@/lib/actions/admin";
@@ -25,6 +27,7 @@ import {
   LayoutDashboard,
   BookOpen,
   Users,
+  UserPlus,
   GraduationCap,
   FileText,
   Plus,
@@ -44,6 +47,8 @@ import {
   RefreshCw,
   Sun,
   Snowflake,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 interface AdminDashboardClientProps {
@@ -147,6 +152,20 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
   const [reportType, setReportType] = useState<"center" | "halaqa" | "student">("center");
   const [selectedReportHalaqa, setSelectedReportHalaqa] = useState<string>(halaqat[0]?.id || "");
   const [selectedReportStudent, setSelectedReportStudent] = useState<string>(students[0]?.id || "");
+
+  // Teacher Management Modal States
+  const [isCreateTeacherModalOpen, setIsCreateTeacherModalOpen] = useState(false);
+  const [teacherFullName, setTeacherFullName] = useState("");
+  const [teacherEmail, setTeacherEmail] = useState("");
+  const [teacherPassword, setTeacherPassword] = useState("");
+  const [teacherPhone, setTeacherPhone] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmittingTeacher, setIsSubmittingTeacher] = useState(false);
+  const [teacherFormError, setTeacherFormError] = useState<string | null>(null);
+
+  // Delete Teacher Confirmation Dialog States
+  const [teacherToDelete, setTeacherToDelete] = useState<TeacherWithHalaqat | null>(null);
+  const [isDeletingTeacher, setIsDeletingTeacher] = useState(false);
 
   // Notification Toast
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -339,6 +358,89 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
       );
     } else {
       showToast(res.error || "فشل تعديل الصلاحية");
+    }
+  };
+
+  // ==========================================
+  // Handlers: Teacher Creation & Deletion
+  // ==========================================
+  const handleOpenCreateTeacherModal = () => {
+    setTeacherFullName("");
+    setTeacherEmail("");
+    setTeacherPassword("");
+    setTeacherPhone("");
+    setTeacherFormError(null);
+    setShowPassword(false);
+    setIsCreateTeacherModalOpen(true);
+  };
+
+  const handleExecuteCreateTeacher = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTeacherFormError(null);
+
+    if (!teacherFullName.trim()) {
+      setTeacherFormError("يرجى إدخال الاسم الرباعي للمعلم");
+      return;
+    }
+    if (!teacherEmail.trim() || !teacherEmail.includes("@")) {
+      setTeacherFormError("يرجى إدخال بريد إلكتروني صالح");
+      return;
+    }
+    if (!teacherPassword || teacherPassword.length < 6) {
+      setTeacherFormError("كلمة المرور يجب ألا تقل عن 6 خانات");
+      return;
+    }
+
+    setIsSubmittingTeacher(true);
+    try {
+      const res = await createTeacher({
+        full_name: teacherFullName.trim(),
+        email: teacherEmail.trim(),
+        password: teacherPassword,
+        phone: teacherPhone.trim() || undefined,
+      });
+
+      if (res.success && res.teacher) {
+        showToast("تم إنشاء حساب المعلم وإضافته بنجاح ✅");
+        setTeachers((prev) => [...prev, res.teacher]);
+        setIsCreateTeacherModalOpen(false);
+      } else {
+        setTeacherFormError(res.error || "فشل إضافة المعلم");
+      }
+    } catch {
+      setTeacherFormError("حدث خطأ غير متوقع أثناء إضافة المعلم");
+    } finally {
+      setIsSubmittingTeacher(false);
+    }
+  };
+
+  const handleConfirmDeleteTeacher = (teacher: TeacherWithHalaqat) => {
+    setTeacherToDelete(teacher);
+  };
+
+  const handleExecuteDeleteTeacher = async () => {
+    if (!teacherToDelete) return;
+    setIsDeletingTeacher(true);
+    try {
+      const res = await deleteTeacher(teacherToDelete.id);
+      if (res.success) {
+        showToast(`تم حذف المعلم (${teacherToDelete.full_name}) وفك ارتباطه بالحلقات بنجاح`);
+        setTeachers((prev) => prev.filter((t) => t.id !== teacherToDelete.id));
+        setHalaqat((prev) =>
+          prev.map((h) =>
+            h.teacher_id === teacherToDelete.id
+              ? { ...h, teacher_id: null, teacher_name: "غير معين", teacher_phone: null }
+              : h
+          )
+        );
+        setTeacherToDelete(null);
+      } else {
+        showToast(res.error || "فشل حذف المعلم");
+      }
+    } catch {
+      showToast("حدث خطأ أثناء حذف المعلم");
+    } finally {
+      setIsDeletingTeacher(false);
     }
   };
 
@@ -846,15 +948,22 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
       {/* ========================================================================= */}
       {activeTab === "teachers" && (
         <div className="space-y-4 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-black text-slate-900 dark:text-white">
                 إدارة المعلمين والمشرفين
               </h2>
               <p className="text-xs text-slate-500">
-                تفعيل الحسابات، تعيين الصلاحيات، واستعراض الحلقات المسندة
+                تفعيل الحسابات، تعيين الصلاحيات، وإضافة وحذف المعلمين
               </p>
             </div>
+            <Button
+              onClick={handleOpenCreateTeacherModal}
+              className="bg-burgundy-900 hover:bg-burgundy-800 text-white rounded-xl gap-1.5 text-xs font-bold self-start sm:self-auto shadow-sm"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>إضافة معلم جديد</span>
+            </Button>
           </div>
 
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs overflow-x-auto">
@@ -921,18 +1030,30 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                       </span>
                     </td>
                     <td className="py-3 px-3 text-center">
-                      <Button
-                        onClick={() => handleToggleTeacherActive(t.id, t.is_active)}
-                        size="sm"
-                        variant="ghost"
-                        className={`h-7 px-2 text-[11px] font-bold rounded-lg ${
-                          t.is_active
-                            ? "text-rose-600 hover:bg-rose-50"
-                            : "text-emerald-600 hover:bg-emerald-50"
-                        }`}
-                      >
-                        {t.is_active ? "تعطيل" : "تفعيل"}
-                      </Button>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          onClick={() => handleToggleTeacherActive(t.id, t.is_active)}
+                          size="sm"
+                          variant="ghost"
+                          className={`h-7 px-2 text-[11px] font-bold rounded-lg ${
+                            t.is_active
+                              ? "text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+                              : "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                          }`}
+                        >
+                          {t.is_active ? "تعطيل" : "تفعيل"}
+                        </Button>
+                        <Button
+                          onClick={() => handleConfirmDeleteTeacher(t)}
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-[11px] font-bold rounded-lg text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40"
+                          title="حذف المعلم بالكامل"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 ml-1 text-rose-500" />
+                          <span>حذف</span>
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1401,6 +1522,230 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                   {isSubmittingTransfer ? "جارٍ النقل..." : "تأكيد النقل"}
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: CREATE TEACHER */}
+      {/* ========================================================================= */}
+      {isCreateTeacherModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div
+            className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 max-w-md w-full border border-islamicGold-400/30 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200"
+            dir="rtl"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-burgundy-50 dark:bg-burgundy-950/80 border border-islamicGold-400/30 flex items-center justify-center text-burgundy-900 dark:text-burgundy-300">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white">
+                    إضافة معلم جديد للمركز
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    إنشاء حساب جديد في النظام وتعيينه بالدور &apos;معلم&apos;
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => !isSubmittingTeacher && setIsCreateTeacherModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            {teacherFormError && (
+              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs font-bold">
+                {teacherFormError}
+              </div>
+            )}
+
+            <form onSubmit={handleExecuteCreateTeacher} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  الاسم الرباعي للمعلم <span className="text-rose-500">*</span>
+                </label>
+                <Input
+                  type="text"
+                  placeholder="مثال: أحمد محمد علي القضاة"
+                  value={teacherFullName}
+                  onChange={(e) => setTeacherFullName(e.target.value)}
+                  className="rounded-xl border-slate-200 dark:border-slate-800 text-xs font-bold"
+                  required
+                  disabled={isSubmittingTeacher}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  البريد الإلكتروني <span className="text-rose-500">*</span>
+                </label>
+                <Input
+                  type="email"
+                  placeholder="teacher@tareq-center.com"
+                  value={teacherEmail}
+                  onChange={(e) => setTeacherEmail(e.target.value)}
+                  className="rounded-xl border-slate-200 dark:border-slate-800 text-xs font-bold"
+                  dir="ltr"
+                  required
+                  disabled={isSubmittingTeacher}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  كلمة المرور <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={teacherPassword}
+                    onChange={(e) => setTeacherPassword(e.target.value)}
+                    className="rounded-xl border-slate-200 dark:border-slate-800 text-xs font-bold pr-3 pl-10"
+                    dir="ltr"
+                    required
+                    disabled={isSubmittingTeacher}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400">لا تقل عن 6 خانات</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  رقم الهاتف (اختياري)
+                </label>
+                <Input
+                  type="tel"
+                  placeholder="0791234567"
+                  value={teacherPhone}
+                  onChange={(e) => setTeacherPhone(e.target.value)}
+                  className="rounded-xl border-slate-200 dark:border-slate-800 text-xs font-bold"
+                  dir="ltr"
+                  disabled={isSubmittingTeacher}
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCreateTeacherModalOpen(false)}
+                  className="rounded-xl text-xs font-bold"
+                  disabled={isSubmittingTeacher}
+                >
+                  إلغاء
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isSubmittingTeacher}
+                  className="bg-burgundy-900 hover:bg-burgundy-800 text-white rounded-xl text-xs font-bold gap-1.5"
+                >
+                  {isSubmittingTeacher ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>جاري الإضافة...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>إضافة المعلم</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: CONFIRM DELETE TEACHER */}
+      {/* ========================================================================= */}
+      {teacherToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div
+            className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 max-w-md w-full border border-rose-200 dark:border-rose-900/50 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200"
+            dir="rtl"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                  تأكيد حذف المعلم
+                </h3>
+                <p className="text-xs text-slate-500 font-bold">
+                  {teacherToDelete.full_name}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-200 text-xs leading-relaxed font-bold">
+              هل أنت متأكد من حذف المعلم؟ سيتم فك ارتباطه بالحلقات تلقائياً وحذف حسابه بالكامل من النظام.
+            </div>
+
+            {teacherToDelete.halaqat && teacherToDelete.halaqat.length > 0 && (
+              <div className="text-[11px] text-slate-500 space-y-1">
+                <span className="font-bold block">الحلقات التي سيتم فك ارتباطها:</span>
+                <div className="flex flex-wrap gap-1">
+                  {teacherToDelete.halaqat.map((h) => (
+                    <span
+                      key={h.id}
+                      className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold"
+                    >
+                      {h.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => !isDeletingTeacher && setTeacherToDelete(null)}
+                className="rounded-xl text-xs font-bold"
+                disabled={isDeletingTeacher}
+              >
+                تراجع
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleExecuteDeleteTeacher}
+                disabled={isDeletingTeacher}
+                className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold gap-1.5"
+              >
+                {isDeletingTeacher ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>جاري الحذف...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>تأكيد الحذف</span>
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </div>

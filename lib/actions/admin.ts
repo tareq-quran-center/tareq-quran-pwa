@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseJsClient } from "@supabase/supabase-js";
 import { getCurrentUserProfile } from "./auth";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
@@ -687,6 +688,180 @@ export async function claimAdminRole() {
     return { success: true };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "خطأ غير متوقع" };
+  }
+}
+
+/**
+ * Create a new teacher in Supabase Auth & public.profiles with role 'teacher'
+ */
+export async function createTeacher(data: {
+  full_name: string;
+  email: string;
+  password: string;
+  phone?: string | null;
+}) {
+  try {
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) {
+      return { success: false, error: "غير مصرح، هذه العملية تتطلب صلاحية مدير المركز" };
+    }
+
+    const fullName = data.full_name?.trim();
+    const email = data.email?.trim().toLowerCase();
+    const password = data.password;
+    const phone = data.phone?.trim() || null;
+
+    if (!fullName || fullName.length < 3) {
+      return { success: false, error: "يرجى كتابة الاسم الرباعي للمعلم بشكل صحيح" };
+    }
+    if (!email || !email.includes("@")) {
+      return { success: false, error: "يرجى إدخال بريد إلكتروني صالح" };
+    }
+    if (!password || password.length < 6) {
+      return { success: false, error: "كلمة المرور يجب ألا تقل عن 6 خانات" };
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return { success: false, error: "إعدادات الاتصال بقاعدة البيانات غير متوفرة" };
+    }
+
+    // Use isolated Supabase JS client to avoid touching current admin session cookies
+    const isolatedClient = createSupabaseJsClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    });
+
+    const { data: authData, error: authErr } = await isolatedClient.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          phone: phone,
+          role: "teacher",
+        },
+      },
+    });
+
+    if (authErr) {
+      const msg = authErr.message?.toLowerCase() || "";
+      if (authErr.status === 429 || msg.includes("rate limit")) {
+        return {
+          success: false,
+          error: "تم تجاوز حد إنشاء الحسابات في Supabase مؤقتاً، يرجى الانتظار قليلاً أو مراجعة إعدادات تأكيد البريد.",
+        };
+      }
+      return { success: false, error: "فشل إنشاء الحساب: " + authErr.message };
+    }
+
+    if (authData?.user?.identities && authData.user.identities.length === 0) {
+      return {
+        success: false,
+        error: "هذا البريد الإلكتروني مسجل بالفعل مسبقاً لمستخدم آخر.",
+      };
+    }
+
+    const newUserId = authData?.user?.id;
+    if (!newUserId) {
+      return { success: false, error: "تعذر الحصول على معرف المستخدم الجديد" };
+    }
+
+    // Ensure/update profile record in public.profiles with teacher role
+    const supabase = createClient();
+    const { error: profileErr } = await supabase.from("profiles").upsert({
+      id: newUserId,
+      full_name: fullName,
+      phone: phone,
+      role: "teacher",
+      is_active: true,
+    });
+
+    if (profileErr) {
+      console.warn("Profile upsert notice:", profileErr.message);
+    }
+
+    revalidatePath("/admin");
+    return {
+      success: true,
+      teacher: {
+        id: newUserId,
+        full_name: fullName,
+        phone: phone,
+        role: "teacher",
+        is_active: true,
+        created_at: new Date().toISOString(),
+        halaqat: [],
+        students_count: 0,
+      } as TeacherWithHalaqat,
+    };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "خطأ غير متوقع أثناء إضافة المعلم" };
+  }
+}
+
+/**
+ * Delete teacher completely from public.profiles, unlinking their halaqat
+ */
+export async function deleteTeacher(teacherId: string) {
+  try {
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) {
+      return { success: false, error: "غير مصرح، هذه العملية تتطلب صلاحية مدير المركز" };
+    }
+
+    if (auth.user?.id === teacherId) {
+      return { success: false, error: "لا يمكنك حذف حسابك الإداري الحالي" };
+    }
+
+    const supabase = createClient();
+
+    // 1. Unlink teacher from any circles/halaqat
+    const { error: circleErr } = await supabase
+      .from("circles")
+      .update({ teacher_id: null })
+      .eq("teacher_id", teacherId);
+    if (circleErr) {
+      console.warn("Unlink circles warning:", circleErr.message);
+    }
+
+    // 2. Remove from group_members
+    const { error: gmErr } = await supabase
+      .from("group_members")
+      .delete()
+      .eq("user_id", teacherId);
+    if (gmErr) {
+      console.warn("Remove group_members warning:", gmErr.message);
+    }
+
+    // 3. Reassign any students linked to this teacher to the current admin to prevent cascade deletion
+    const { error: stdErr } = await supabase
+      .from("students")
+      .update({ teacher_id: auth.user.id })
+      .eq("teacher_id", teacherId);
+    if (stdErr) {
+      console.warn("Reassign students warning:", stdErr.message);
+    }
+
+    // 4. Delete profile from public.profiles
+    const { error: delErr } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("id", teacherId);
+
+    if (delErr) {
+      return { success: false, error: "فشل حذف المعلم من قاعدة البيانات: " + delErr.message };
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "خطأ غير متوقع أثناء حذف المعلم" };
   }
 }
 

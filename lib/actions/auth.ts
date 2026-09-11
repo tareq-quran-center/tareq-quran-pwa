@@ -64,64 +64,11 @@ export async function loginTeacher(data: LoginInput): Promise<ActionResult> {
   }
 }
 
-export async function signupTeacher(data: SignupInput): Promise<ActionResult<{ requiresConfirmation: boolean }>> {
-  const validation = signupSchema.safeParse(data);
-  if (!validation.success) {
-    return {
-      success: false,
-      error: validation.error.errors[0]?.message || "بيانات الإدخال غير صحيحة",
-    };
-  }
-
-  try {
-    const supabase = createClient();
-    const { data: authData, error } = await supabase.auth.signUp({
-      email: validation.data.email,
-      password: validation.data.password,
-      options: {
-        data: {
-          full_name: validation.data.full_name,
-          phone: validation.data.phone || null,
-        },
-      },
-    });
-
-    if (error) {
-      const errMsg = error.message?.toLowerCase() || "";
-      if (error.status === 429 || errMsg.includes("rate limit")) {
-        return {
-          success: false,
-          error:
-            "تم تجاوز حد إرسال الرسائل في Supabase. يُرجى تعطيل 'Confirm email' من إعدادات Supabase، أو الانتظار قليلاً.",
-        };
-      }
-      return {
-        success: false,
-        error: error.message || "فشل إنشاء الحساب، قد يكون البريد الإلكتروني مستخدماً بالفعل",
-      };
-    }
-
-    // In Supabase with email enumeration protection, existing emails return empty identities array
-    if (authData?.user?.identities && authData.user.identities.length === 0) {
-      return {
-        success: false,
-        error: "هذا البريد الإلكتروني مسجل بالفعل. يرجى الانتقال إلى تبويب 'تسجيل الدخول'.",
-      };
-    }
-
-    const requiresConfirmation = !authData?.session;
-
-    revalidatePath("/", "layout");
-    return {
-      success: true,
-      data: { requiresConfirmation },
-    };
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : "حدث خطأ غير متوقع أثناء تسجيل الحساب",
-    };
-  }
+export async function signupTeacher(_data: SignupInput): Promise<ActionResult<{ requiresConfirmation: boolean }>> {
+  return {
+    success: false,
+    error: "تم إغلاق التسجيل الذاتي. بيانات الدخول تُمنح فقط من خلال إدارة مركز طارق القرآني.",
+  };
 }
 
 export async function logoutTeacher(): Promise<void> {

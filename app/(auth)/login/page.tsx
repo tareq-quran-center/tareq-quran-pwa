@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LogIn, UserPlus, AlertCircle, CheckCircle, Facebook } from "lucide-react";
-import { loginSchema, signupSchema, LoginInput, SignupInput } from "@/lib/validations/auth";
-import { loginTeacher, signupTeacher } from "@/lib/actions/auth";
+import { LogIn, AlertCircle, CheckCircle, Facebook, Info } from "lucide-react";
+import { loginSchema, LoginInput } from "@/lib/validations/auth";
+import { loginTeacher } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,6 @@ import { useRouter } from "next/navigation";
 import { MosqueLogo } from "@/components/common/MosqueLogo";
 
 export default function LoginPage() {
-  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,12 +23,6 @@ export default function LoginPage() {
   const loginForm = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
-  });
-
-  // Signup Form
-  const signupForm = useForm<SignupInput>({
-    resolver: zodResolver(signupSchema),
-    defaultValues: { full_name: "", email: "", password: "", phone: "" },
   });
 
   const onLoginSubmit = async (data: LoginInput) => {
@@ -50,33 +43,6 @@ export default function LoginPage() {
     }
   };
 
-  const onSignupSubmit = async (data: SignupInput) => {
-    setIsLoading(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    const res = await signupTeacher(data);
-    if (res.success) {
-      if (res.data?.requiresConfirmation) {
-        setSuccessMessage(
-          "تم إنشاء الحساب بنجاح! يتطلب حسابك تأكيد البريد الإلكتروني. يرجى فتح بريدك الإلكتروني (وتفقد مجلد الرسائل غير المرغوب فيها Spam) والضغط على رابط التفعيل ثم تسجيل الدخول."
-        );
-        loginForm.setValue("email", data.email);
-        setActiveTab("login");
-        setIsLoading(false);
-      } else {
-        setSuccessMessage("تم إنشاء الحساب بنجاح! جاري التوجيه إلى اللوحة...");
-        setTimeout(() => {
-          router.push("/dashboard");
-          router.refresh();
-        }, 800);
-      }
-    } else {
-      setErrorMessage(res.error || "فشل إنشاء الحساب");
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="flex-1 flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950">
       <Card className="w-full max-w-md shadow-xl border-slate-200 dark:border-slate-800">
@@ -93,45 +59,11 @@ export default function LoginPage() {
             />
           </div>
           <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-50">
-            بوابة المعلم
+            تسجيل الدخول
           </CardTitle>
           <CardDescription className="text-slate-500 font-medium">
-            متابع الحفظ • مركز طارق القرآني
+            بوابة المعلمين والإدارة • مركز طارق بن زياد القرآني
           </CardDescription>
-
-          {/* Tabs Switcher */}
-          <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl mt-4">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab("login");
-                setErrorMessage(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-                activeTab === "login"
-                  ? "bg-white dark:bg-slate-800 text-burgundy-900 dark:text-burgundy-300 shadow-sm font-black"
-                  : "text-slate-500 hover:text-slate-900"
-              }`}
-            >
-              تسجيل الدخول
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab("signup");
-                setErrorMessage(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-                activeTab === "signup"
-                  ? "bg-white dark:bg-slate-800 text-burgundy-900 dark:text-burgundy-300 shadow-sm font-black"
-                  : "text-slate-500 hover:text-slate-900"
-              }`}
-            >
-              حساب جديد
-            </button>
-          </div>
         </CardHeader>
 
         <CardContent>
@@ -149,111 +81,54 @@ export default function LoginPage() {
             </div>
           )}
 
-          {activeTab === "login" ? (
-            /* Login Form */
-            <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4" noValidate>
-              <div className="space-y-2">
-                <Label htmlFor="login-email">البريد الإلكتروني</Label>
-                <Input
-                  id="login-email"
-                  type="email"
-                  placeholder="teacher@example.com"
-                  dir="ltr"
-                  className="text-left"
-                  {...loginForm.register("email")}
-                />
-                {loginForm.formState.errors.email && (
-                  <p className="text-xs text-rose-600 mt-1">{loginForm.formState.errors.email.message}</p>
-                )}
-              </div>
+          <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4" noValidate>
+            <div className="space-y-2">
+              <Label htmlFor="login-email">البريد الإلكتروني</Label>
+              <Input
+                id="login-email"
+                type="email"
+                placeholder="teacher@example.com"
+                dir="ltr"
+                className="text-left"
+                {...loginForm.register("email")}
+              />
+              {loginForm.formState.errors.email && (
+                <p className="text-xs text-rose-600 mt-1">{loginForm.formState.errors.email.message}</p>
+              )}
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="login-password">كلمة المرور</Label>
-                <Input
-                  id="login-password"
-                  type="password"
-                  placeholder="••••••••"
-                  dir="ltr"
-                  className="text-left"
-                  {...loginForm.register("password")}
-                />
-                {loginForm.formState.errors.password && (
-                  <p className="text-xs text-rose-600 mt-1">{loginForm.formState.errors.password.message}</p>
-                )}
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="login-password">كلمة المرور</Label>
+              <Input
+                id="login-password"
+                type="password"
+                placeholder="••••••••"
+                dir="ltr"
+                className="text-left"
+                {...loginForm.register("password")}
+              />
+              {loginForm.formState.errors.password && (
+                <p className="text-xs text-rose-600 mt-1">{loginForm.formState.errors.password.message}</p>
+              )}
+            </div>
 
-              <Button type="submit" className="w-full h-11 gap-2 text-base mt-2" disabled={isLoading}>
-                <LogIn className="w-5 h-5" />
-                <span>{isLoading ? "جاري التحقق..." : "دخول"}</span>
-              </Button>
-            </form>
-          ) : (
-            /* Signup Form */
-            <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="space-y-4" noValidate>
-              <div className="space-y-2">
-                <Label htmlFor="signup-name">الاسم الكامل للمعلم</Label>
-                <Input
-                  id="signup-name"
-                  type="text"
-                  placeholder="مثال: الشيخ أحمد علي"
-                  {...signupForm.register("full_name")}
-                />
-                {signupForm.formState.errors.full_name && (
-                  <p className="text-xs text-rose-600 mt-1">{signupForm.formState.errors.full_name.message}</p>
-                )}
-              </div>
+            <Button
+              type="submit"
+              className="w-full h-11 gap-2 text-base mt-2 bg-burgundy-900 hover:bg-burgundy-800 text-white font-bold rounded-xl shadow-md"
+              disabled={isLoading}
+            >
+              <LogIn className="w-5 h-5" />
+              <span>{isLoading ? "جاري التحقق..." : "تسجيل الدخول"}</span>
+            </Button>
+          </form>
 
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">البريد الإلكتروني</Label>
-                <Input
-                  id="signup-email"
-                  type="email"
-                  placeholder="teacher@example.com"
-                  dir="ltr"
-                  className="text-left"
-                  {...signupForm.register("email")}
-                />
-                {signupForm.formState.errors.email && (
-                  <p className="text-xs text-rose-600 mt-1">{signupForm.formState.errors.email.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">كلمة المرور</Label>
-                <Input
-                  id="signup-password"
-                  type="password"
-                  placeholder="••••••••"
-                  dir="ltr"
-                  className="text-left"
-                  {...signupForm.register("password")}
-                />
-                {signupForm.formState.errors.password && (
-                  <p className="text-xs text-rose-600 mt-1">{signupForm.formState.errors.password.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signup-phone">رقم الجوال (اختياري)</Label>
-                <Input
-                  id="signup-phone"
-                  type="tel"
-                  placeholder="0791234567"
-                  dir="ltr"
-                  className="text-left"
-                  {...signupForm.register("phone")}
-                />
-                {signupForm.formState.errors.phone && (
-                  <p className="text-xs text-rose-600 mt-1">{signupForm.formState.errors.phone.message}</p>
-                )}
-              </div>
-
-              <Button type="submit" className="w-full h-11 gap-2 text-base mt-2" disabled={isLoading}>
-                <UserPlus className="w-5 h-5" />
-                <span>{isLoading ? "جاري إنشاء الحساب..." : "إنشاء حساب"}</span>
-              </Button>
-            </form>
-          )}
+          {/* Registration Notice */}
+          <div className="mt-5 p-3.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-900/50 text-amber-900 dark:text-amber-300 text-xs flex items-center gap-2.5 text-right leading-relaxed font-medium">
+            <Info className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span>
+              بيانات الدخول تُمنح فقط من خلال إدارة المركز. للتسجيل يُرجى مراجعة إدارة مركز طارق القرآني.
+            </span>
+          </div>
 
           {/* Official Center Facebook Link */}
           <div className="mt-6 pt-4 border-t border-slate-200/80 dark:border-slate-800 flex flex-col items-center gap-2">

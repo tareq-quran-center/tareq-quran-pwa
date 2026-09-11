@@ -9,14 +9,20 @@ import { useNetworkSync } from "@/lib/hooks/useNetworkSync";
 import { PWAInstallButton } from "@/components/common/PWAInstallButton";
 import { MosqueLogo } from "@/components/common/MosqueLogo";
 
-export function Header() {
+export interface HeaderProps {
+  isAdmin?: boolean;
+}
+
+export function Header({ isAdmin = false }: HeaderProps) {
   const pathname = usePathname();
   const { isOnline, pendingCount, isSyncing } = useNetworkSync();
 
   const navItems = [
     { href: "/dashboard", label: "اللوحة الرئيسية", icon: LayoutDashboard },
     { href: "/students", label: "قائمة الطلاب", icon: Users },
-    { href: "/admin", label: "لوحة المدير", icon: ShieldCheck },
+    ...(isAdmin
+      ? [{ href: "/admin", label: "لوحة المدير", icon: ShieldCheck }]
+      : []),
   ];
 
   return (
@@ -88,7 +94,7 @@ export function Header() {
           ) : (
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-burgundy-50 dark:bg-slate-800 border border-burgundy-100 dark:border-slate-700 text-xs font-bold text-burgundy-900 dark:text-burgundy-300">
               <span className="w-2 h-2 rounded-full bg-islamicGold-500 animate-pulse"></span>
-              <span>{pathname?.startsWith("/admin") ? "مدير المركز 👑" : "معلم الحلقة 📖"}</span>
+              <span>{isAdmin ? "مدير المركز 👑" : "معلم الحلقة 📖"}</span>
             </div>
           )}
 

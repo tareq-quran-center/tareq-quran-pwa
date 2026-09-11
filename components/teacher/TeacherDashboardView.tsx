@@ -24,6 +24,7 @@ interface TeacherDashboardViewProps {
   stats?: TeacherReportStats;
   seasons?: SeasonRow[];
   circles?: CircleRow[];
+  isAdmin?: boolean;
 }
 
 export function TeacherDashboardView({
@@ -33,6 +34,7 @@ export function TeacherDashboardView({
   stats: initialStats,
   seasons = FALLBACK_SEASONS,
   circles = [],
+  isAdmin = false,
 }: TeacherDashboardViewProps) {
   // 1. Determine teacher's distinct seasons based on their circles and students
   const teacherSeasonIds = useMemo(() => {
@@ -137,7 +139,7 @@ export function TeacherDashboardView({
   return (
     <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300">
       {/* Teacher Hero Banner */}
-      <TeacherDashboardClient />
+      <TeacherDashboardClient isAdmin={isAdmin} />
 
       {/* Season Selector with persistence & teacher auto-selection */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">

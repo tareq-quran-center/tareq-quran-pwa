@@ -1,10 +1,9 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
-export function TeacherDashboardClient() {
+export function TeacherDashboardClient({ isAdmin = false }: { isAdmin?: boolean }) {
   return (
     <>
-
       {/* Compact Hero Banner */}
       <div className="hero-banner no-print print:hidden relative overflow-hidden bg-gradient-to-br from-burgundy-950 via-burgundy-900 to-burgundy-950 text-white p-5 sm:p-6 rounded-2xl shadow-lg border border-islamicGold-400/30">
         <div className="absolute inset-0 bg-[radial-gradient(#C5A059_1px,transparent_1px)] [background-size:16px_16px] opacity-15 pointer-events-none" />
@@ -23,15 +22,17 @@ export function TeacherDashboardClient() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <a
-              href="/admin"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-islamicGold-400/50 text-white text-xs font-bold transition-all shadow-xs backdrop-blur-xs"
-            >
-              <span>لوحة المدير</span>
-              <span className="text-islamicGold-300">👑</span>
-            </a>
-          </div>
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              <a
+                href="/admin"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-islamicGold-400/50 text-white text-xs font-bold transition-all shadow-xs backdrop-blur-xs"
+              >
+                <span>لوحة المدير</span>
+                <span className="text-islamicGold-300">👑</span>
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </>

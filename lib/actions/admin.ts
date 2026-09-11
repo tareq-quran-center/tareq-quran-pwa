@@ -35,14 +35,17 @@ export interface AdminDataResult {
 }
 
 /**
- * Helper: ensure caller is authenticated and admin (or first user setup)
+ * Helper: ensure caller is authenticated and possesses admin role
  */
 async function checkAdminAuth() {
   const { user, profile, isAdmin } = await getCurrentUserProfile();
   if (!user) {
     return { authorized: false, user: null, profile: null, isAdmin: false, error: "AUTH_REQUIRED" };
   }
-  return { authorized: true, user, profile, isAdmin };
+  if (!isAdmin || profile?.role !== "admin") {
+    return { authorized: false, user, profile, isAdmin: false, error: "ADMIN_REQUIRED" };
+  }
+  return { authorized: true, user, profile, isAdmin: true };
 }
 
 /**
@@ -52,7 +55,7 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
   try {
     const auth = await checkAdminAuth();
     if (!auth.authorized) {
-      return { success: false, error: "AUTH_REQUIRED" };
+      return { success: false, error: auth.error || "AUTH_REQUIRED" };
     }
 
     const supabase = createClient();
@@ -653,38 +656,6 @@ export async function transferStudentHalaqa(
 
     revalidatePath("/admin");
     revalidatePath("/students");
-    return { success: true };
-  } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : "خطأ غير متوقع" };
-  }
-}
-
-/**
- * Allows the current logged-in center director to claim/confirm the Admin role
- */
-export async function claimAdminRole() {
-  try {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return { success: false, error: "غير مصرح، يرجى تسجيل الدخول أولاً" };
-    }
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({ role: "admin", is_active: true })
-      .eq("id", user.id);
-
-    if (error) {
-      return { success: false, error: "فشل تعيين الصلاحية: " + error.message };
-    }
-
-    revalidatePath("/admin");
-    revalidatePath("/dashboard");
-    revalidatePath("/", "layout");
     return { success: true };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "خطأ غير متوقع" };

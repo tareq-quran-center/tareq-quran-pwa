@@ -1,3 +1,4 @@
+import { getCurrentUserProfile } from "@/lib/actions/auth";
 import { getAdminCenterData } from "@/lib/actions/admin";
 import { AdminDashboardClient } from "@/components/admin/AdminDashboardClient";
 import { AlertCircle } from "lucide-react";
@@ -9,11 +10,25 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AdminPage() {
+  const { user, profile, isAdmin } = await getCurrentUserProfile();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  // Server Route Guard: Only accounts with role === 'admin' can access /admin
+  if (!isAdmin || profile?.role !== "admin") {
+    redirect("/dashboard");
+  }
+
   const data = await getAdminCenterData();
 
   if (!data.success) {
-    if (data.error === "AUTH_REQUIRED" || data.error?.includes("تسجيل الدخول") || data.error?.includes("غير مصرح")) {
+    if (data.error === "AUTH_REQUIRED" || data.error?.includes("تسجيل الدخول")) {
       redirect("/login");
+    }
+    if (data.error === "ADMIN_REQUIRED") {
+      redirect("/dashboard");
     }
 
     return (

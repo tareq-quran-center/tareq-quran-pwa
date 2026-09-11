@@ -4,7 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Users, ShieldCheck } from "lucide-react";
 
-export function BottomNav() {
+export interface BottomNavProps {
+  isAdmin?: boolean;
+}
+
+export function BottomNav({ isAdmin = false }: BottomNavProps) {
   const pathname = usePathname();
 
   const navItems = [
@@ -18,11 +22,15 @@ export function BottomNav() {
       label: "الطلاب",
       icon: Users,
     },
-    {
-      href: "/admin",
-      label: "المدير",
-      icon: ShieldCheck,
-    },
+    ...(isAdmin
+      ? [
+          {
+            href: "/admin",
+            label: "المدير",
+            icon: ShieldCheck,
+          },
+        ]
+      : []),
   ];
 
   return (

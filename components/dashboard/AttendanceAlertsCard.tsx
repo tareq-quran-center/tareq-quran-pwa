@@ -209,7 +209,7 @@ export function AttendanceAlertsCard({
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2.5">
                             <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-200 flex items-center justify-center font-black text-sm shrink-0">
-                              {alert.studentName.charAt(0)}
+                              {(alert?.studentName || "ط").trim().charAt(0) || "📖"}
                             </div>
                             <div>
                               <Link
@@ -324,7 +324,7 @@ export function AttendanceAlertsCard({
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2.5">
                           <div className="w-9 h-9 rounded-xl bg-burgundy-100 dark:bg-burgundy-950/80 text-burgundy-900 dark:text-burgundy-200 flex items-center justify-center font-black text-sm shrink-0">
-                            {alert.studentName.charAt(0)}
+                            {(alert?.studentName || "ط").trim().charAt(0) || "📖"}
                           </div>
                           <div>
                             <Link

@@ -171,3 +171,29 @@ export const QURAN_SURAHS: Array<{ number: number; name: string; ayahs: number }
   { number: 113, name: "الفلق", ayahs: 5 },
   { number: 114, name: "الناس", ayahs: 6 },
 ];
+
+/**
+ * Safely extracts the display name of a student with fallback
+ */
+export function getStudentDisplayName(
+  student?: { full_name?: string | null; name?: string | null } | null
+): string {
+  if (!student) return "طالب";
+  return student.full_name?.trim() || student.name?.trim() || "طالب";
+}
+
+/**
+ * Safely extracts the initial avatar letter from a name or student object
+ */
+export function getStudentInitial(
+  nameOrStudent?: string | { full_name?: string | null; name?: string | null } | null
+): string {
+  if (!nameOrStudent) return "📖";
+  const name =
+    typeof nameOrStudent === "string"
+      ? nameOrStudent
+      : getStudentDisplayName(nameOrStudent);
+  const trimmed = name.trim();
+  return trimmed.length > 0 ? trimmed.charAt(0) : "📖";
+}
+

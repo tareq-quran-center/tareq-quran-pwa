@@ -309,14 +309,16 @@ export function TopStudentsModal({
                         {item.student.avatar_url ? (
                           <img
                             src={item.student.avatar_url}
-                            alt={item.student.full_name}
+                            alt={item.student?.full_name || (item.student as any)?.name || "طالب"}
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).style.display = "none";
                             }}
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <span className="select-none">{item.student.full_name.charAt(0)}</span>
+                          <span className="select-none">
+                            {(item.student?.full_name || (item.student as any)?.name || "ط").trim().charAt(0) || "📖"}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -324,7 +326,7 @@ export function TopStudentsModal({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-black text-sm text-slate-900 dark:text-slate-50">
-                          {item.student.full_name}
+                          {item.student?.full_name || (item.student as any)?.name || "طالب"}
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">

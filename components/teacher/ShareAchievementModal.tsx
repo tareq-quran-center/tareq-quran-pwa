@@ -169,19 +169,19 @@ export function ShareAchievementModal({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={student.avatar_url}
-                      alt={student.full_name}
+                      alt={student?.full_name || (student as any)?.name || "طالب"}
                       className="w-full h-full object-cover rounded-2xl"
                       onError={(e) => {
                         (e.currentTarget as HTMLImageElement).style.display = "none";
                       }}
                     />
                   ) : (
-                    <span>{student.full_name.charAt(0)}</span>
+                    <span>{(student?.full_name || (student as any)?.name || "ط").trim().charAt(0) || "📖"}</span>
                   )}
                 </div>
 
                 <div className="space-y-0.5">
-                  <h3 className="text-xl font-black tracking-tight">{student.full_name}</h3>
+                  <h3 className="text-xl font-black tracking-tight">{student?.full_name || (student as any)?.name || "طالب"}</h3>
                   <p className="text-xs text-amber-200/90 font-bold">
                     {student.academic_grade || "طالب حلقة القرآن"}
                   </p>

@@ -109,8 +109,11 @@ export async function getStudents(): Promise<ActionResult<StudentRow[]>> {
         }
         const stats = logsMap.get(student.id) || { totalPages: 0, count: 0 };
         const totalPages = Number(stats.totalPages.toFixed(2));
+        const sName = (student as any).name || student.full_name || "طالب";
         return {
           ...student,
+          full_name: sName,
+          name: sName,
           parent_token: token,
           total_pages_memorized: totalPages,
           total_recitations_count: stats.count,
@@ -435,9 +438,16 @@ export async function restoreStudent(id: string): Promise<ActionResult<StudentRo
       revalidatePath(`/parent/${restoredStudent.parent_token}`);
     }
 
+    const sName = (restoredStudent as any).name || restoredStudent.full_name || "طالب";
+    const normalizedRestored = {
+      ...restoredStudent,
+      full_name: sName,
+      name: sName,
+    };
+
     return {
       success: true,
-      data: restoredStudent,
+      data: normalizedRestored as StudentRow,
     };
   } catch (err) {
     return {
@@ -504,8 +514,11 @@ export async function getDeletedStudents(): Promise<ActionResult<StudentRow[]>> 
     const safeStudents: StudentRow[] = students.map((student) => {
       const stats = logsMap.get(student.id) || { totalPages: 0, count: 0 };
       const totalPages = Number(stats.totalPages.toFixed(2));
+      const sName = (student as any).name || student.full_name || "طالب";
       return {
         ...student,
+        full_name: sName,
+        name: sName,
         total_pages_memorized: totalPages,
         total_recitations_count: stats.count,
         total_pages_count: totalPages,
@@ -1015,9 +1028,16 @@ export async function markStudentContacted(studentId: string): Promise<ActionRes
     revalidatePath("/dashboard");
     revalidatePath("/students");
 
+    const sName = (data as any).name || data.full_name || "طالب";
+    const normalizedData = {
+      ...data,
+      full_name: sName,
+      name: sName,
+    };
+
     return {
       success: true,
-      data: data as StudentRow,
+      data: normalizedData as StudentRow,
     };
   } catch (err) {
     return {

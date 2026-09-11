@@ -405,10 +405,10 @@ export function LiveRecitationModal({
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-2xl bg-burgundy-900/60 border border-islamicGold-500/40 text-islamicGold-300 flex items-center justify-center font-black text-lg shrink-0 shadow-inner">
-                    {currentStudent.full_name.charAt(0)}
+                    {(currentStudent?.full_name || (currentStudent as any)?.name || "ط").trim().charAt(0) || "📖"}
                   </div>
                   <div>
-                    <h3 className="text-lg font-black text-white">{currentStudent.full_name}</h3>
+                    <h3 className="text-lg font-black text-white">{currentStudent?.full_name || (currentStudent as any)?.name || "طالب"}</h3>
                     <p className="text-xs text-slate-400 font-medium">
                       {currentStudent.academic_grade || "غير محدد"}
                     </p>

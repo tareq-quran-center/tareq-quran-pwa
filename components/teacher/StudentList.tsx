@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRealtimeSync, RealtimePayload } from "@/lib/hooks/useRealtimeSync";
 import { lightHaptic } from "@/lib/haptics";
+import { getStudentDisplayName } from "@/lib/utils";
 
 const StudentDialog = dynamic(() => import("./StudentDialog").then((mod) => mod.StudentDialog), { ssr: false });
 const DeleteStudentDialog = dynamic(() => import("./DeleteStudentDialog").then((mod) => mod.DeleteStudentDialog), { ssr: false });
@@ -46,15 +47,22 @@ export function StudentList({
   const handleRealtimePayload = useCallback((payload: RealtimePayload<StudentRow & MemorizationLogRow>) => {
     const { table, eventType, new: newRecord, old: oldRecord } = payload;
     if (table === "students") {
-      const studentRec = newRecord as StudentRow;
-      if (eventType === "INSERT" && studentRec) {
-        setStudents((prev) => [studentRec, ...prev.filter((s) => s.id !== studentRec.id)]);
+      const rawRec = newRecord as any;
+      if (rawRec && (eventType === "INSERT" || eventType === "UPDATE")) {
+        const studentRec: StudentRow = {
+          ...rawRec,
+          full_name: rawRec.full_name || rawRec.name || "طالب",
+          name: rawRec.name || rawRec.full_name || "طالب",
+        };
+        if (eventType === "INSERT") {
+          setStudents((prev) => [studentRec, ...prev.filter((s) => s.id !== studentRec.id)]);
+        } else if (eventType === "UPDATE") {
+          setStudents((prev) =>
+            prev.map((s) => (s.id === studentRec.id ? { ...s, ...studentRec } : s))
+          );
+        }
       } else if (eventType === "DELETE" && oldRecord && oldRecord.id) {
         setStudents((prev) => prev.filter((s) => s.id !== oldRecord.id));
-      } else if (eventType === "UPDATE" && studentRec) {
-        setStudents((prev) =>
-          prev.map((s) => (s.id === studentRec.id ? studentRec : s))
-        );
       }
     }
     if (table === "memorization_logs") {
@@ -107,16 +115,30 @@ export function StudentList({
     return maxPages > 0 ? topId : undefined;
   }, [students, logs]);
 
-  const filteredStudents = students
-    .filter((s) => s.full_name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
-    .sort((a, b) => {
-      if (sortBy === "pages") {
-        const pagesB = b.total_pages_memorized ?? b.total_pages_count ?? 0;
-        const pagesA = a.total_pages_memorized ?? a.total_pages_count ?? 0;
-        return pagesB - pagesA;
-      }
-      return a.full_name.localeCompare(b.full_name, "ar");
-    });
+  const filteredStudents = useMemo(() => {
+    return students
+      .filter((s) => {
+        const name = getStudentDisplayName(s);
+        const grade = s?.academic_grade || "";
+        const phone = s?.parent_phone || "";
+        const q = searchQuery.trim().toLowerCase();
+        return (
+          name.toLowerCase().includes(q) ||
+          grade.toLowerCase().includes(q) ||
+          phone.includes(q)
+        );
+      })
+      .sort((a, b) => {
+        if (sortBy === "pages") {
+          const pagesB = b.total_pages_memorized ?? b.total_pages_count ?? 0;
+          const pagesA = a.total_pages_memorized ?? a.total_pages_count ?? 0;
+          return pagesB - pagesA;
+        }
+        const nameA = getStudentDisplayName(a);
+        const nameB = getStudentDisplayName(b);
+        return nameA.localeCompare(nameB, "ar");
+      });
+  }, [students, searchQuery, sortBy]);
 
   const handleOpenAdd = () => {
     setSelectedStudent(null);

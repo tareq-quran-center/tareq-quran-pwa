@@ -32,10 +32,16 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
     getStudentAttendanceCached(id, 100),
   ]);
 
-  const student = studentRes.data;
-  if (studentRes.error || !student) {
+  const rawStudent = studentRes.data;
+  if (studentRes.error || !rawStudent) {
     notFound();
   }
+
+  const student = {
+    ...rawStudent,
+    full_name: (rawStudent as any).name || rawStudent.full_name || "طالب",
+    name: (rawStudent as any).name || rawStudent.full_name || "طالب",
+  };
 
   // Auto-heal missing parent_token for legacy student records
   if (!student.parent_token) {

@@ -123,11 +123,12 @@ export function getAttendanceAlerts(
     );
 
     // Determine alert severity/type
+    const sName = student?.full_name || (student as any)?.name || "طالب";
     if (consecutiveAbsences >= 3) {
       const reason = `غائب ${consecutiveAbsences} أيام متتالية`;
       alerts.push({
         studentId: student.id,
-        studentName: student.full_name,
+        studentName: sName,
         parentPhone: student.parent_phone,
         academicGrade: student.academic_grade,
         alertType: "consecutive",
@@ -136,7 +137,7 @@ export function getAttendanceAlerts(
         attendanceRate: rate,
         formattedWhatsAppUrl: generateWhatsAppUrl(
           student.parent_phone,
-          student.full_name,
+          sName,
           consecutiveAbsences,
           "consecutive",
           rate
@@ -148,7 +149,7 @@ export function getAttendanceAlerts(
       const reason = `نسبة الحضور ${rate}%`;
       alerts.push({
         studentId: student.id,
-        studentName: student.full_name,
+        studentName: sName,
         parentPhone: student.parent_phone,
         academicGrade: student.academic_grade,
         alertType: "low_rate",
@@ -157,7 +158,7 @@ export function getAttendanceAlerts(
         attendanceRate: rate,
         formattedWhatsAppUrl: generateWhatsAppUrl(
           student.parent_phone,
-          student.full_name,
+          sName,
           totalSessions - attendedSessions,
           "low_rate",
           rate

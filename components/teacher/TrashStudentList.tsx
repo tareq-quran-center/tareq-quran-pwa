@@ -211,19 +211,19 @@ export function TrashStudentList({ initialStudents }: TrashStudentListProps) {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={student.avatar_url}
-                          alt={student.full_name}
+                          alt={student?.full_name || (student as any)?.name || "طالب"}
                           className="w-full h-full object-cover rounded-full"
                         />
                       ) : (
                         <span className="text-base select-none">
-                          {student.full_name.charAt(0)}
+                          {(student?.full_name || (student as any)?.name || "ط").trim().charAt(0) || "📖"}
                         </span>
                       )}
                     </div>
 
                     <div className="min-w-0">
                       <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-50 truncate flex items-center gap-1.5">
-                        <span className="truncate">{student.full_name}</span>
+                        <span className="truncate">{student?.full_name || (student as any)?.name || "طالب"}</span>
                         {student.academic_grade && (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
                             {student.academic_grade}

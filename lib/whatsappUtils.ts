@@ -50,10 +50,11 @@ export function generateParentPraiseMessage(
     ? `${appOrigin || (typeof window !== "undefined" ? window.location.origin : "")}/parent/${student.parent_token}`
     : "";
 
+  const studentName = student?.full_name || (student as any)?.name || "ابننا الطالب";
   const lines = [
     "السلام عليكم ورحمة الله وبركاته 🌸",
     "",
-    `يسر إدارة حلقة القرآن الكريم أن تبارك لكم تميز ابننا البطل: *${student.full_name}* ✨`,
+    `يسر إدارة حلقة القرآن الكريم أن تبارك لكم تميز ابننا البطل: *${studentName}* ✨`,
     "",
     `📖 مجموع التسميع المنجز: *${totalPages} صفحة*`,
     recentSurah ? `🎯 آخر ما تم تسميعه: *${recentSurah.startsWith("سورة") ? recentSurah : `سورة ${recentSurah}`}*` : "",

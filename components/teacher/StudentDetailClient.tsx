@@ -295,13 +295,15 @@ export function StudentDetailClient({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={student.avatar_url}
-                  alt={student.full_name}
+                  alt={student?.full_name || (student as any)?.name || "طالب"}
                   onError={() => setImgError(true)}
                   className="w-full h-full object-cover block rounded-2xl"
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               ) : (
-                <span className="select-none">{student.full_name.charAt(0)}</span>
+                <span className="select-none">
+                  {(student?.full_name || (student as any)?.name || "ط").trim().charAt(0) || "📖"}
+                </span>
               )}
             </div>
 
@@ -309,7 +311,7 @@ export function StudentDetailClient({
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex items-center gap-1.5">
                 <h2 className="text-sm sm:text-lg font-black tracking-tight leading-snug truncate text-white">
-                  {student.full_name}
+                  {student?.full_name || (student as any)?.name || "طالب"}
                 </h2>
                 {student.academic_grade && (
                   <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/10 text-islamicGold-300 border border-white/10 shrink-0">

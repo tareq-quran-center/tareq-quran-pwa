@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { lightHaptic, successHaptic } from "@/lib/haptics";
 import { generateWhatsAppShareUrl } from "@/lib/whatsappUtils";
 import { calculateRecitationPages } from "@/lib/quranMetadata";
+import { getStudentDisplayName, getStudentInitial } from "@/lib/utils";
 import Link from "next/link";
 
 interface StudentCardProps {
@@ -22,6 +23,8 @@ interface StudentCardProps {
 }
 
 export function StudentCard({ student, logs, attendance, alert, weeklyTopStudentId, onEdit, onDelete }: StudentCardProps) {
+  const displayName = getStudentDisplayName(student);
+  const initialLetter = getStudentInitial(displayName);
   const [copied, setCopied] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -120,23 +123,23 @@ export function StudentCard({ student, logs, attendance, alert, weeklyTopStudent
         <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="w-14 h-14 rounded-full bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-900 dark:text-burgundy-200 flex items-center justify-center font-bold overflow-hidden border-2 border-burgundy-200 dark:border-burgundy-800 shrink-0 shadow-sm">
-              {student.avatar_url && !imgError ? (
+              {student?.avatar_url && !imgError ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={student.avatar_url}
-                  alt={student.full_name}
+                  alt={displayName}
                   onError={() => setImgError(true)}
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-xl select-none font-black">{student.full_name.charAt(0)}</span>
+                <span className="text-xl select-none font-black">{initialLetter}</span>
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <Link href={`/students/${student.id}`} className="hover:underline block">
+              <Link href={`/students/${student?.id || ""}`} className="hover:underline block">
                 <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-50 flex items-center gap-1.5 flex-wrap">
-                  <span className="truncate">{student.full_name}</span>
-                  {student.academic_grade && (
+                  <span className="truncate">{displayName}</span>
+                  {student?.academic_grade && (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-burgundy-50 dark:bg-burgundy-950 text-burgundy-800 dark:text-burgundy-300 border border-burgundy-200 shrink-0">
                       {student.academic_grade}
                     </span>
@@ -152,7 +155,7 @@ export function StudentCard({ student, logs, attendance, alert, weeklyTopStudent
                 </CardTitle>
               </Link>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                تم التسجيل: {new Date(student.created_at).toLocaleDateString("ar-JO")}
+                تم التسجيل: {student?.created_at ? new Date(student.created_at).toLocaleDateString("ar-JO") : "—"}
               </p>
             </div>
           </div>

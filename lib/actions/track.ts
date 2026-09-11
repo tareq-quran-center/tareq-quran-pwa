@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { StudentTrackData } from "@/types";
 import { validateAndFormatJordanianPhone } from "@/lib/phoneUtils";
+import { normalizeMemorizationLogRow } from "@/lib/logUtils";
 
 /**
  * Public resolver for student tracking card (No auth required)
@@ -144,7 +145,9 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
       .order("created_at", { ascending: false })
       .limit(30);
 
-    const safeLogs = (logsData || []).filter((l) => !l.deleted_at);
+    const safeLogs = (logsData || [])
+      .filter((l) => !l.deleted_at)
+      .map(normalizeMemorizationLogRow);
 
     // 4. Fetch Attendance Records
     const { data: attData } = await supabase

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ParentProgressPayload } from "@/types";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { validateAndFormatJordanianPhone } from "@/lib/phoneUtils";
+import { normalizeMemorizationLogRow } from "@/lib/logUtils";
 
 export interface ParentSearchResult {
   success: boolean;
@@ -175,7 +176,7 @@ export async function getStudentProgressByToken(token: string): Promise<ParentPr
           });
         }
       } else if (Array.isArray(logs)) {
-        safeLogs = logs;
+        safeLogs = logs.map(normalizeMemorizationLogRow);
       }
     } catch (err) {
       if (process.env.NODE_ENV === "development") {

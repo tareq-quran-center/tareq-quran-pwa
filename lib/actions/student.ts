@@ -18,6 +18,7 @@ import { calculateRecitationPages } from "@/lib/quranMetadata";
 import { revalidatePath } from "next/cache";
 import { getActiveGroupId } from "./group";
 import { getSeasons } from "./season";
+import { normalizeMemorizationLogRow } from "@/lib/logUtils";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -69,7 +70,7 @@ export async function getStudents(): Promise<ActionResult<StudentRow[]>> {
         .from("memorization_logs")
         .select("*")
         .in("student_id", studentIds);
-      logsSummary = logsData || [];
+      logsSummary = (logsData || []).map(normalizeMemorizationLogRow);
     }
 
     const logsMap = new Map<string, { totalPages: number; count: number }>();

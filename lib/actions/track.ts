@@ -74,16 +74,52 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
       };
     }
 
-    // 1. Fetch Halaqa details
+    // 1. Fetch Halaqa & Season details
     let halaqa: { id: string; name: string } | null = null;
+    let season: { id: string; name: string } | null = null;
+
     if (student.group_id) {
-      const { data: groupData } = await supabase
-        .from("groups")
-        .select("id, name")
+      const { data: circleData } = await supabase
+        .from("circles")
+        .select("id, name, season_id")
         .eq("id", student.group_id)
         .maybeSingle();
-      if (groupData) {
-        halaqa = groupData;
+
+      if (circleData) {
+        halaqa = { id: circleData.id, name: circleData.name };
+        if (circleData.season_id) {
+          const { data: seasonData } = await supabase
+            .from("seasons")
+            .select("id, name")
+            .eq("id", circleData.season_id)
+            .maybeSingle();
+          if (seasonData) {
+            season = seasonData;
+          }
+        }
+      } else {
+        const { data: groupData } = await supabase
+          .from("groups")
+          .select("id, name")
+          .eq("id", student.group_id)
+          .maybeSingle();
+        if (groupData) {
+          halaqa = groupData;
+        }
+      }
+    }
+
+    // If season was not resolved from circle, fallback to active season
+    if (!season) {
+      const { data: activeSeasonData } = await supabase
+        .from("seasons")
+        .select("id, name")
+        .eq("is_active", true)
+        .maybeSingle();
+      if (activeSeasonData) {
+        season = activeSeasonData;
+      } else {
+        season = { id: "1cf3bae5-b259-4f96-babe-4dcd80598ed8", name: "النادي الدائم" };
       }
     }
 
@@ -189,6 +225,7 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
         avatar_url: student.avatar_url,
       },
       halaqa,
+      season,
       teacher,
       attendanceRate,
       totalDays,

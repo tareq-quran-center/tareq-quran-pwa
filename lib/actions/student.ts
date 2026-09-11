@@ -4,10 +4,20 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { studentSchema, StudentInput } from "@/lib/validations/student";
 import { validateAndFormatJordanianPhone } from "@/lib/phoneUtils";
-import { StudentRow, StudentInsert, StudentUpdate, ParentProgressPayload, MemorizationLogRow, AttendanceRecordRow } from "@/types";
+import {
+  StudentRow,
+  StudentInsert,
+  StudentUpdate,
+  ParentProgressPayload,
+  MemorizationLogRow,
+  AttendanceRecordRow,
+  SeasonRow,
+  CircleRow,
+} from "@/types";
 import { calculateRecitationPages } from "@/lib/quranMetadata";
 import { revalidatePath } from "next/cache";
 import { getActiveGroupId } from "./group";
+import { getSeasons } from "./season";
 
 export interface ActionResult<T = void> {
   success: boolean;
@@ -711,10 +721,18 @@ export interface TeacherReportStats {
 
 export interface TeacherReportDataResult {
   success: boolean;
-  students?: StudentRow[];
+  students?: Array<
+    StudentRow & {
+      season_id?: string;
+      season_name?: string;
+      halaqa_name?: string;
+    }
+  >;
   logs?: MemorizationLogRow[];
   attendance?: AttendanceRecordRow[];
   stats?: TeacherReportStats;
+  seasons?: SeasonRow[];
+  circles?: CircleRow[];
   error?: string;
 }
 
@@ -876,11 +894,30 @@ export async function getTeacherReportData(options?: TeacherReportDataOptions): 
       }
     });
 
-    const students: StudentRow[] = rawStudents.map((s) => {
+    // 5. Fetch Seasons & Circles
+    const [seasonsRes, circlesRes] = await Promise.all([
+      getSeasons(),
+      supabase.from("circles").select("*"),
+    ]);
+
+    const seasonsList = seasonsRes.data;
+    const activeSeason = seasonsRes.activeSeason || seasonsList[0];
+    const seasonMap = new Map(seasonsList.map((s) => [s.id, s]));
+    const circlesList = (circlesRes.data || []) as CircleRow[];
+    const circleMap = new Map(circlesList.map((c) => [c.id, c]));
+
+    const students = rawStudents.map((s) => {
       const stats = logsMap.get(s.id) || { totalPages: 0, count: 0 };
       const totalPages = Number(stats.totalPages.toFixed(2));
+      const circle = circleMap.get(s.group_id);
+      const seasonId = circle?.season_id || activeSeason.id;
+      const seasonName = seasonMap.get(seasonId)?.name || activeSeason.name;
+
       return {
         ...s,
+        season_id: seasonId,
+        season_name: seasonName,
+        halaqa_name: circle?.name || "حلقة",
         total_pages_memorized: totalPages,
         total_recitations_count: stats.count,
         total_pages_count: totalPages,
@@ -934,6 +971,8 @@ export async function getTeacherReportData(options?: TeacherReportDataOptions): 
       logs: allLogsSummary.length > 0 ? allLogsSummary : logs,
       attendance,
       stats,
+      seasons: seasonsList,
+      circles: circlesList,
     };
   } catch (err) {
     return {

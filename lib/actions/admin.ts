@@ -9,11 +9,16 @@ import {
   TeacherWithHalaqat,
   AdminCenterOverview,
   StudentRow,
+  SeasonRow,
+  CircleRow,
 } from "@/types";
+import { getSeasons } from "./season";
+import { FALLBACK_SEASONS } from "@/lib/constants/seasons";
 
 export interface AdminDataResult {
   success: boolean;
   error?: string;
+  seasons?: SeasonRow[];
   overview?: AdminCenterOverview;
   halaqat?: HalaqaWithDetails[];
   teachers?: TeacherWithHalaqat[];
@@ -21,6 +26,8 @@ export interface AdminDataResult {
     StudentRow & {
       halaqa_name?: string;
       teacher_name?: string;
+      season_id?: string;
+      season_name?: string;
     }
   >;
   currentUserIsAdmin?: boolean;
@@ -49,7 +56,13 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
 
     const supabase = createClient();
 
-    // 1. Fetch all profiles (teachers & admins)
+    // 1. Fetch seasons
+    const seasonsRes = await getSeasons();
+    const seasonsList = seasonsRes.data;
+    const activeSeason = seasonsRes.activeSeason || seasonsList[0];
+    const seasonMap = new Map(seasonsList.map((s) => [s.id, s]));
+
+    // 2. Fetch all profiles (teachers & admins)
     let profiles: any[] = [];
     try {
       const { data, error } = await supabase
@@ -60,7 +73,18 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
       console.error("Failed to fetch profiles:", e);
     }
 
-    // 2. Fetch all groups (halaqat)
+    // 3. Fetch all circles (season-linked halaqat)
+    let circles: CircleRow[] = [];
+    try {
+      const { data: cData, error: cErr } = await supabase
+        .from("circles")
+        .select("*");
+      if (!cErr && cData) circles = cData as CircleRow[];
+    } catch (e) {
+      console.error("Failed to fetch circles:", e);
+    }
+
+    // 4. Fetch all groups (halaqat)
     let groups: any[] = [];
     try {
       const { data, error } = await supabase
@@ -71,7 +95,7 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
       console.error("Failed to fetch groups:", e);
     }
 
-    // 3. Fetch all group_members
+    // 5. Fetch all group_members
     let members: any[] = [];
     try {
       const { data, error } = await supabase
@@ -204,10 +228,28 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
         ? Math.round((presentAttendanceDays / totalAttendanceDays) * 100)
         : 100;
 
-    // Halaqat with Details
-    const halaqatWithDetails: HalaqaWithDetails[] = safeGroups.map((g: any) => {
-      const assignedTeacher = groupToTeacherMap.get(g.id);
-      const groupStudents = safeStudents.filter((s: any) => s.group_id === g.id);
+    // Build circleMap
+    const circleMap = new Map<string, CircleRow>(circles.map((c) => [c.id, c]));
+
+    // Halaqat with Details - unify circles and groups
+    const allHalaqaIds = new Set<string>();
+    safeGroups.forEach((g) => allHalaqaIds.add(g.id));
+    circles.forEach((c) => allHalaqaIds.add(c.id));
+
+    const halaqatWithDetails: HalaqaWithDetails[] = Array.from(allHalaqaIds).map((id) => {
+      const c = circleMap.get(id);
+      const g = groupMap.get(id);
+      const name = c?.name || g?.name || "حلقة";
+      const seasonId = c?.season_id || activeSeason.id;
+      const seasonName = seasonMap.get(seasonId)?.name || activeSeason.name;
+      const assignedTeacher = groupToTeacherMap.get(id);
+      const teacherId = c?.teacher_id || assignedTeacher?.id || null;
+      const teacherName = teacherId
+        ? profileMap.get(teacherId)?.full_name || profileMap.get(teacherId)?.name || assignedTeacher?.name || "غير معين"
+        : assignedTeacher?.name || "غير معين";
+      const teacherPhone = teacherId ? profileMap.get(teacherId)?.phone || assignedTeacher?.phone || null : null;
+
+      const groupStudents = safeStudents.filter((s: any) => s.group_id === id);
       const groupStudentIds = new Set(groupStudents.map((s: any) => s.id));
 
       const groupLogs = safeLogs.filter((l: any) => groupStudentIds.has(l.student_id));
@@ -221,13 +263,15 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
       const attRate = groupAtt.length > 0 ? Math.round((groupPresent / groupAtt.length) * 100) : 100;
 
       return {
-        id: g.id,
-        name: g.name,
-        created_by: g.created_by,
-        created_at: g.created_at,
-        teacher_id: assignedTeacher?.id || null,
-        teacher_name: assignedTeacher?.name || "غير معين",
-        teacher_phone: assignedTeacher?.phone || null,
+        id,
+        name,
+        created_by: g?.created_by || null,
+        created_at: c?.created_at || g?.created_at || new Date().toISOString(),
+        teacher_id: teacherId,
+        teacher_name: teacherName,
+        teacher_phone: teacherPhone,
+        season_id: seasonId,
+        season_name: seasonName,
         students_count: groupStudents.length,
         attendance_rate: attRate,
         total_pages: Number(groupPages.toFixed(1)),
@@ -253,20 +297,25 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
       };
     });
 
-    // Enriched Students
+    // Enriched Students with season mapping
     const enrichedStudents = safeStudents.map((s: any) => {
       const g = s.group_id ? groupMap.get(s.group_id) : null;
+      const c = s.group_id ? circleMap.get(s.group_id) : null;
       const t = s.teacher_id ? profileMap.get(s.teacher_id) : null;
       const totalPages = Number((studentPagesMap.get(s.id) || 0).toFixed(1));
       const displayName = s.name || s.full_name || "بدون اسم";
+      const seasonId = c?.season_id || activeSeason.id;
+      const seasonName = seasonMap.get(seasonId)?.name || activeSeason.name;
 
       return {
         ...s,
         full_name: displayName,
         name: displayName,
         phone: s.phone || s.parent_phone || null,
-        halaqa_name: g?.name || "بدون حلقة",
+        halaqa_name: c?.name || g?.name || "بدون حلقة",
         teacher_name: t?.full_name || t?.name || "غير محدد",
+        season_id: seasonId,
+        season_name: seasonName,
         total_pages_memorized: totalPages,
         total_pages_count: totalPages,
       };
@@ -275,7 +324,7 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
     // Overview KPIs
     const overview: AdminCenterOverview = {
       totalStudents: safeStudents.length,
-      totalHalaqat: safeGroups.length,
+      totalHalaqat: halaqatWithDetails.length,
       totalTeachers: safeProfiles.filter((p: any) => (p as any).role !== "admin").length || safeProfiles.length,
       attendanceRate: overallAttendanceRate,
       totalPagesMemorized: Number(totalPagesMemorized.toFixed(1)),
@@ -285,6 +334,7 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
 
     return {
       success: true,
+      seasons: seasonsList,
       overview,
       halaqat: halaqatWithDetails,
       teachers: teachersWithHalaqat,
@@ -300,9 +350,13 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
 }
 
 /**
- * Create a new Halaqa and optionally assign a teacher
+ * Create a new Halaqa and optionally assign a teacher and season
  */
-export async function createHalaqa(data: { name: string; teacher_id?: string }) {
+export async function createHalaqa(data: {
+  name: string;
+  teacher_id?: string;
+  season_id?: string;
+}) {
   try {
     const supabase = createClient();
     const {
@@ -316,6 +370,13 @@ export async function createHalaqa(data: { name: string; teacher_id?: string }) 
     const newGroupId = crypto.randomUUID();
     const cleanName = data.name.trim();
 
+    // Determine target season (default to active season or permanent club)
+    let targetSeasonId = data.season_id;
+    if (!targetSeasonId) {
+      const seasonsRes = await getSeasons();
+      targetSeasonId = seasonsRes.activeSeason?.id || FALLBACK_SEASONS[0].id;
+    }
+
     // 1. Ensure user profile exists and has admin privileges
     try {
       await supabase
@@ -326,7 +387,19 @@ export async function createHalaqa(data: { name: string; teacher_id?: string }) 
       // ignore
     }
 
-    // 2. Insert into groups table
+    // 2. Insert into circles table (season-linked halaqat)
+    try {
+      await supabase.from("circles").insert({
+        id: newGroupId,
+        name: cleanName,
+        season_id: targetSeasonId,
+        teacher_id: data.teacher_id || null,
+      });
+    } catch (circleErr) {
+      console.warn("Could not insert to circles table:", circleErr);
+    }
+
+    // 3. Insert into groups table
     let newGroup: any = null;
     const { data: insertedGroup, error: groupError } = await supabase
       .from("groups")
@@ -349,18 +422,12 @@ export async function createHalaqa(data: { name: string; teacher_id?: string }) 
         .select()
         .maybeSingle();
 
-      if (retry.error) {
-        return {
-          success: false,
-          error: "فشل إنشاء الحلقة: " + (retry.error.message || groupError.message),
-        };
-      }
       newGroup = retry.data || { id: newGroupId, name: cleanName, created_by: user.id };
     } else {
       newGroup = insertedGroup || { id: newGroupId, name: cleanName, created_by: user.id };
     }
 
-    // 3. Add creator to group_members so they are immediately part of the group
+    // 4. Add creator to group_members so they are immediately part of the group
     try {
       await supabase.from("group_members").insert({
         id: crypto.randomUUID(),
@@ -372,7 +439,7 @@ export async function createHalaqa(data: { name: string; teacher_id?: string }) 
       console.warn("Could not insert creator to group_members:", e);
     }
 
-    // 4. If a teacher was assigned (and distinct from creator), also add to group_members
+    // 5. If a teacher was assigned (and distinct from creator), also add to group_members
     if (data.teacher_id && data.teacher_id !== user.id) {
       try {
         await supabase.from("group_members").insert({
@@ -386,7 +453,7 @@ export async function createHalaqa(data: { name: string; teacher_id?: string }) 
       }
     }
 
-    // 5. Automatically activate this new Halaqa in cookies
+    // 6. Automatically activate this new Halaqa in cookies
     try {
       const cookieStore = cookies();
       cookieStore.set("active_group_id", newGroupId, {
@@ -400,19 +467,41 @@ export async function createHalaqa(data: { name: string; teacher_id?: string }) 
     revalidatePath("/admin");
     revalidatePath("/dashboard");
     revalidatePath("/students");
-    return { success: true, data: newGroup };
+    return {
+      success: true,
+      data: {
+        ...newGroup,
+        season_id: targetSeasonId,
+      },
+    };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "خطأ غير متوقع" };
   }
 }
 
 /**
- * Update Halaqa name and assigned teacher
+ * Update Halaqa name, assigned teacher, and season
  */
-export async function updateHalaqa(data: { id: string; name: string; teacher_id?: string }) {
+export async function updateHalaqa(data: {
+  id: string;
+  name: string;
+  teacher_id?: string;
+  season_id?: string;
+}) {
   try {
     const supabase = createClient();
 
+    // 1. Update circles table
+    try {
+      const circleUpdates: any = { name: data.name.trim() };
+      if (data.season_id) circleUpdates.season_id = data.season_id;
+      if (data.teacher_id !== undefined) circleUpdates.teacher_id = data.teacher_id || null;
+      await supabase.from("circles").update(circleUpdates).eq("id", data.id);
+    } catch (circleErr) {
+      console.warn("Could not update circles table:", circleErr);
+    }
+
+    // 2. Update groups table
     const { error: updateError } = await supabase
       .from("groups")
       .update({ name: data.name.trim() })
@@ -447,7 +536,7 @@ export async function updateHalaqa(data: { id: string; name: string; teacher_id?
 }
 
 /**
- * Delete a Halaqa (unlinks students)
+ * Delete a Halaqa (unlinks students and cleans up circles/groups)
  */
 export async function deleteHalaqa(id: string) {
   try {
@@ -462,7 +551,12 @@ export async function deleteHalaqa(id: string) {
     // 2. Remove memberships
     await supabase.from("group_members").delete().eq("group_id", id);
 
-    // 3. Delete group
+    // 3. Delete from circles
+    try {
+      await supabase.from("circles").delete().eq("id", id);
+    } catch (e) {}
+
+    // 4. Delete group
     const { error } = await supabase.from("groups").delete().eq("id", id);
 
     if (error) {

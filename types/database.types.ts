@@ -364,6 +364,66 @@ export type Database = {
           }
         ];
       };
+      seasons: {
+        Row: {
+          id: string;
+          name: string;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      circles: {
+        Row: {
+          id: string;
+          name: string;
+          season_id: string;
+          teacher_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          season_id: string;
+          teacher_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          season_id?: string;
+          teacher_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "circles_season_id_fkey";
+            columns: ["season_id"];
+            isOneToOne: false;
+            referencedRelation: "seasons";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "circles_teacher_id_fkey";
+            columns: ["teacher_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
     };
     Views: {
       students_with_summary: {
@@ -436,3 +496,5 @@ export type AttendanceRecordsTable = Database["public"]["Tables"]["attendance_re
 export type ProfileTable = Database["public"]["Tables"]["profiles"];
 export type GroupTable = Database["public"]["Tables"]["groups"];
 export type GroupMemberTable = Database["public"]["Tables"]["group_members"];
+export type SeasonTable = Database["public"]["Tables"]["seasons"];
+export type CircleTable = Database["public"]["Tables"]["circles"];

@@ -19,6 +19,8 @@ import {
   Printer,
   ChevronDown,
   ChevronUp,
+  Sun,
+  Snowflake,
 } from "lucide-react";
 
 interface PublicTrackCardProps {
@@ -32,6 +34,7 @@ export function PublicTrackCard({ data }: PublicTrackCardProps) {
   const {
     student,
     halaqa,
+    season,
     teacher,
     attendanceRate,
     presentDays,
@@ -64,7 +67,7 @@ export function PublicTrackCard({ data }: PublicTrackCardProps) {
   }
 
   // Generate WhatsApp Share Message
-  const shareText = `السلام عليكم ورحمة الله وبركاته 🌸%0A%0A*تقرير إنجاز الطالب في مركز طارق القرآني:*%0A👤 *الطالب:* ${student.full_name}%0A🕌 *الحلقة:* ${halaqa?.name || "مركز طارق القرآني"}%0A👨‍🏫 *المعلم:* ${teacher?.full_name || "معلم الحلقة"}%0A%0A📊 *نسبة الحضور:* ${attendanceRate}٪ (${presentDays} من ${totalDays} يوم)%0A%0A📖 *آخر حفظ جديد:* ${
+  const shareText = `السلام عليكم ورحمة الله وبركاته 🌸%0A%0A*تقرير إنجاز الطالب في مركز طارق القرآني:*%0A👤 *الطالب:* ${student.full_name}%0A🏛️ *النادي:* ${season?.name || "النادي الدائم"}%0A🕌 *الحلقة:* ${halaqa?.name || "مركز طارق القرآني"}%0A👨‍🏫 *المعلم:* ${teacher?.full_name || "معلم الحلقة"}%0A%0A📊 *نسبة الحضور:* ${attendanceRate}٪ (${presentDays} من ${totalDays} يوم)%0A%0A📖 *آخر حفظ جديد:* ${
     latestHifz
       ? `${latestHifz.surah_start} (${latestHifz.aya_start}-${latestHifz.aya_end}) - تقييم: ${latestHifz.grade}`
       : "لا يوجد بعد"
@@ -110,12 +113,27 @@ export function PublicTrackCard({ data }: PublicTrackCardProps) {
             <MosqueLogo variant="badge" size="lg" className="w-16 h-16 sm:w-20 sm:h-20" alt="مركز طارق القرآني" />
           </div>
 
-          {/* Titles & Student Name */}
-          <div className="flex-1 space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-burgundy-800/80 border border-islamicGold-400/40 text-islamicGold-300 text-xs font-black">
-              <Sparkles className="w-3.5 h-3.5 text-islamicGold-400" />
-              <span>بطاقة إنجاز ومتابعة الطالب القرآني</span>
+          {/* Titles, Badges & Student Name */}
+          <div className="flex-1 space-y-2.5">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-burgundy-800/80 border border-islamicGold-400/40 text-islamicGold-300 text-xs font-black">
+                <Sparkles className="w-3.5 h-3.5 text-islamicGold-400" />
+                <span>بطاقة إنجاز ومتابعة الطالب</span>
+              </div>
+
+              {/* Club / Season Badge */}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-islamicGold-400/20 border border-islamicGold-400/60 text-islamicGold-200 text-xs font-black shadow-xs backdrop-blur-xs">
+                {season?.name?.includes("صيف") ? (
+                  <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                ) : season?.name?.includes("شتو") ? (
+                  <Snowflake className="w-3.5 h-3.5 text-sky-300 shrink-0" />
+                ) : (
+                  <BookOpen className="w-3.5 h-3.5 text-islamicGold-400 shrink-0" />
+                )}
+                <span>{season?.name || "النادي الدائم"}</span>
+              </div>
             </div>
+
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
               {student.full_name}
             </h1>
@@ -126,27 +144,34 @@ export function PublicTrackCard({ data }: PublicTrackCardProps) {
         </div>
 
         {/* Quick Meta Grid */}
-        <div className="mt-6 pt-5 border-t border-burgundy-800/60 grid grid-cols-2 sm:grid-cols-3 gap-3 text-right">
+        <div className="mt-6 pt-5 border-t border-burgundy-800/60 grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-right">
+          <div className="bg-white/10 dark:bg-black/20 rounded-xl p-2.5 backdrop-blur-xs">
+            <span className="text-[11px] text-islamicGold-300 block font-bold">النادي / الفصل</span>
+            <span className="text-xs sm:text-sm font-black text-white truncate block">
+              {season?.name || "النادي الدائم"}
+            </span>
+          </div>
+
           <div className="bg-white/10 dark:bg-black/20 rounded-xl p-2.5 backdrop-blur-xs">
             <span className="text-[11px] text-islamicGold-300 block font-bold">الحلقة القرآنية</span>
-            <span className="text-xs sm:text-sm font-black text-white">
+            <span className="text-xs sm:text-sm font-black text-white truncate block">
               {halaqa?.name || "حلقة مركز طارق"}
             </span>
           </div>
 
           <div className="bg-white/10 dark:bg-black/20 rounded-xl p-2.5 backdrop-blur-xs">
             <span className="text-[11px] text-islamicGold-300 block font-bold">معلم الحلقة</span>
-            <span className="text-xs sm:text-sm font-black text-white">
+            <span className="text-xs sm:text-sm font-black text-white truncate block">
               {teacher?.full_name || "معلم الحلقة"}
             </span>
           </div>
 
-          <div className="bg-white/10 dark:bg-black/20 rounded-xl p-2.5 backdrop-blur-xs col-span-2 sm:col-span-1">
-            <span className="text-[11px] text-islamicGold-300 block font-bold">نسبة الحضور والالتزام</span>
+          <div className="bg-white/10 dark:bg-black/20 rounded-xl p-2.5 backdrop-blur-xs">
+            <span className="text-[11px] text-islamicGold-300 block font-bold">نسبة الحضور</span>
             <span className="text-xs sm:text-sm font-black text-white flex items-center gap-1">
               <span>{attendanceRate}٪</span>
               <span className="text-[10px] text-burgundy-200 font-normal">
-                ({presentDays}/{totalDays} يوم)
+                ({presentDays}/{totalDays})
               </span>
             </span>
           </div>

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   AdminCenterOverview,
   HalaqaWithDetails,
   TeacherWithHalaqat,
   StudentRow,
+  SeasonRow,
 } from "@/types";
 import {
   createHalaqa,
@@ -17,6 +18,7 @@ import {
   transferStudentHalaqa,
   claimAdminRole,
 } from "@/lib/actions/admin";
+import { SeasonSelector } from "@/components/common/SeasonSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -40,6 +42,8 @@ import {
   Award,
   Sparkles,
   RefreshCw,
+  Sun,
+  Snowflake,
 } from "lucide-react";
 
 interface AdminDashboardClientProps {
@@ -51,8 +55,11 @@ interface AdminDashboardClientProps {
       StudentRow & {
         halaqa_name?: string;
         teacher_name?: string;
+        season_id?: string;
+        season_name?: string;
       }
     >;
+    seasons?: SeasonRow[];
     currentUserIsAdmin?: boolean;
   };
 }
@@ -61,6 +68,38 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
   const [activeTab, setActiveTab] = useState<
     "overview" | "halaqat" | "teachers" | "students" | "reports"
   >("overview");
+
+  const [seasons] = useState<SeasonRow[]>(
+    initialData.seasons && initialData.seasons.length > 0
+      ? initialData.seasons
+      : [
+          {
+            id: "1cf3bae5-b259-4f96-babe-4dcd80598ed8",
+            name: "النادي الدائم",
+            is_active: true,
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: "bc3c7462-3567-40ea-bb19-ebfd32b15c71",
+            name: "النادي الصيفي",
+            is_active: false,
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: "0701bbdb-5a34-426f-afee-4f8dd296cc4e",
+            name: "النادي الشتوي",
+            is_active: false,
+            created_at: new Date().toISOString(),
+          },
+        ]
+  );
+
+  const defaultActiveSeason = useMemo(
+    () => seasons.find((s) => s.is_active) || seasons[0],
+    [seasons]
+  );
+
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string>(defaultActiveSeason.id);
 
   const [overview] = useState<AdminCenterOverview>(
     initialData.overview || {
@@ -81,6 +120,8 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
       StudentRow & {
         halaqa_name?: string;
         teacher_name?: string;
+        season_id?: string;
+        season_name?: string;
       }
     >
   >(initialData.students || []);
@@ -94,6 +135,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
   const [editingHalaqa, setEditingHalaqa] = useState<HalaqaWithDetails | null>(null);
   const [halaqaNameInput, setHalaqaNameInput] = useState("");
   const [halaqaTeacherInput, setHalaqaTeacherInput] = useState("");
+  const [halaqaSeasonInput, setHalaqaSeasonInput] = useState<string>(defaultActiveSeason.id);
   const [isSubmittingHalaqa, setIsSubmittingHalaqa] = useState(false);
 
   // Transfer Student Modal States
@@ -114,6 +156,57 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
     setTimeout(() => setToastMsg(null), 3000);
   };
 
+  // Filtered halaqat by selected season
+  const displayedHalaqat = useMemo(() => {
+    if (!selectedSeasonId || selectedSeasonId === "all") return halaqat;
+    return halaqat.filter((h) => h.season_id === selectedSeasonId);
+  }, [halaqat, selectedSeasonId]);
+
+  // Filtered students by selected season and search
+  const displayedStudents = useMemo(() => {
+    return students.filter((s) => {
+      const matchesSeason =
+        !selectedSeasonId || selectedSeasonId === "all" || s.season_id === selectedSeasonId;
+      const matchesHalaqa =
+        selectedHalaqaFilter === "all" || s.group_id === selectedHalaqaFilter;
+      const matchesSearch =
+        !studentSearch.trim() ||
+        s.full_name?.toLowerCase().includes(studentSearch.toLowerCase().trim());
+      return matchesSeason && matchesHalaqa && matchesSearch;
+    });
+  }, [students, selectedSeasonId, selectedHalaqaFilter, studentSearch]);
+
+  // Overview KPIs recalculated for the selected season
+  const displayedOverview = useMemo(() => {
+    if (!selectedSeasonId || selectedSeasonId === "all") return overview;
+
+    const seasonHalaqat = halaqat.filter((h) => h.season_id === selectedSeasonId);
+    const seasonStudents = students.filter((s) => s.season_id === selectedSeasonId);
+    const seasonPages = seasonHalaqat.reduce((acc, h) => acc + h.total_pages, 0);
+    const totalAtt = seasonHalaqat.reduce(
+      (acc, h) => acc + (h.students_count > 0 ? h.attendance_rate : 0),
+      0
+    );
+    const avgAtt = seasonHalaqat.length > 0 ? Math.round(totalAtt / seasonHalaqat.length) : 100;
+    const teacherIds = new Set(seasonHalaqat.map((h) => h.teacher_id).filter(Boolean));
+
+    return {
+      totalStudents: seasonStudents.length,
+      totalHalaqat: seasonHalaqat.length,
+      totalTeachers: teacherIds.size || 0,
+      attendanceRate: avgAtt,
+      totalPagesMemorized: Number(seasonPages.toFixed(1)),
+      totalRecitations: overview.totalRecitations,
+      todayAttendanceCount: overview.todayAttendanceCount,
+    };
+  }, [overview, halaqat, students, selectedSeasonId]);
+
+  // Active season name helper
+  const currentSeasonObj = useMemo(
+    () => seasons.find((s) => s.id === selectedSeasonId),
+    [seasons, selectedSeasonId]
+  );
+
   // ==========================================
   // Handlers: Halaqat
   // ==========================================
@@ -121,6 +214,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
     setEditingHalaqa(null);
     setHalaqaNameInput("");
     setHalaqaTeacherInput("");
+    setHalaqaSeasonInput(selectedSeasonId !== "all" ? selectedSeasonId : defaultActiveSeason.id);
     setIsHalaqaModalOpen(true);
   };
 
@@ -128,6 +222,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
     setEditingHalaqa(h);
     setHalaqaNameInput(h.name);
     setHalaqaTeacherInput(h.teacher_id || "");
+    setHalaqaSeasonInput(h.season_id || defaultActiveSeason.id);
     setIsHalaqaModalOpen(true);
   };
 
@@ -142,8 +237,10 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
           id: editingHalaqa.id,
           name: halaqaNameInput.trim(),
           teacher_id: halaqaTeacherInput || undefined,
+          season_id: halaqaSeasonInput,
         });
         if (res.success) {
+          const seasonObj = seasons.find((s) => s.id === halaqaSeasonInput);
           showToast("تم تحديث الحلقة بنجاح");
           setHalaqat((prev) =>
             prev.map((item) =>
@@ -152,6 +249,8 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                     ...item,
                     name: halaqaNameInput.trim(),
                     teacher_id: halaqaTeacherInput || null,
+                    season_id: halaqaSeasonInput,
+                    season_name: seasonObj?.name || item.season_name,
                     teacher_name:
                       teachers.find((t) => t.id === halaqaTeacherInput)?.full_name || "غير معين",
                   }
@@ -166,8 +265,10 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
         const res = await createHalaqa({
           name: halaqaNameInput.trim(),
           teacher_id: halaqaTeacherInput || undefined,
+          season_id: halaqaSeasonInput,
         });
         if (res.success && res.data) {
+          const seasonObj = seasons.find((s) => s.id === halaqaSeasonInput);
           showToast("تم إنشاء وتفعيل الحلقة بنجاح ✅");
           setHalaqat((prev) => [
             ...prev,
@@ -179,14 +280,15 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
               teacher_id: halaqaTeacherInput || null,
               teacher_name:
                 teachers.find((t) => t.id === halaqaTeacherInput)?.full_name || "غير معين",
-              teacher_phone: null,
+              teacher_phone:
+                teachers.find((t) => t.id === halaqaTeacherInput)?.phone || null,
+              season_id: halaqaSeasonInput,
+              season_name: seasonObj?.name || "النادي الدائم",
               students_count: 0,
               attendance_rate: 100,
               total_pages: 0,
             },
           ]);
-          setHalaqaNameInput("");
-          setHalaqaTeacherInput("");
           setIsHalaqaModalOpen(false);
         } else {
           showToast(res.error || "فشل الإنشاء");
@@ -379,6 +481,16 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
         </div>
       )}
 
+      {/* Elegant Season Selector Bar */}
+      <div className="no-print">
+        <SeasonSelector
+          seasons={seasons}
+          selectedSeasonId={selectedSeasonId}
+          onSeasonChange={setSelectedSeasonId}
+          showAllOption={true}
+        />
+      </div>
+
       {/* Navigation Tabs */}
       <div className="no-print flex items-center gap-1.5 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-x-auto">
         <button
@@ -402,7 +514,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
           }`}
         >
           <BookOpen className="w-4 h-4" />
-          <span>الحلقات ({halaqat.length})</span>
+          <span>الحلقات ({displayedHalaqat.length})</span>
         </button>
 
         <button
@@ -426,7 +538,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
           }`}
         >
           <GraduationCap className="w-4 h-4" />
-          <span>الطلاب ({students.length})</span>
+          <span>الطلاب ({displayedStudents.length})</span>
         </button>
 
         <button
@@ -447,6 +559,22 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
       {/* ========================================================================= */}
       {activeTab === "overview" && (
         <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Active Season Banner Indicator */}
+          <div className="flex items-center justify-between px-4 py-2.5 bg-burgundy-50 dark:bg-burgundy-950/40 rounded-2xl border border-burgundy-200/60 dark:border-burgundy-900/60 text-xs font-bold text-burgundy-950 dark:text-burgundy-200">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-islamicGold-500 animate-pulse" />
+              <span>
+                بيانات وإحصائيات:{" "}
+                <span className="font-black text-burgundy-900 dark:text-islamicGold-300">
+                  {selectedSeasonId === "all" ? "جميع الأندية والفصول" : currentSeasonObj?.name}
+                </span>
+              </span>
+            </div>
+            <span className="text-[11px] text-slate-500">
+              {displayedHalaqat.length} حلقة • {displayedStudents.length} طالب
+            </span>
+          </div>
+
           {/* 5 Core Metric Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             {/* 1. Students */}
@@ -454,12 +582,12 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
               <span className="text-xs text-slate-500 font-bold block mb-1">إجمالي الطلاب</span>
               <div className="flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                  {overview.totalStudents}
+                  {displayedOverview.totalStudents}
                 </span>
                 <GraduationCap className="w-5 h-5 text-burgundy-800" />
               </div>
               <span className="text-[11px] text-islamicGold-700 dark:text-islamicGold-400 mt-1 block">
-                طالب مسجل في المركز
+                طالب مسجل في {currentSeasonObj?.name || "النادي"}
               </span>
             </div>
 
@@ -468,11 +596,11 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
               <span className="text-xs text-slate-500 font-bold block mb-1">عدد الحلقات</span>
               <div className="flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                  {overview.totalHalaqat}
+                  {displayedOverview.totalHalaqat}
                 </span>
                 <BookOpen className="w-5 h-5 text-islamicGold-600" />
               </div>
-              <span className="text-[11px] text-slate-400 mt-1 block">حلقة قرآنية نشطة</span>
+              <span className="text-[11px] text-slate-400 mt-1 block">حلقة قرآنية تابعة</span>
             </div>
 
             {/* 3. Teachers */}
@@ -480,7 +608,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
               <span className="text-xs text-slate-500 font-bold block mb-1">عدد المعلمين</span>
               <div className="flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                  {overview.totalTeachers}
+                  {displayedOverview.totalTeachers}
                 </span>
                 <Users className="w-5 h-5 text-burgundy-700" />
               </div>
@@ -492,12 +620,12 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
               <span className="text-xs text-slate-500 font-bold block mb-1">نسبة الحضور</span>
               <div className="flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                  {overview.attendanceRate}٪
+                  {displayedOverview.attendanceRate}٪
                 </span>
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
               </div>
               <span className="text-[11px] text-emerald-600 font-bold mt-1 block">
-                معدل التزام المركز
+                معدل الالتزام
               </span>
             </div>
 
@@ -506,7 +634,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
               <span className="text-xs text-slate-500 font-bold block mb-1">إجمالي الإنجاز</span>
               <div className="flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                  {overview.totalPagesMemorized}
+                  {displayedOverview.totalPagesMemorized}
                 </span>
                 <Award className="w-5 h-5 text-islamicGold-500" />
               </div>
@@ -521,9 +649,9 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
-                  ملخص أداء الحلقات القرآنية
+                  ملخص أداء الحلقات ({selectedSeasonId === "all" ? "جميع الأندية" : currentSeasonObj?.name})
                 </h3>
-                <p className="text-xs text-slate-500">نظرة سريعة على جميع حلقات مركز طارق</p>
+                <p className="text-xs text-slate-500">نظرة سريعة على حلقات هذا النادي في المركز</p>
               </div>
               <Button
                 onClick={handleOpenCreateHalaqa}
@@ -540,6 +668,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 font-black">
                     <th className="py-2.5 px-3">اسم الحلقة</th>
+                    <th className="py-2.5 px-3">النادي</th>
                     <th className="py-2.5 px-3">المعلم المشرف</th>
                     <th className="py-2.5 px-3 text-center">الطلاب</th>
                     <th className="py-2.5 px-3 text-center">نسبة الحضور</th>
@@ -547,21 +676,34 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-bold">
-                  {halaqat.map((h) => (
-                    <tr key={h.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                      <td className="py-3 px-3 font-black text-slate-900 dark:text-slate-100">
-                        {h.name}
-                      </td>
-                      <td className="py-3 px-3 text-slate-600 dark:text-slate-300">
-                        {h.teacher_name}
-                      </td>
-                      <td className="py-3 px-3 text-center">{h.students_count} طالب</td>
-                      <td className="py-3 px-3 text-center text-emerald-600">{h.attendance_rate}٪</td>
-                      <td className="py-3 px-3 text-center text-islamicGold-700 dark:text-islamicGold-400">
-                        {h.total_pages} ص
+                  {displayedHalaqat.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-6 text-center text-slate-400">
+                        لا توجد حلقات مسجلة في هذا النادي حالياً. اضغط على "إضافة حلقة" لإنشاء حلقة جديدة.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    displayedHalaqat.map((h) => (
+                      <tr key={h.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        <td className="py-3 px-3 font-black text-slate-900 dark:text-slate-100">
+                          {h.name}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-burgundy-50 dark:bg-burgundy-950 text-burgundy-900 dark:text-burgundy-300 border border-islamicGold-400/30">
+                            {h.season_name || "النادي الدائم"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-slate-600 dark:text-slate-300">
+                          {h.teacher_name}
+                        </td>
+                        <td className="py-3 px-3 text-center">{h.students_count} طالب</td>
+                        <td className="py-3 px-3 text-center text-emerald-600">{h.attendance_rate}٪</td>
+                        <td className="py-3 px-3 text-center text-islamicGold-700 dark:text-islamicGold-400">
+                          {h.total_pages} ص
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -577,10 +719,10 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-black text-slate-900 dark:text-white">
-                إدارة الحلقات القرآنية
+                إدارة الحلقات القرآنية • {selectedSeasonId === "all" ? "جميع الأندية" : currentSeasonObj?.name}
               </h2>
               <p className="text-xs text-slate-500">
-                إنشاء وتعديل الحلقات وتعيين المعلمين المشرفين
+                إنشاء وتعديل الحلقات وتعيين المعلمين المشرفين وتصنيفها حسب الأندية
               </p>
             </div>
             <Button
@@ -593,52 +735,77 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {halaqat.map((h) => (
-              <div
-                key={h.id}
-                className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between space-y-4 hover:border-burgundy-700/50 transition-colors"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="p-2 rounded-xl bg-burgundy-50 dark:bg-burgundy-950 text-burgundy-800 dark:text-burgundy-300">
-                      <BookOpen className="w-5 h-5" />
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        onClick={() => handleOpenEditHalaqa(h)}
-                        variant="ghost"
-                        size="sm"
-                        className="w-8 h-8 p-0 text-slate-500 hover:text-burgundy-800 rounded-lg"
-                        title="تعديل الحلقة"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        onClick={() => handleDeleteHalaqa(h.id)}
-                        variant="ghost"
-                        size="sm"
-                        className="w-8 h-8 p-0 text-slate-500 hover:text-rose-600 rounded-lg"
-                        title="حذف الحلقة"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+            {displayedHalaqat.length === 0 ? (
+              <div className="col-span-full p-8 text-center bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 space-y-3">
+                <div className="w-12 h-12 mx-auto rounded-2xl bg-burgundy-50 dark:bg-burgundy-950 flex items-center justify-center text-burgundy-800 dark:text-burgundy-300">
+                  <BookOpen className="w-6 h-6" />
+                </div>
+                <h4 className="text-sm font-black text-slate-900 dark:text-white">
+                  لا توجد حلقات قرآنية مسجلة في {currentSeasonObj?.name || "هذا النادي"}
+                </h4>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  ابدأ بإضافة أول حلقة وربطها بهذا النادي لتمكين المعلمين والطلاب من بدء التسميع والمتابعة.
+                </p>
+                <Button
+                  onClick={handleOpenCreateHalaqa}
+                  className="bg-burgundy-900 hover:bg-burgundy-800 text-white rounded-xl gap-1.5 text-xs font-bold"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>إضافة حلقة الآن</span>
+                </Button>
+              </div>
+            ) : (
+              displayedHalaqat.map((h) => (
+                <div
+                  key={h.id}
+                  className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between space-y-4 hover:border-burgundy-700/50 transition-colors"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="p-2 rounded-xl bg-burgundy-50 dark:bg-burgundy-950 text-burgundy-800 dark:text-burgundy-300">
+                          <BookOpen className="w-5 h-5" />
+                        </span>
+                        <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-burgundy-50 dark:bg-burgundy-950/80 text-burgundy-900 dark:text-burgundy-300 border border-islamicGold-400/30">
+                          {h.season_name || "النادي الدائم"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          onClick={() => handleOpenEditHalaqa(h)}
+                          variant="ghost"
+                          size="sm"
+                          className="w-8 h-8 p-0 text-slate-500 hover:text-burgundy-800 rounded-lg"
+                          title="تعديل الحلقة"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          onClick={() => handleDeleteHalaqa(h.id)}
+                          variant="ghost"
+                          size="sm"
+                          className="w-8 h-8 p-0 text-slate-500 hover:text-rose-600 rounded-lg"
+                          title="حذف الحلقة"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
+
+                    <h3 className="text-base font-black text-slate-900 dark:text-white">
+                      {h.name}
+                    </h3>
+
+                    <p className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-islamicGold-600" />
+                      <span>المعلم: </span>
+                      <span className="font-bold text-slate-900 dark:text-slate-200">
+                        {h.teacher_name}
+                      </span>
+                    </p>
                   </div>
 
-                  <h3 className="text-base font-black text-slate-900 dark:text-white">
-                    {h.name}
-                  </h3>
-
-                  <p className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-islamicGold-600" />
-                    <span>المعلم: </span>
-                    <span className="font-bold text-slate-900 dark:text-slate-200">
-                      {h.teacher_name}
-                    </span>
-                  </p>
-                </div>
-
-                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-3 gap-2 text-center text-xs">
                   <div className="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl">
                     <span className="text-[10px] text-slate-400 block">الطلاب</span>
                     <span className="font-black text-slate-900 dark:text-white">
@@ -668,10 +835,11 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                   <ExternalLink className="w-3.5 h-3.5 mr-1" />
                 </Button>
               </div>
-            ))}
-          </div>
+            ))
+          )}
         </div>
-      )}
+      </div>
+    )}
 
       {/* ========================================================================= */}
       {/* TAB 3: TEACHERS */}
@@ -814,10 +982,10 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
               onChange={(e) => setSelectedHalaqaFilter(e.target.value)}
               className="h-11 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold w-full sm:w-56"
             >
-              <option value="all">جميع الحلقات ({students.length})</option>
-              {halaqat.map((h) => (
+              <option value="all">جميع حلقات النادي ({displayedStudents.length} طالب)</option>
+              {displayedHalaqat.map((h) => (
                 <option key={h.id} value={h.id}>
-                  {h.name}
+                  {h.name} ({h.season_name})
                 </option>
               ))}
             </select>
@@ -829,7 +997,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 font-black">
                   <th className="py-2.5 px-3">اسم الطالب</th>
-                  <th className="py-2.5 px-3">الحلقة</th>
+                  <th className="py-2.5 px-3">الحلقة والنادي</th>
                   <th className="py-2.5 px-3">المعلم</th>
                   <th className="py-2.5 px-3 text-center">إجمالي الإنجاز</th>
                   <th className="py-2.5 px-3 text-center">رابط المتابعة</th>
@@ -837,56 +1005,69 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-bold">
-                {filteredStudents.map((s) => (
-                  <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                    <td className="py-3 px-3">
-                      <Link
-                        href={`/students/${s.id}`}
-                        className="font-black text-slate-900 dark:text-slate-100 hover:text-burgundy-800"
-                      >
-                        {s.full_name}
-                      </Link>
-                      {s.parent_phone && (
-                        <span className="block text-[10px] text-slate-400 font-normal">
-                          هاتف: {s.parent_phone}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3 text-slate-700 dark:text-slate-300">
-                      {s.halaqa_name}
-                    </td>
-                    <td className="py-3 px-3 text-slate-600 dark:text-slate-400">
-                      {s.teacher_name}
-                    </td>
-                    <td className="py-3 px-3 text-center text-islamicGold-700 dark:text-islamicGold-400 font-black">
-                      {s.total_pages_memorized || 0} ص
-                    </td>
-                    <td className="py-3 px-3 text-center">
-                      <Link
-                        href={`/track/${s.parent_token}`}
-                        target="_blank"
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-burgundy-50 hover:bg-burgundy-100 dark:bg-burgundy-950 dark:hover:bg-burgundy-900 text-burgundy-900 dark:text-burgundy-200 text-[11px] font-bold border border-burgundy-200/60 transition-colors"
-                      >
-                        <span>عرض البطاقة</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </Link>
-                    </td>
-                    <td className="py-3 px-3 text-center">
-                      <Button
-                        onClick={() => {
-                          setTransferModalStudent(s);
-                          setTransferTargetHalaqa(s.group_id || "");
-                        }}
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs font-bold text-slate-600 hover:text-burgundy-800 rounded-lg gap-1"
-                      >
-                        <ArrowUpDown className="w-3.5 h-3.5" />
-                        <span>نقل</span>
-                      </Button>
+                {displayedStudents.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-slate-400">
+                      لا يوجد طلاب مسجلون في {currentSeasonObj?.name || "هذا النادي"} يطابقون شروط البحث.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  displayedStudents.map((s) => (
+                    <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                      <td className="py-3 px-3">
+                        <Link
+                          href={`/students/${s.id}`}
+                          className="font-black text-slate-900 dark:text-slate-100 hover:text-burgundy-800"
+                        >
+                          {s.full_name}
+                        </Link>
+                        {s.parent_phone && (
+                          <span className="block text-[10px] text-slate-400 font-normal">
+                            هاتف: {s.parent_phone}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className="font-bold text-slate-800 dark:text-slate-200 block">
+                          {s.halaqa_name}
+                        </span>
+                        <span className="inline-block text-[10px] text-islamicGold-700 dark:text-islamicGold-400 font-bold mt-0.5">
+                          {s.season_name || "النادي الدائم"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-slate-600 dark:text-slate-400">
+                        {s.teacher_name}
+                      </td>
+                      <td className="py-3 px-3 text-center text-islamicGold-700 dark:text-islamicGold-400 font-black">
+                        {s.total_pages_memorized || 0} ص
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <Link
+                          href={`/track/${s.parent_token}`}
+                          target="_blank"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-burgundy-50 hover:bg-burgundy-100 dark:bg-burgundy-950 dark:hover:bg-burgundy-900 text-burgundy-900 dark:text-burgundy-200 text-[11px] font-bold border border-burgundy-200/60 transition-colors"
+                        >
+                          <span>عرض البطاقة</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <Button
+                          onClick={() => {
+                            setTransferModalStudent(s);
+                            setTransferTargetHalaqa(s.group_id || "");
+                          }}
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 px-2.5 text-xs font-bold text-burgundy-800 dark:text-burgundy-300 hover:bg-burgundy-50 rounded-xl"
+                        >
+                          <ArrowUpDown className="w-3.5 h-3.5 ml-1" />
+                          <span>نقل</span>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -901,43 +1082,39 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
           <div className="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-black text-slate-900 dark:text-white">
-                تقارير مركز طارق القرآني
+                تقارير المركز المجمعة والتفصيلية
               </h2>
               <p className="text-xs text-slate-500">
-                تقارير شاملة قابلة للطباعة والتصدير بجودة عالية
+                طباعة كشوفات الإنجاز لـ {selectedSeasonId === "all" ? "جميع الأندية" : currentSeasonObj?.name}
               </p>
             </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => window.print()}
-                className="bg-burgundy-900 hover:bg-burgundy-800 text-white rounded-xl gap-1.5"
-              >
-                <Printer className="w-4 h-4" />
-                <span>طباعة التقرير</span>
-              </Button>
-            </div>
+            <Button
+              onClick={() => window.print()}
+              className="bg-burgundy-900 hover:bg-burgundy-800 text-white rounded-xl gap-1.5"
+            >
+              <Printer className="w-4 h-4" />
+              <span>طباعة التقرير الحالي</span>
+            </Button>
           </div>
 
-          {/* Sub-selector */}
-          <div className="no-print flex items-center gap-2">
+          {/* Sub-tabs for reports */}
+          <div className="no-print flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
             <button
               onClick={() => setReportType("center")}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 reportType === "center"
-                  ? "bg-burgundy-900 text-white border-burgundy-900"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300"
+                  ? "bg-burgundy-900 text-white"
+                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400"
               }`}
             >
-              تقرير المركز الشامل
+              التقرير العام للمركز
             </button>
-
             <button
               onClick={() => setReportType("halaqa")}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 reportType === "halaqa"
-                  ? "bg-burgundy-900 text-white border-burgundy-900"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300"
+                  ? "bg-burgundy-900 text-white"
+                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400"
               }`}
             >
               تقرير حلقة معينة
@@ -949,7 +1126,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6 print:p-0 print:border-none">
               <div className="text-center pb-6 border-b border-slate-200 dark:border-slate-800">
                 <h3 className="text-xl font-black text-slate-900 dark:text-white">
-                  مركز طارق القرآني — التقرير العام الشامل
+                  مركز طارق القرآني — التقرير العام ({selectedSeasonId === "all" ? "جميع الأندية والفصول" : currentSeasonObj?.name})
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">
                   تاريخ استخراج التقرير: {new Date().toLocaleDateString("ar-JO")}
@@ -961,25 +1138,25 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                 <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800">
                   <span className="text-xs text-slate-400 block">إجمالي الطلاب</span>
                   <span className="text-xl font-black text-slate-900 dark:text-white">
-                    {overview.totalStudents}
+                    {displayedOverview.totalStudents}
                   </span>
                 </div>
                 <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800">
                   <span className="text-xs text-slate-400 block">عدد الحلقات</span>
                   <span className="text-xl font-black text-slate-900 dark:text-white">
-                    {overview.totalHalaqat}
+                    {displayedOverview.totalHalaqat}
                   </span>
                 </div>
                 <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800">
                   <span className="text-xs text-slate-400 block">نسبة الحضور</span>
                   <span className="text-xl font-black text-emerald-600">
-                    {overview.attendanceRate}٪
+                    {displayedOverview.attendanceRate}٪
                   </span>
                 </div>
                 <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800">
                   <span className="text-xs text-slate-400 block">الصفحات المنجزة</span>
                   <span className="text-xl font-black text-islamicGold-600">
-                    {overview.totalPagesMemorized} ص
+                    {displayedOverview.totalPagesMemorized} ص
                   </span>
                 </div>
               </div>
@@ -994,6 +1171,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                     <thead>
                       <tr className="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-black">
                         <th className="p-2.5 border">الحلقة</th>
+                        <th className="p-2.5 border">النادي</th>
                         <th className="p-2.5 border">المعلم المشرف</th>
                         <th className="p-2.5 border text-center">عدد الطلاب</th>
                         <th className="p-2.5 border text-center">نسبة الحضور</th>
@@ -1001,15 +1179,24 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                       </tr>
                     </thead>
                     <tbody>
-                      {halaqat.map((h) => (
-                        <tr key={h.id} className="border-t font-bold">
-                          <td className="p-2.5 border font-black">{h.name}</td>
-                          <td className="p-2.5 border">{h.teacher_name}</td>
-                          <td className="p-2.5 border text-center">{h.students_count}</td>
-                          <td className="p-2.5 border text-center text-emerald-600">{h.attendance_rate}٪</td>
-                          <td className="p-2.5 border text-center text-islamicGold-700">{h.total_pages}</td>
+                      {displayedHalaqat.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="p-4 text-center text-slate-400">
+                            لا توجد حلقات في هذا النادي لعرضها بالتقرير.
+                          </td>
                         </tr>
-                      ))}
+                      ) : (
+                        displayedHalaqat.map((h) => (
+                          <tr key={h.id} className="border-t font-bold">
+                            <td className="p-2.5 border font-black">{h.name}</td>
+                            <td className="p-2.5 border text-islamicGold-700">{h.season_name}</td>
+                            <td className="p-2.5 border">{h.teacher_name}</td>
+                            <td className="p-2.5 border text-center">{h.students_count}</td>
+                            <td className="p-2.5 border text-center text-emerald-600">{h.attendance_rate}٪</td>
+                            <td className="p-2.5 border text-center text-islamicGold-700">{h.total_pages}</td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -1027,17 +1214,17 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                   onChange={(e) => setSelectedReportHalaqa(e.target.value)}
                   className="h-10 px-3 bg-slate-50 dark:bg-slate-800 border rounded-xl text-xs font-bold"
                 >
-                  {halaqat.map((h) => (
+                  {displayedHalaqat.map((h) => (
                     <option key={h.id} value={h.id}>
-                      {h.name}
+                      {h.name} ({h.season_name})
                     </option>
                   ))}
                 </select>
               </div>
 
               {(() => {
-                const curHalaqa = halaqat.find((h) => h.id === selectedReportHalaqa);
-                const hStudents = students.filter((s) => s.group_id === selectedReportHalaqa);
+                const curHalaqa = displayedHalaqat.find((h) => h.id === selectedReportHalaqa) || displayedHalaqat[0];
+                const hStudents = displayedStudents.filter((s) => s.group_id === curHalaqa?.id);
 
                 return (
                   <div className="space-y-4">
@@ -1103,6 +1290,24 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                   required
                   className="rounded-xl"
                 />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                  النادي / الفصل التابع له <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={halaqaSeasonInput}
+                  onChange={(e) => setHalaqaSeasonInput(e.target.value)}
+                  className="w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100"
+                  required
+                >
+                  {seasons.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} {s.is_active ? "★ (النشط حالياً)" : ""}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>

@@ -40,6 +40,14 @@ export type GroupMemberRow = Database["public"]["Tables"]["group_members"]["Row"
 export type GroupMemberInsert = Database["public"]["Tables"]["group_members"]["Insert"];
 export type GroupMemberUpdate = Database["public"]["Tables"]["group_members"]["Update"];
 
+export type SeasonRow = Database["public"]["Tables"]["seasons"]["Row"];
+export type SeasonInsert = Database["public"]["Tables"]["seasons"]["Insert"];
+export type SeasonUpdate = Database["public"]["Tables"]["seasons"]["Update"];
+
+export type CircleRow = Database["public"]["Tables"]["circles"]["Row"];
+export type CircleInsert = Database["public"]["Tables"]["circles"]["Insert"];
+export type CircleUpdate = Database["public"]["Tables"]["circles"]["Update"];
+
 export interface StudentWithProgress extends StudentRow {
   latest_log?: MemorizationLogRow | null;
   latest_attendance?: AttendanceRecordRow | null;
@@ -95,6 +103,8 @@ export interface HalaqaWithDetails {
   teacher_id: string | null;
   teacher_name: string | null;
   teacher_phone: string | null;
+  season_id?: string | null;
+  season_name?: string | null;
   students_count: number;
   attendance_rate: number;
   total_pages: number;
@@ -135,6 +145,10 @@ export interface StudentTrackData {
     avatar_url?: string | null;
   };
   halaqa?: {
+    id: string;
+    name: string;
+  } | null;
+  season?: {
     id: string;
     name: string;
   } | null;

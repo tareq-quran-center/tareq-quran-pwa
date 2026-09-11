@@ -42,6 +42,7 @@ export default async function AdminPage() {
           halaqat: data.halaqat,
           teachers: data.teachers,
           students: data.students,
+          seasons: data.seasons,
           currentUserIsAdmin: data.currentUserIsAdmin,
         }}
       />

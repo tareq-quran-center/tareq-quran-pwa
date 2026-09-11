@@ -41,25 +41,61 @@ export async function recordAttendance(data: AttendanceInput): Promise<ActionRes
       };
     }
 
-    const payload: AttendanceRecordInsert = {
+    const basePayload: Record<string, any> = {
       student_id: validation.data.student_id,
       teacher_id: user.id,
       date: validation.data.date,
       status: validation.data.status,
-      notes: validation.data.notes || null,
     };
 
-    // Upsert using student_id and date unique constraint, governed by RLS
-    const { data: record, error } = await supabase
-      .from("attendance_records")
-      .upsert(payload, { onConflict: "student_id,date" })
-      .select()
-      .single();
+    if (validation.data.notes && validation.data.notes.trim() !== "") {
+      basePayload.notes = validation.data.notes.trim();
+    }
 
-    if (error) {
+    // Upsert using student_id and date unique constraint, governed by RLS with schema cache auto-recovery
+    let currentPayload = { ...basePayload };
+    let record: any = null;
+    let lastError: any = null;
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data: upserted, error } = await supabase
+        .from("attendance_records")
+        .upsert(currentPayload as any, { onConflict: "student_id,date" })
+        .select()
+        .single();
+
+      if (!error && upserted) {
+        record = upserted;
+        break;
+      }
+
+      lastError = error;
+
+      // 1. Column not found in PostgREST schema cache
+      const missingMatch = error?.message?.match(/Could not find the '([^']+)' column of 'attendance_records'/i);
+      if (missingMatch && missingMatch[1]) {
+        const missingCol = missingMatch[1];
+        console.warn(`[recordAttendance] Column '${missingCol}' not found in DB schema cache. Stripping and retrying...`);
+        delete currentPayload[missingCol];
+        continue;
+      }
+
+      // 2. Column does not exist on table relation
+      const colNotFoundMatch = error?.message?.match(/column "([^"]+)" of relation "attendance_records" does not exist/i);
+      if (colNotFoundMatch && colNotFoundMatch[1]) {
+        const missingCol = colNotFoundMatch[1];
+        console.warn(`[recordAttendance] Column '${missingCol}' does not exist on table. Stripping and retrying...`);
+        delete currentPayload[missingCol];
+        continue;
+      }
+
+      break;
+    }
+
+    if (!record) {
       return {
         success: false,
-        error: "فشل تسجيل الحضور: " + error.message,
+        error: "فشل تسجيل الحضور: " + (lastError?.message || "خطأ غير متوقع"),
       };
     }
 
@@ -206,22 +242,60 @@ export async function recordBulkAttendance(records: AttendanceInput[]): Promise<
       };
     }
 
-    const payload: AttendanceRecordInsert[] = records.map((r) => ({
-      student_id: r.student_id,
-      teacher_id: user.id,
-      date: r.date,
-      status: r.status,
-      notes: r.notes || null,
-    }));
+    const hasAnyNotes = records.some((r) => r.notes && r.notes.trim() !== "");
 
-    const { error } = await supabase
-      .from("attendance_records")
-      .upsert(payload, { onConflict: "student_id,date" });
+    const basePayload: Record<string, any>[] = records.map((r) => {
+      const item: Record<string, any> = {
+        student_id: r.student_id,
+        teacher_id: user.id,
+        date: r.date,
+        status: r.status,
+      };
+      if (hasAnyNotes) {
+        item.notes = r.notes?.trim() || null;
+      }
+      return item;
+    });
 
-    if (error) {
+    let currentPayload = basePayload.map((item) => ({ ...item }));
+    let lastError: any = null;
+    let bulkSuccess = false;
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { error } = await supabase
+        .from("attendance_records")
+        .upsert(currentPayload as any, { onConflict: "student_id,date" });
+
+      if (!error) {
+        bulkSuccess = true;
+        break;
+      }
+
+      lastError = error;
+
+      // 1. Match missing column in PostgREST schema cache or table relation
+      const missingMatch =
+        error?.message?.match(/Could not find the '([^']+)' column of 'attendance_records'/i) ||
+        error?.message?.match(/column "([^"]+)" of relation "attendance_records" does not exist/i);
+
+      if (missingMatch && missingMatch[1]) {
+        const missingCol = missingMatch[1];
+        console.warn(`[recordBulkAttendance] Column '${missingCol}' not found in DB schema cache. Stripping and retrying...`);
+        currentPayload = currentPayload.map((item) => {
+          const copy = { ...item };
+          delete copy[missingCol];
+          return copy;
+        });
+        continue;
+      }
+
+      break;
+    }
+
+    if (!bulkSuccess) {
       return {
         success: false,
-        error: "فشل تحديث الحضور الجماعي: " + error.message,
+        error: "فشل تحديث الحضور الجماعي: " + (lastError?.message || "خطأ غير متوقع"),
       };
     }
 

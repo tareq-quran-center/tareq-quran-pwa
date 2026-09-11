@@ -221,3 +221,31 @@ export interface StudentTrackData {
   }>;
 }
 
+export interface BulkImportStudentInput {
+  name: string;
+  parent_phone: string;
+  phone?: string | null;
+  notes?: string | null;
+  academic_grade?: string | null;
+}
+
+export interface BulkImportPayload {
+  circle_id: string;
+  students: BulkImportStudentInput[];
+}
+
+export interface BulkImportResult {
+  success: boolean;
+  insertedCount: number;
+  failedCount: number;
+  insertedStudents: Array<{
+    id: string;
+    name: string;
+    parent_phone: string | null;
+    parent_token: string;
+    track_url: string;
+  }>;
+  errors?: string[];
+  error?: string;
+}
+

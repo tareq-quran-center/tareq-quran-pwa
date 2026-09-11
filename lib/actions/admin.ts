@@ -12,9 +12,12 @@ import {
   StudentRow,
   SeasonRow,
   CircleRow,
+  BulkImportPayload,
+  BulkImportResult,
 } from "@/types";
 import { getSeasons } from "./season";
 import { FALLBACK_SEASONS } from "@/lib/constants/seasons";
+import { validateAndFormatJordanianPhone } from "@/lib/phoneUtils";
 
 export interface AdminDataResult {
   success: boolean;
@@ -848,6 +851,158 @@ export async function deleteTeacher(teacherId: string) {
     return { success: true };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "خطأ غير متوقع أثناء حذف المعلم" };
+  }
+}
+
+/**
+ * Bulk import students for a specific circle (Admin only)
+ */
+export async function bulkImportStudents(payload: BulkImportPayload): Promise<BulkImportResult> {
+  try {
+    const auth = await checkAdminAuth();
+    if (!auth.authorized || !auth.user) {
+      return {
+        success: false,
+        error: "عذراً، هذه الميزة مخصصة لمدير المركز فقط",
+        insertedCount: 0,
+        failedCount: 0,
+        insertedStudents: [],
+      };
+    }
+
+    if (!payload.circle_id || !Array.isArray(payload.students) || payload.students.length === 0) {
+      return {
+        success: false,
+        error: "يرجى تحديد الحلقة وقائمة الطلاب المراد استيرادهم",
+        insertedCount: 0,
+        failedCount: 0,
+        insertedStudents: [],
+      };
+    }
+
+    const supabase = createClient();
+
+    // 1. Resolve circle and assigned teacher
+    let assignedTeacherId = auth.user.id;
+    const { data: circleData } = await supabase
+      .from("circles")
+      .select("id, name, teacher_id")
+      .eq("id", payload.circle_id)
+      .maybeSingle();
+
+    if (circleData?.teacher_id) {
+      assignedTeacherId = circleData.teacher_id;
+    } else {
+      const { data: gm } = await supabase
+        .from("group_members")
+        .select("user_id")
+        .eq("group_id", payload.circle_id)
+        .limit(1)
+        .maybeSingle();
+      if (gm?.user_id) {
+        assignedTeacherId = gm.user_id;
+      }
+    }
+
+    // 2. Normalize and prepare student rows
+    const rowsToInsert: any[] = [];
+    const errors: string[] = [];
+
+    for (let i = 0; i < payload.students.length; i++) {
+      const s = payload.students[i];
+      const cleanName = (s.name || "").trim();
+      if (!cleanName) {
+        errors.push(`الصف ${i + 1}: تم تخطي الطالب لعدم وجود اسم`);
+        continue;
+      }
+
+      let normalizedPhone: string | null = null;
+      if (s.parent_phone) {
+        const phoneCheck = validateAndFormatJordanianPhone(s.parent_phone);
+        if (phoneCheck.isValid && phoneCheck.local) {
+          normalizedPhone = phoneCheck.local;
+        } else {
+          // Store cleaned digits
+          const digits = s.parent_phone.replace(/[^\d+]/g, "").trim();
+          normalizedPhone = digits || s.parent_phone.trim();
+        }
+      }
+
+      rowsToInsert.push({
+        name: cleanName,
+        parent_phone: normalizedPhone,
+        phone: s.phone ? s.phone.trim() : null,
+        group_id: payload.circle_id,
+        teacher_id: assignedTeacherId,
+        parent_token: crypto.randomUUID(),
+        notes: s.notes ? s.notes.trim() : null,
+      });
+    }
+
+    if (rowsToInsert.length === 0) {
+      return {
+        success: false,
+        error: "لم يتم العثور على أي صفوف صالحة للاستيراد",
+        insertedCount: 0,
+        failedCount: payload.students.length,
+        insertedStudents: [],
+        errors,
+      };
+    }
+
+    // 3. Batch insert in chunks of 50
+    const insertedStudents: Array<{
+      id: string;
+      name: string;
+      parent_phone: string | null;
+      parent_token: string;
+      track_url: string;
+    }> = [];
+
+    const CHUNK_SIZE = 50;
+    for (let i = 0; i < rowsToInsert.length; i += CHUNK_SIZE) {
+      const chunk = rowsToInsert.slice(i, i + CHUNK_SIZE);
+      const { data: insertedRows, error: insertError } = await supabase
+        .from("students")
+        .insert(chunk)
+        .select("id, name, parent_phone, parent_token");
+
+      if (insertError) {
+        console.error("Bulk insert chunk error:", insertError);
+        errors.push(`فشل إدراج جزء من الطلاب (${i + 1}-${i + chunk.length}): ${insertError.message}`);
+      } else if (insertedRows) {
+        insertedRows.forEach((row: any) => {
+          insertedStudents.push({
+            id: row.id,
+            name: row.name,
+            parent_phone: row.parent_phone,
+            parent_token: row.parent_token,
+            track_url: `/parent/${row.parent_token}`,
+          });
+        });
+      }
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/students");
+    revalidatePath("/dashboard");
+
+    return {
+      success: insertedStudents.length > 0,
+      insertedCount: insertedStudents.length,
+      failedCount: payload.students.length - insertedStudents.length,
+      insertedStudents,
+      errors: errors.length > 0 ? errors : undefined,
+    };
+  } catch (err) {
+    console.error("Unexpected error in bulkImportStudents:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "حدث خطأ غير متوقع أثناء الاستيراد الجماعي",
+      insertedCount: 0,
+      failedCount: payload.students?.length || 0,
+      insertedStudents: [],
+    };
   }
 }
 

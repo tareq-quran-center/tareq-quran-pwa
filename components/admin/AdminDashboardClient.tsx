@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   AdminCenterOverview,
   HalaqaWithDetails,
@@ -9,6 +10,14 @@ import {
   StudentRow,
   SeasonRow,
 } from "@/types";
+
+const BulkStudentImportDialog = dynamic(
+  () =>
+    import("./BulkStudentImportDialog").then(
+      (m) => m.BulkStudentImportDialog
+    ),
+  { ssr: false }
+);
 import {
   createHalaqa,
   updateHalaqa,
@@ -47,6 +56,7 @@ import {
   Snowflake,
   Eye,
   EyeOff,
+  FileSpreadsheet,
 } from "lucide-react";
 
 interface AdminDashboardClientProps {
@@ -134,6 +144,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
   // Filter & Search states
   const [studentSearch, setStudentSearch] = useState("");
   const [selectedHalaqaFilter, setSelectedHalaqaFilter] = useState("all");
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
 
   // Halaqa Modal States
   const [isHalaqaModalOpen, setIsHalaqaModalOpen] = useState(false);
@@ -1037,12 +1048,23 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                 قائمة جميع الطلاب، نقل الطلاب بين الحلقات، وروابط متابعة أولياء الأمور
               </p>
             </div>
-            <Link href="/students">
-              <Button className="bg-burgundy-900 hover:bg-burgundy-800 text-white rounded-xl gap-1.5">
-                <Plus className="w-4 h-4" />
-                <span>إضافة طالب جديد</span>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                onClick={() => setIsBulkImportOpen(true)}
+                variant="outline"
+                className="border-burgundy-300 dark:border-burgundy-800 text-burgundy-900 dark:text-burgundy-200 hover:bg-burgundy-50 dark:hover:bg-burgundy-950/60 rounded-xl gap-1.5 font-bold shadow-xs"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-islamicGold-600" />
+                <span>استيراد جماعي (Excel)</span>
               </Button>
-            </Link>
+              <Link href="/students">
+                <Button className="bg-burgundy-900 hover:bg-burgundy-800 text-white rounded-xl gap-1.5">
+                  <Plus className="w-4 h-4" />
+                  <span>إضافة طالب جديد</span>
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Filters & Search */}
@@ -1709,6 +1731,39 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
             </div>
           </div>
         </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* BULK STUDENT IMPORT DIALOG (LAZY LOADED) */}
+      {/* ========================================================================= */}
+      {isBulkImportOpen && (
+        <BulkStudentImportDialog
+          isOpen={isBulkImportOpen}
+          onClose={() => setIsBulkImportOpen(false)}
+          halaqat={halaqat}
+          selectedSeasonId={selectedSeasonId}
+          onSuccess={(newStudents) => {
+            setStudents((prev) => [
+              ...newStudents.map((ns) => {
+                const hObj = halaqat.find((h) => h.id === ns.group_id);
+                return {
+                  id: ns.id,
+                  name: ns.name,
+                  full_name: ns.name,
+                  parent_phone: ns.parent_phone,
+                  parent_token: ns.parent_token,
+                  created_at: new Date().toISOString(),
+                  season_id: hObj?.season_id,
+                  season_name: hObj?.season_name,
+                  halaqa_name: hObj?.name || "الحلقة",
+                  teacher_name: hObj?.teacher_name || "غير معين",
+                } as any;
+              }),
+              ...prev,
+            ]);
+            showToast(`تم استيراد ${newStudents.length} طالب بنجاح 🎉`);
+          }}
+        />
       )}
     </div>
   );

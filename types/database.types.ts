@@ -15,6 +15,9 @@ export type Database = {
           teacher_id: string;
           group_id: string | null;
           full_name: string;
+          name?: string;
+          phone?: string | null;
+          notes?: string | null;
           parent_phone: string | null;
           parent_token: string;
           academic_grade: string | null;
@@ -33,7 +36,10 @@ export type Database = {
           id?: string;
           teacher_id: string;
           group_id?: string | null;
-          full_name: string;
+          full_name?: string;
+          name?: string;
+          phone?: string | null;
+          notes?: string | null;
           parent_phone?: string | null;
           parent_token?: string;
           academic_grade?: string | null;
@@ -53,6 +59,9 @@ export type Database = {
           teacher_id?: string;
           group_id?: string | null;
           full_name?: string;
+          name?: string;
+          phone?: string | null;
+          notes?: string | null;
           parent_phone?: string | null;
           parent_token?: string;
           academic_grade?: string | null;

@@ -244,6 +244,8 @@ export interface BulkImportResult {
     parent_phone: string | null;
     parent_token: string;
     track_url: string;
+    group_id?: string | null;
+    teacher_id?: string;
   }>;
   errors?: string[];
   error?: string;

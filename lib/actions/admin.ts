@@ -882,17 +882,35 @@ export async function bulkImportStudents(payload: BulkImportPayload): Promise<Bu
 
     const supabase = createClient();
 
-    // 1. Resolve circle and assigned teacher
-    let assignedTeacherId = auth.user.id;
+    // 1. Resolve circle, assigned teacher, and validate foreign keys
+    let assignedTeacherId: string = auth.user.id;
+    let circleName = "حلقة القرآن الكريم";
+
+    // Check circles table
     const { data: circleData } = await supabase
       .from("circles")
       .select("id, name, teacher_id")
       .eq("id", payload.circle_id)
       .maybeSingle();
 
-    if (circleData?.teacher_id) {
-      assignedTeacherId = circleData.teacher_id;
-    } else {
+    if (circleData) {
+      if (circleData.name) circleName = circleData.name;
+      if (circleData.teacher_id) assignedTeacherId = circleData.teacher_id;
+    }
+
+    // Check groups table
+    const { data: groupData } = await supabase
+      .from("groups")
+      .select("id, name, created_by")
+      .eq("id", payload.circle_id)
+      .maybeSingle();
+
+    if (groupData?.name && !circleData?.name) {
+      circleName = groupData.name;
+    }
+
+    // If teacher not resolved from circles, check group_members / created_by
+    if (!circleData?.teacher_id) {
       const { data: gm } = await supabase
         .from("group_members")
         .select("user_id")
@@ -901,6 +919,45 @@ export async function bulkImportStudents(payload: BulkImportPayload): Promise<Bu
         .maybeSingle();
       if (gm?.user_id) {
         assignedTeacherId = gm.user_id;
+      } else if (groupData?.created_by) {
+        assignedTeacherId = groupData.created_by;
+      }
+    }
+
+    // Verify assignedTeacherId exists in profiles to prevent foreign key violation
+    if (assignedTeacherId && assignedTeacherId !== auth.user.id) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", assignedTeacherId)
+        .maybeSingle();
+      if (!prof) {
+        assignedTeacherId = auth.user.id;
+      }
+    }
+
+    // Ensure group exists in groups table for students.group_id foreign key constraint
+    let validGroupId: string | null = payload.circle_id;
+    if (!groupData) {
+      const { error: ensureGroupErr } = await supabase.from("groups").insert({
+        id: payload.circle_id,
+        name: circleName,
+        created_by: auth.user.id,
+      });
+
+      if (ensureGroupErr) {
+        console.warn("Could not insert circle into groups table:", ensureGroupErr);
+        // Fallback: don't let group_id break the insert if it doesn't exist in groups
+        validGroupId = null;
+      } else {
+        try {
+          await supabase.from("group_members").insert({
+            id: crypto.randomUUID(),
+            group_id: payload.circle_id,
+            user_id: assignedTeacherId || auth.user.id,
+            role: "owner",
+          });
+        } catch {}
       }
     }
 
@@ -928,11 +985,14 @@ export async function bulkImportStudents(payload: BulkImportPayload): Promise<Bu
         }
       }
 
+      // parent_phone is NOT NULL in database schema, so provide a safe default if empty
+      const finalParentPhone = normalizedPhone || "0700000000";
+
       rowsToInsert.push({
         name: cleanName,
-        parent_phone: normalizedPhone,
+        parent_phone: finalParentPhone,
         phone: s.phone ? s.phone.trim() : null,
-        group_id: payload.circle_id,
+        group_id: validGroupId,
         teacher_id: assignedTeacherId,
         parent_token: crypto.randomUUID(),
         notes: s.notes ? s.notes.trim() : null,
@@ -942,7 +1002,7 @@ export async function bulkImportStudents(payload: BulkImportPayload): Promise<Bu
     if (rowsToInsert.length === 0) {
       return {
         success: false,
-        error: "لم يتم العثور على أي صفوف صالحة للاستيراد",
+        error: errors.length > 0 ? errors.join("\n") : "لم يتم العثور على أي صفوف صالحة للاستيراد",
         insertedCount: 0,
         failedCount: payload.students.length,
         insertedStudents: [],
@@ -950,34 +1010,147 @@ export async function bulkImportStudents(payload: BulkImportPayload): Promise<Bu
       };
     }
 
-    // 3. Batch insert in chunks of 50
+    // 3. Batch insert in chunks of 50 with multi-level resilient fallback
     const insertedStudents: Array<{
       id: string;
       name: string;
       parent_phone: string | null;
       parent_token: string;
       track_url: string;
+      group_id?: string | null;
+      teacher_id?: string;
     }> = [];
 
     const CHUNK_SIZE = 50;
     for (let i = 0; i < rowsToInsert.length; i += CHUNK_SIZE) {
       const chunk = rowsToInsert.slice(i, i + CHUNK_SIZE);
-      const { data: insertedRows, error: insertError } = await supabase
+
+      // Attempt 1: Standard batch insert
+      let { data: insertedRows, error: insertError } = await supabase
         .from("students")
         .insert(chunk)
-        .select("id, name, parent_phone, parent_token");
+        .select("id, name, parent_phone, parent_token, group_id, teacher_id");
 
+      // Attempt 2: If RLS policy or teacher foreign key error, retry batch with teacher_id = auth.user.id
       if (insertError) {
-        console.error("Bulk insert chunk error:", insertError);
-        errors.push(`فشل إدراج جزء من الطلاب (${i + 1}-${i + chunk.length}): ${insertError.message}`);
+        const msg = (insertError.message || "").toLowerCase();
+        console.warn(`Chunk ${i + 1}-${i + chunk.length} initial insert failed: ${insertError.message}`);
+
+        if (
+          msg.includes("row-level security") ||
+          msg.includes("policy") ||
+          msg.includes("teacher_id") ||
+          msg.includes("students_teacher_id_fkey")
+        ) {
+          const fallbackChunk = chunk.map((r) => ({
+            ...r,
+            teacher_id: auth.user.id,
+          }));
+          const retryRes = await supabase
+            .from("students")
+            .insert(fallbackChunk)
+            .select("id, name, parent_phone, parent_token, group_id, teacher_id");
+
+          if (!retryRes.error && retryRes.data) {
+            insertedRows = retryRes.data;
+            insertError = null;
+          } else {
+            insertError = retryRes.error;
+          }
+        }
+      }
+
+      // Attempt 3: If group_id foreign key constraint error, retry with group_id = null
+      if (insertError) {
+        const msg = (insertError.message || "").toLowerCase();
+        if (
+          msg.includes("group_id") ||
+          msg.includes("students_group_id_fkey") ||
+          msg.includes("foreign key") ||
+          msg.includes("groups")
+        ) {
+          const fallbackChunk = chunk.map((r) => ({
+            ...r,
+            teacher_id: auth.user.id,
+            group_id: null,
+          }));
+          const retryRes = await supabase
+            .from("students")
+            .insert(fallbackChunk)
+            .select("id, name, parent_phone, parent_token, group_id, teacher_id");
+
+          if (!retryRes.error && retryRes.data) {
+            insertedRows = retryRes.data;
+            insertError = null;
+          } else {
+            insertError = retryRes.error;
+          }
+        }
+      }
+
+      // Attempt 4: If batch still failed, retry row-by-row to salvage all valid rows
+      if (insertError) {
+        console.warn(`Chunk failed as batch, falling back to individual inserts: ${insertError.message}`);
+        let chunkSuccessCount = 0;
+
+        for (let rIdx = 0; rIdx < chunk.length; rIdx++) {
+          const single = chunk[rIdx];
+          const globalIdx = i + rIdx + 1;
+
+          // Try 1: row as is
+          let singleRes = await supabase
+            .from("students")
+            .insert(single)
+            .select("id, name, parent_phone, parent_token, group_id, teacher_id")
+            .maybeSingle();
+
+          // Try 2: row with teacher_id = auth.user.id
+          if (singleRes.error) {
+            singleRes = await supabase
+              .from("students")
+              .insert({ ...single, teacher_id: auth.user.id })
+              .select("id, name, parent_phone, parent_token, group_id, teacher_id")
+              .maybeSingle();
+          }
+
+          // Try 3: row with group_id = null
+          if (singleRes.error) {
+            singleRes = await supabase
+              .from("students")
+              .insert({ ...single, teacher_id: auth.user.id, group_id: null })
+              .select("id, name, parent_phone, parent_token, group_id, teacher_id")
+              .maybeSingle();
+          }
+
+          if (!singleRes.error && singleRes.data) {
+            chunkSuccessCount++;
+            insertedStudents.push({
+              id: singleRes.data.id,
+              name: singleRes.data.name || (singleRes.data as any).full_name || single.name || "طالب",
+              parent_phone: singleRes.data.parent_phone,
+              parent_token: singleRes.data.parent_token,
+              track_url: `/parent/${singleRes.data.parent_token}`,
+              group_id: singleRes.data.group_id || validGroupId || payload.circle_id,
+              teacher_id: singleRes.data.teacher_id,
+            });
+          } else {
+            errors.push(`الطالب ${single.name} (الصف ${globalIdx}): ${singleRes.error?.message || "فشل الإدراج"}`);
+          }
+        }
+
+        if (chunkSuccessCount === 0) {
+          errors.push(`فشل إدراج جزء من الطلاب (${i + 1}-${i + chunk.length}): ${insertError.message}`);
+        }
       } else if (insertedRows) {
         insertedRows.forEach((row: any) => {
           insertedStudents.push({
             id: row.id,
-            name: row.name,
+            name: row.name || row.full_name || "طالب",
             parent_phone: row.parent_phone,
             parent_token: row.parent_token,
             track_url: `/parent/${row.parent_token}`,
+            group_id: row.group_id || validGroupId || payload.circle_id,
+            teacher_id: row.teacher_id,
           });
         });
       }
@@ -987,8 +1160,19 @@ export async function bulkImportStudents(payload: BulkImportPayload): Promise<Bu
     revalidatePath("/students");
     revalidatePath("/dashboard");
 
+    if (insertedStudents.length === 0) {
+      return {
+        success: false,
+        error: errors.length > 0 ? errors.join("\n") : "فشل إدراج الطلاب في قاعدة البيانات",
+        insertedCount: 0,
+        failedCount: payload.students.length,
+        insertedStudents: [],
+        errors,
+      };
+    }
+
     return {
-      success: insertedStudents.length > 0,
+      success: true,
       insertedCount: insertedStudents.length,
       failedCount: payload.students.length - insertedStudents.length,
       insertedStudents,

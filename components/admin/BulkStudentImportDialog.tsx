@@ -232,14 +232,19 @@ export function BulkStudentImportDialog({
       };
 
       const res = await bulkImportStudents(payload);
-      if (res.success && res.insertedStudents) {
+      if (res.success && res.insertedStudents && res.insertedStudents.length > 0) {
         setImportResult(res);
         setStep("success");
         if (onSuccess) {
           onSuccess(res.insertedStudents);
         }
       } else {
-        setParseError(res.error || "فشل تنفيذ الاستيراد الجماعي");
+        const detailedError =
+          res.error ||
+          (res.errors && res.errors.length > 0
+            ? res.errors.join(" | ")
+            : "فشل تنفيذ الاستيراد الجماعي، يرجى التأكد من البيانات أو مراجعة إدارة النظام");
+        setParseError(detailedError);
       }
     } catch (err: any) {
       setParseError(err?.message || "حدث خطأ غير متوقع أثناء إرسال البيانات");
@@ -729,6 +734,22 @@ export function BulkStudentImportDialog({
                   ) وتوليد روابط متابعة أولياء الأمور المخصصة لهم.
                 </p>
               </div>
+
+              {importResult.failedCount > 0 && importResult.errors && (
+                <div className="max-w-md mx-auto p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200 text-xs text-right">
+                  <span className="font-bold block mb-1">
+                    تنبيه: تم تخطي {importResult.failedCount} طالب لعدم اكتمال بياناتهم:
+                  </span>
+                  <ul className="list-disc list-inside space-y-0.5 text-[11px] text-amber-700 dark:text-amber-300">
+                    {importResult.errors.slice(0, 5).map((err, idx) => (
+                      <li key={idx}>{err}</li>
+                    ))}
+                    {importResult.errors.length > 5 && (
+                      <li>...وغيرهم من السجلات غير الصالحة</li>
+                    )}
+                  </ul>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="max-w-md mx-auto flex flex-col gap-3">

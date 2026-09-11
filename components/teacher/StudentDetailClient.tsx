@@ -25,12 +25,16 @@ import {
   RotateCcw,
   MoreVertical,
   X,
+  Camera,
+  Loader2,
 } from "lucide-react";
 import { StudentRow, MemorizationLogRow, AttendanceRecordRow } from "@/types";
-import { GRADE_LABELS, ATTENDANCE_LABELS, LOG_TYPE_LABELS, formatArabicDate, formatPageCount } from "@/lib/utils";
+import { GRADE_LABELS, ATTENDANCE_LABELS, LOG_TYPE_LABELS, formatArabicDate, formatPageCount, getStudentInitial, getStudentDisplayName } from "@/lib/utils";
 import { deleteMemorizationLog } from "@/lib/actions/log";
 import { deleteAttendanceById } from "@/lib/actions/attendance";
-import { regenerateParentToken } from "@/lib/actions/student";
+import { regenerateParentToken, updateStudentAvatar } from "@/lib/actions/student";
+import { compressStudentAvatar, blobToDataURL } from "@/lib/imageCompression";
+import { uploadStudentAvatar } from "@/lib/storage";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRealtimeSync, RealtimePayload } from "@/lib/hooks/useRealtimeSync";
@@ -88,6 +92,43 @@ export function StudentDetailClient({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string | null>(student.avatar_url || null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  const handleQuickAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !student?.id) return;
+
+    try {
+      setIsUploadingAvatar(true);
+      lightHaptic();
+      showToast("جاري ضغط ومعالجة الصورة... ⚙️");
+
+      // Ultra-fast 160x160 WebP compression (< 25KB)
+      const compressedBlob = await compressStudentAvatar(file, { maxDimension: 160, quality: 0.8 });
+      const previewUrl = URL.createObjectURL(compressedBlob);
+      setCurrentAvatarUrl(previewUrl);
+      setImgError(false);
+
+      // Upload directly to Supabase Storage 'student-avatars' CDN
+      const cdnUrl = await uploadStudentAvatar(compressedBlob, student.id);
+      const finalUrl = cdnUrl || (await blobToDataURL(compressedBlob));
+
+      // Save to database
+      const saveRes = await updateStudentAvatar(student.id, finalUrl);
+      if (saveRes.success) {
+        setCurrentAvatarUrl(finalUrl);
+        successHaptic();
+        showToast("تم تحديث صورة الطالب بنجاح! 📸✨");
+      } else {
+        showToast(saveRes.error || "فشل حفظ الصورة");
+      }
+    } catch {
+      showToast("تعذر رفع الصورة، يرجى تجربة ملف آخر");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   const handleCopyParentLink = async () => {
     if (!parentToken) return;
@@ -286,25 +327,52 @@ export function StudentDetailClient({
         <div className="relative z-10 flex items-center justify-between gap-2.5 sm:gap-3 w-full">
           {/* Left: Avatar + Details in horizontal flex */}
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-            {/* Strict Fixed 56px Avatar */}
+            {/* Strict Fixed 56px Avatar with Quick Upload */}
             <div
-              className="w-14 h-14 min-w-[56px] min-h-[56px] max-w-[56px] max-h-[56px] rounded-2xl bg-white/10 backdrop-blur-md text-amber-300 flex items-center justify-center font-black text-xl shadow-md shrink-0 overflow-hidden border border-white/20 aspect-square"
+              className="relative group w-14 h-14 min-w-[56px] min-h-[56px] max-w-[56px] max-h-[56px] rounded-2xl bg-white/10 backdrop-blur-md text-amber-300 flex items-center justify-center font-black text-xl shadow-md shrink-0 overflow-hidden border border-white/20 aspect-square"
               style={{ width: "56px", height: "56px", minWidth: "56px", minHeight: "56px", maxWidth: "56px", maxHeight: "56px" }}
             >
-              {student.avatar_url && !imgError ? (
+              {currentAvatarUrl && !imgError ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={student.avatar_url}
-                  alt={student?.full_name || (student as any)?.name || "طالب"}
+                  src={currentAvatarUrl}
+                  alt={getStudentDisplayName(student)}
+                  loading="lazy"
+                  width={56}
+                  height={56}
                   onError={() => setImgError(true)}
-                  className="w-full h-full object-cover block rounded-2xl"
+                  className="w-full h-full object-cover block rounded-2xl aspect-square"
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               ) : (
-                <span className="select-none">
-                  {(student?.full_name || (student as any)?.name || "ط").trim().charAt(0) || "📖"}
+                <span className="select-none font-black text-xl">
+                  {getStudentInitial(student)}
                 </span>
               )}
+
+              {/* Quick Upload Overlay */}
+              <label
+                htmlFor="quick-avatar-detail"
+                title="تغيير أو التقاط صورة الطالب"
+                className="absolute inset-0 bg-black/60 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl text-[9px] font-bold gap-0.5"
+              >
+                {isUploadingAvatar ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-amber-300" />
+                ) : (
+                  <>
+                    <Camera className="w-4 h-4 text-amber-300" />
+                    <span>تغيير</span>
+                  </>
+                )}
+              </label>
+              <input
+                id="quick-avatar-detail"
+                type="file"
+                accept="image/*"
+                disabled={isUploadingAvatar}
+                onChange={handleQuickAvatarUpload}
+                className="hidden"
+              />
             </div>
 
             {/* Student Info */}

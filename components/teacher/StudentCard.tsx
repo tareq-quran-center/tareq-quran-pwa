@@ -122,14 +122,17 @@ export function StudentCard({ student, logs, attendance, alert, weeklyTopStudent
         {/* CARD HEADER: Profile Info + Visible Edit Action + 3-Dots Menu */}
         <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="w-14 h-14 rounded-full bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-900 dark:text-burgundy-200 flex items-center justify-center font-bold overflow-hidden border-2 border-burgundy-200 dark:border-burgundy-800 shrink-0 shadow-sm">
+            <div className="w-14 h-14 min-w-[56px] min-h-[56px] max-w-[56px] max-h-[56px] rounded-full bg-burgundy-100 dark:bg-burgundy-950 text-burgundy-900 dark:text-burgundy-200 flex items-center justify-center font-bold overflow-hidden border-2 border-burgundy-200 dark:border-burgundy-800 shrink-0 shadow-sm aspect-square">
               {student?.avatar_url && !imgError ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={student.avatar_url}
                   alt={displayName}
+                  loading="lazy"
+                  width={56}
+                  height={56}
                   onError={() => setImgError(true)}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover aspect-square"
                 />
               ) : (
                 <span className="text-xl select-none font-black">{initialLetter}</span>

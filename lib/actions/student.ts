@@ -226,6 +226,9 @@ export async function createStudent(data: StudentInput): Promise<ActionResult<St
       parent_phone: normalizedPhone,
       parent_token: crypto.randomUUID(),
     };
+    if (validation.data.avatar_url !== undefined) {
+      insertPayload.avatar_url = validation.data.avatar_url || null;
+    }
     if ((validation.data as any).notes) {
       insertPayload.notes = (validation.data as any).notes;
     }
@@ -306,6 +309,9 @@ export async function updateStudent(id: string, data: StudentInput): Promise<Act
       name: validation.data.full_name,
       parent_phone: normalizedPhone,
     };
+    if (validation.data.avatar_url !== undefined) {
+      updatePayload.avatar_url = validation.data.avatar_url || null;
+    }
     if ((validation.data as any).notes !== undefined) {
       updatePayload.notes = (validation.data as any).notes;
     }
@@ -1046,3 +1052,53 @@ export async function markStudentContacted(studentId: string): Promise<ActionRes
     };
   }
 }
+
+export async function updateStudentAvatar(
+  studentId: string,
+  avatarUrl: string
+): Promise<ActionResult<{ avatar_url: string }>> {
+  if (!studentId) {
+    return { success: false, error: "معرف الطالب مطلوب" };
+  }
+
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { success: false, error: "غير مصرح لك بتحديث صورة الطالب، يرجى تسجيل الدخول" };
+    }
+
+    const { data: updated, error } = await supabase
+      .from("students")
+      .update({ avatar_url: avatarUrl || null })
+      .eq("id", studentId)
+      .select("id, avatar_url, parent_token")
+      .single();
+
+    if (error) {
+      return { success: false, error: "فشل حفظ صورة الطالب: " + error.message };
+    }
+
+    revalidatePath(`/students/${studentId}`);
+    revalidatePath("/students");
+    revalidatePath("/dashboard");
+    if (updated?.parent_token) {
+      revalidatePath(`/parent/${updated.parent_token}`);
+    }
+
+    return {
+      success: true,
+      data: { avatar_url: updated.avatar_url || avatarUrl },
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "حدث خطأ غير متوقع أثناء تحديث صورة الطالب",
+    };
+  }
+}
+

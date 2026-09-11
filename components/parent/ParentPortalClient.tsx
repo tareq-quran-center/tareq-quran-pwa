@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ParentProgressPayload } from "@/types";
-import { GRADE_LABELS, ATTENDANCE_LABELS, LOG_TYPE_LABELS, formatArabicDate, formatPageCount } from "@/lib/utils";
+import { GRADE_LABELS, ATTENDANCE_LABELS, LOG_TYPE_LABELS, formatArabicDate, formatPageCount, getStudentInitial } from "@/lib/utils";
 import { AudioPlayer } from "@/components/common/AudioPlayer";
 import { SocialLinks } from "@/components/common/SocialLinks";
 import {
@@ -138,20 +138,27 @@ export function ParentPortalClient({ student, logs, attendance }: ParentPortalCl
                   null;
 
                 return (
-                  <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-white/10 backdrop-blur-md text-amber-300 flex items-center justify-center font-black text-3xl sm:text-4xl shadow-xl shrink-0 overflow-hidden border-2 border-white/20">
+                  <div
+                    className="w-28 h-28 sm:w-32 sm:h-32 min-w-[112px] min-h-[112px] max-w-[128px] max-h-[128px] rounded-2xl bg-white/10 backdrop-blur-md text-amber-300 flex items-center justify-center font-black text-3xl sm:text-4xl shadow-xl shrink-0 overflow-hidden border-2 border-white/20 aspect-square"
+                    style={{ width: "112px", height: "112px", minWidth: "112px", minHeight: "112px" }}
+                  >
                     {studentAvatarUrl && !imgError ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={studentAvatarUrl}
                         alt={student?.full_name || "صورة الطالب"}
+                        loading="lazy"
+                        width={128}
+                        height={128}
                         onError={(e) => {
                           console.warn("Failed to load student avatar image from URL:", studentAvatarUrl, e);
                           setImgError(true);
                         }}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover aspect-square block rounded-2xl"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     ) : (
-                      <span>{student?.full_name ? student.full_name.charAt(0) : "📖"}</span>
+                      <span className="select-none font-black">{getStudentInitial(student?.full_name)}</span>
                     )}
                   </div>
                 );

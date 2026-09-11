@@ -212,7 +212,10 @@ export function TrashStudentList({ initialStudents }: TrashStudentListProps) {
                         <img
                           src={student.avatar_url}
                           alt={student?.full_name || (student as any)?.name || "طالب"}
-                          className="w-full h-full object-cover rounded-full"
+                          loading="lazy"
+                          width={44}
+                          height={44}
+                          className="w-full h-full object-cover rounded-full aspect-square"
                         />
                       ) : (
                         <span className="text-base select-none">

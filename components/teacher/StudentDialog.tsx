@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UserPlus, UserCheck, X, Camera, School, MapPin, Briefcase, GraduationCap, Calendar } from "lucide-react";
+import { UserPlus, UserCheck, X, Camera, School, MapPin, Briefcase, GraduationCap, Calendar, Upload } from "lucide-react";
 import { studentSchema, StudentInput, ACADEMIC_GRADES } from "@/lib/validations/student";
 import { StudentRow } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { compressImage, blobToDataURL } from "@/lib/utils/imageCompressor";
+import { compressStudentAvatar, blobToDataURL } from "@/lib/imageCompression";
 import { uploadStudentAvatar } from "@/lib/storage";
+import { getStudentInitial } from "@/lib/utils";
 
 interface StudentDialogProps {
   isOpen: boolean;
@@ -89,12 +90,12 @@ export function StudentDialog({
       setIsCompressing(true);
       setError(null);
 
-      // Compress avatar to max 320x320 HD WEBP (~10-20KB)
-      const compressedBlob = await compressImage(file, 320, 0.8);
+      // Compress avatar to 160x160 square WebP (~5-15KB)
+      const compressedBlob = await compressStudentAvatar(file, { maxDimension: 160, quality: 0.8 });
       const previewUrl = URL.createObjectURL(compressedBlob);
       setAvatarPreview(previewUrl);
 
-      // Upload directly to Supabase Storage CDN to avoid storing heavy Base64 in database
+      // Upload directly to Supabase Storage 'student-avatars' CDN
       const cdnUrl = await uploadStudentAvatar(compressedBlob, student?.id);
       if (cdnUrl) {
         setValue("avatar_url", cdnUrl);
@@ -152,20 +153,28 @@ export function StudentDialog({
 
             {/* Avatar Upload Section */}
             <div className="flex flex-col items-center justify-center space-y-2 pb-2">
-              <div className="relative w-20 h-20 rounded-full border-2 border-burgundy-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden shadow-md group">
+              <div className="relative w-20 h-20 rounded-full border-2 border-burgundy-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden shadow-md group shrink-0 aspect-square">
                 {avatarPreview ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={avatarPreview} alt="معاينة الصورة" className="w-full h-full object-cover" />
+                  <img
+                    src={avatarPreview}
+                    alt="معاينة الصورة"
+                    loading="lazy"
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover aspect-square"
+                  />
                 ) : (
-                  <span className="text-xl font-bold text-burgundy-900 dark:text-burgundy-300">
-                    {student?.full_name ? student.full_name.charAt(0) : "📷"}
+                  <span className="text-2xl font-black text-burgundy-900 dark:text-burgundy-300 select-none">
+                    {student ? getStudentInitial(student) : "👤"}
                   </span>
                 )}
                 <label
                   htmlFor="avatar-upload"
-                  className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-xs font-bold"
+                  className="absolute inset-0 bg-black/40 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-[10px] font-bold gap-0.5"
                 >
                   <Camera className="w-5 h-5" />
+                  <span>تغيير</span>
                 </label>
                 <input
                   id="avatar-upload"
@@ -175,8 +184,15 @@ export function StudentDialog({
                   className="hidden"
                 />
               </div>
-              <span className="text-xs text-slate-500 font-medium">
-                {isCompressing ? "جاري ضغط الصورة..." : "انقر على الصورة لرفع أو تغيير صورة الطالب (معالجة مضغوطة HD)"}
+              <label
+                htmlFor="avatar-upload"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-burgundy-50 dark:bg-burgundy-950/60 text-burgundy-800 dark:text-burgundy-300 border border-burgundy-200 dark:border-burgundy-800 hover:bg-burgundy-100 cursor-pointer transition-colors shadow-2xs"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>{isCompressing ? "جاري الضغط والرفع..." : "اختيار صورة الطالب (كاميرا / ألبوم)"}</span>
+              </label>
+              <span className="text-[11px] text-slate-400 font-medium">
+                ضغط فائق تلقائي (160x160 WebP &lt; 25KB)
               </span>
             </div>
 

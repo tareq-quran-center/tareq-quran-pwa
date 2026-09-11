@@ -310,10 +310,13 @@ export function TopStudentsModal({
                           <img
                             src={item.student.avatar_url}
                             alt={item.student?.full_name || (item.student as any)?.name || "طالب"}
+                            loading="lazy"
+                            width={36}
+                            height={36}
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).style.display = "none";
                             }}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover aspect-square"
                           />
                         ) : (
                           <span className="select-none">

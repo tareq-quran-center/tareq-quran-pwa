@@ -46,7 +46,8 @@ export async function uploadRecitationAudio(
 
 /**
  * Uploads a student avatar image to Supabase Storage and returns the public CDN URL.
- * Automatically tries 'student-avatars' or 'avatars' bucket with 1-year immutable cacheControl.
+ * Automatically targets the 'student-avatars' bucket (with fallback to 'avatars')
+ * and sets a 1-year immutable cache-control header for peak CDN performance.
  */
 export async function uploadStudentAvatar(
   imageBlob: Blob,
@@ -58,24 +59,28 @@ export async function uploadStudentAvatar(
 
   try {
     const supabase = createClient();
-    const fileName = `${studentId || "student"}_${Date.now()}.webp`;
+    const isJpeg = imageBlob.type === "image/jpeg";
+    const ext = isJpeg ? "jpg" : "webp";
+    const contentType = imageBlob.type || (isJpeg ? "image/jpeg" : "image/webp");
+    const fileName = `${studentId || "student"}_${Date.now()}.${ext}`;
 
-    // Attempt upload to 'student-avatars' bucket, fallback to 'avatars' or 'recitation-audio'
+    // Target 'student-avatars' bucket first
     let bucket = "student-avatars";
     let { data, error } = await supabase.storage
       .from(bucket)
       .upload(fileName, imageBlob, {
-        contentType: "image/webp",
+        contentType,
         cacheControl: "31536000",
         upsert: true,
       });
 
+    // Fallback to 'avatars' bucket if 'student-avatars' is not configured
     if (error) {
       bucket = "avatars";
       const fallbackRes = await supabase.storage
         .from(bucket)
         .upload(fileName, imageBlob, {
-          contentType: "image/webp",
+          contentType,
           cacheControl: "31536000",
           upsert: true,
         });

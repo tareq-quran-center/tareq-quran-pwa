@@ -170,7 +170,10 @@ export function ShareAchievementModal({
                     <img
                       src={student.avatar_url}
                       alt={student?.full_name || (student as any)?.name || "طالب"}
-                      className="w-full h-full object-cover rounded-2xl"
+                      loading="lazy"
+                      width={56}
+                      height={56}
+                      className="w-full h-full object-cover rounded-2xl aspect-square"
                       onError={(e) => {
                         (e.currentTarget as HTMLImageElement).style.display = "none";
                       }}

@@ -22,6 +22,7 @@ import {
   Sun,
   Snowflake,
 } from "lucide-react";
+import { getStudentInitial } from "@/lib/utils";
 
 interface PublicTrackCardProps {
   data: StudentTrackData;
@@ -30,6 +31,7 @@ interface PublicTrackCardProps {
 export function PublicTrackCard({ data }: PublicTrackCardProps) {
   const [copied, setCopied] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const {
     student,
@@ -107,39 +109,66 @@ export function PublicTrackCard({ data }: PublicTrackCardProps) {
       <div className="relative overflow-hidden bg-gradient-to-br from-burgundy-950 via-burgundy-900 to-burgundy-950 text-white rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-islamicGold-500/40">
         <div className="absolute inset-0 bg-[radial-gradient(#C5A059_1.5px,transparent_1.5px)] [background-size:20px_20px] opacity-15 pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-right">
-          {/* Logo */}
-          <div className="bg-white/95 dark:bg-slate-900/95 p-3 rounded-2xl shadow-lg border border-islamicGold-400/50 shrink-0">
-            <MosqueLogo variant="badge" size="lg" className="w-16 h-16 sm:w-20 sm:h-20" alt="مركز طارق القرآني" />
-          </div>
-
-          {/* Titles, Badges & Student Name */}
-          <div className="flex-1 space-y-2.5">
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-burgundy-800/80 border border-islamicGold-400/40 text-islamicGold-300 text-xs font-black">
-                <Sparkles className="w-3.5 h-3.5 text-islamicGold-400" />
-                <span>بطاقة إنجاز ومتابعة الطالب</span>
-              </div>
-
-              {/* Club / Season Badge */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-islamicGold-400/20 border border-islamicGold-400/60 text-islamicGold-200 text-xs font-black shadow-xs backdrop-blur-xs">
-                {season?.name?.includes("صيف") ? (
-                  <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                ) : season?.name?.includes("شتو") ? (
-                  <Snowflake className="w-3.5 h-3.5 text-sky-300 shrink-0" />
-                ) : (
-                  <BookOpen className="w-3.5 h-3.5 text-islamicGold-400 shrink-0" />
-                )}
-                <span>{season?.name || "النادي الدائم"}</span>
-              </div>
+        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-5 text-center sm:text-right">
+          {/* Right/Top: Student Avatar + Info */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5 flex-1 min-w-0">
+            {/* Student Avatar */}
+            <div
+              className="w-20 h-20 sm:w-24 sm:h-24 min-w-[80px] min-h-[80px] max-w-[96px] max-h-[96px] rounded-2xl bg-islamicGold-500/20 text-islamicGold-300 flex items-center justify-center font-black text-3xl shadow-xl border-2 border-islamicGold-400/60 overflow-hidden shrink-0 aspect-square backdrop-blur-md"
+              style={{ width: "80px", height: "80px", minWidth: "80px", minHeight: "80px" }}
+            >
+              {student.avatar_url && !imgError ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={student.avatar_url}
+                  alt={student.full_name}
+                  loading="lazy"
+                  width={96}
+                  height={96}
+                  onError={() => setImgError(true)}
+                  className="w-full h-full object-cover aspect-square block rounded-2xl"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                <span className="select-none font-black text-3xl">
+                  {getStudentInitial(student.full_name)}
+                </span>
+              )}
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              {student.full_name}
-            </h1>
-            <p className="text-xs sm:text-sm text-burgundy-200 font-medium">
-              مركز طارق القرآني • جمعية المحافظة على القرآن الكريم
-            </p>
+            {/* Titles, Badges & Student Name */}
+            <div className="space-y-2 text-center sm:text-right flex-1 min-w-0">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-burgundy-800/80 border border-islamicGold-400/40 text-islamicGold-300 text-xs font-black">
+                  <Sparkles className="w-3.5 h-3.5 text-islamicGold-400" />
+                  <span>بطاقة إنجاز ومتابعة الطالب</span>
+                </div>
+
+                {/* Club / Season Badge */}
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-islamicGold-400/20 border border-islamicGold-400/60 text-islamicGold-200 text-xs font-black shadow-xs backdrop-blur-xs">
+                  {season?.name?.includes("صيف") ? (
+                    <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  ) : season?.name?.includes("شتو") ? (
+                    <Snowflake className="w-3.5 h-3.5 text-sky-300 shrink-0" />
+                  ) : (
+                    <BookOpen className="w-3.5 h-3.5 text-islamicGold-400 shrink-0" />
+                  )}
+                  <span>{season?.name || "النادي الدائم"}</span>
+                </div>
+              </div>
+
+              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight truncate">
+                {student.full_name}
+              </h1>
+              <p className="text-xs sm:text-sm text-burgundy-200 font-medium">
+                مركز طارق القرآني • جمعية المحافظة على القرآن الكريم
+              </p>
+            </div>
+          </div>
+
+          {/* Mosque Logo Badge */}
+          <div className="hidden sm:flex bg-white/95 dark:bg-slate-900/95 p-2.5 rounded-2xl shadow-lg border border-islamicGold-400/50 shrink-0">
+            <MosqueLogo variant="badge" size="lg" className="w-16 h-16" alt="مركز طارق القرآني" />
           </div>
         </div>
 

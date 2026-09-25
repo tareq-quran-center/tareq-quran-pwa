@@ -563,6 +563,29 @@ export type Database = {
         };
         Returns: Json;
       };
+      ensure_group_from_circle: {
+        Args: {
+          p_circle_id: string;
+        };
+        Returns: undefined;
+      };
+      transfer_student_safe: {
+        Args: {
+          p_student_id: string;
+          p_new_group_id?: string;
+          p_new_teacher_id?: string;
+        };
+        Returns: Json;
+      };
+      bulk_import_students_safe: {
+        Args: {
+          p_circle_id: string;
+          p_students: Json;
+          p_requesting_user_id: string;
+        };
+        Returns: Json;
+      };
+
     };
     Enums: {
       attendance_status_enum: "حاضر" | "غائب" | "متأخر" | "لم يرصد" | "مستأذن";

@@ -7,9 +7,15 @@ import { SeasonSelector } from "@/components/common/SeasonSelector";
 import { TeacherDashboardClient } from "@/components/teacher/TeacherDashboardClient";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { SummaryReportTable } from "@/components/dashboard/SummaryReportTable";
+import dynamic from "next/dynamic";
 import { FALLBACK_SEASONS } from "@/lib/constants/seasons";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const LiveRecitationModal = dynamic(
+  () => import("./LiveRecitationModal").then((mod) => mod.LiveRecitationModal),
+  { ssr: false }
+);
 
 interface TeacherDashboardViewProps {
   students: Array<
@@ -58,6 +64,7 @@ export function TeacherDashboardView({
   }, [teacherSeasonIds, seasons]);
 
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>(defaultSeasonId);
+  const [isLiveRecitationOpen, setIsLiveRecitationOpen] = useState(false);
 
   // 2. Filter students according to selected season
   const filteredStudents = useMemo(() => {
@@ -140,7 +147,10 @@ export function TeacherDashboardView({
   return (
     <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300">
       {/* Teacher Hero Banner */}
-      <TeacherDashboardClient isAdmin={isAdmin} />
+      <TeacherDashboardClient
+        isAdmin={isAdmin}
+        onOpenLiveRecitation={() => setIsLiveRecitationOpen(true)}
+      />
 
       {/* Season Selector with persistence & teacher auto-selection */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
@@ -153,13 +163,23 @@ export function TeacherDashboardView({
           className="w-full sm:w-auto"
         />
 
-        {/* Informative indicator badge */}
-        <div className="text-xs font-bold text-slate-500 dark:text-slate-400 px-2 flex items-center gap-1.5 self-end sm:self-auto">
-          <span>عرض بيانات:</span>
-          <span className="text-burgundy-900 dark:text-burgundy-300 bg-burgundy-50 dark:bg-burgundy-950/60 px-2.5 py-0.5 rounded-full border border-burgundy-200 dark:border-burgundy-800">
-            {currentSeasonName}
-          </span>
-          <span className="text-slate-400">({filteredStudents.length} طالب)</span>
+        <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+          <Button
+            onClick={() => setIsLiveRecitationOpen(true)}
+            className="bg-gradient-to-r from-islamicGold-600 to-amber-500 hover:from-islamicGold-700 hover:to-amber-600 text-burgundy-950 font-black text-xs px-3.5 py-1.5 h-9 rounded-xl shadow-xs gap-1.5 active:scale-95 transition-all"
+          >
+            <Zap className="w-3.5 h-3.5 fill-current" />
+            <span>التسميع السريع ⚡</span>
+          </Button>
+
+          {/* Informative indicator badge */}
+          <div className="text-xs font-bold text-slate-500 dark:text-slate-400 px-2 flex items-center gap-1.5">
+            <span>عرض بيانات:</span>
+            <span className="text-burgundy-900 dark:text-burgundy-300 bg-burgundy-50 dark:bg-burgundy-950/60 px-2.5 py-0.5 rounded-full border border-burgundy-200 dark:border-burgundy-800">
+              {currentSeasonName}
+            </span>
+            <span className="text-slate-400">({filteredStudents.length} طالب)</span>
+          </div>
         </div>
       </div>
 
@@ -213,6 +233,14 @@ export function TeacherDashboardView({
         students={filteredStudents}
         logs={filteredLogs}
         attendance={filteredAttendance}
+      />
+
+      {/* Live Recitation Session Modal */}
+      <LiveRecitationModal
+        isOpen={isLiveRecitationOpen}
+        onClose={() => setIsLiveRecitationOpen(false)}
+        students={filteredStudents}
+        logs={filteredLogs}
       />
     </div>
   );

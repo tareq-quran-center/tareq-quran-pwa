@@ -433,6 +433,87 @@ export type Database = {
           }
         ];
       };
+      activities: {
+        Row: {
+          id: string;
+          title: string;
+          activity_type: string;
+          cost: string;
+          activity_date: string;
+          location: string | null;
+          description: string | null;
+          target_type: string;
+          target_group_id: string | null;
+          target_group_name: string | null;
+          is_active: boolean;
+          created_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          activity_type?: string;
+          cost?: string;
+          activity_date: string;
+          location?: string | null;
+          description?: string | null;
+          target_type?: string;
+          target_group_id?: string | null;
+          target_group_name?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          activity_type?: string;
+          cost?: string;
+          activity_date?: string;
+          location?: string | null;
+          description?: string | null;
+          target_type?: string;
+          target_group_id?: string | null;
+          target_group_name?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [];
+      };
+      activity_responses: {
+        Row: {
+          id: string;
+          activity_id: string;
+          student_id: string;
+          status: string;
+          notes: string | null;
+          parent_phone: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          activity_id: string;
+          student_id: string;
+          status: string;
+          notes?: string | null;
+          parent_phone?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          activity_id?: string;
+          student_id?: string;
+          status?: string;
+          notes?: string | null;
+          parent_phone?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       students_with_summary: {

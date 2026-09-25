@@ -25,15 +25,17 @@ import {
   SurahProgressRecord,
   JuzProgressRecord,
 } from "@/lib/quranMetadata";
+import { ParentActivityCard } from "./ParentActivityCard";
 
 interface ParentPortalClientProps {
   student: NonNullable<ParentProgressPayload["student"]>;
   logs: NonNullable<ParentProgressPayload["logs"]>;
   attendance: NonNullable<ParentProgressPayload["attendance"]>;
   siblings?: ParentProgressPayload["siblings"];
+  activities?: NonNullable<ParentProgressPayload["activities"]>;
 }
 
-export function ParentPortalClient({ student, logs, attendance, siblings }: ParentPortalClientProps) {
+export function ParentPortalClient({ student, logs, attendance, siblings, activities = [] }: ParentPortalClientProps) {
   const [expandedLogIds, setExpandedLogIds] = useState<Set<string>>(new Set());
   const [expandedJuzId, setExpandedJuzId] = useState<number | null>(null);
   const [isAttendanceExpanded, setIsAttendanceExpanded] = useState(false);
@@ -233,6 +235,21 @@ export function ParentPortalClient({ student, logs, attendance, siblings }: Pare
             </div>
           </CardContent>
         </Card>
+
+        {/* Active Activities & Trips Section (موافقة أو اعتذار الأهل) */}
+        {activities && activities.length > 0 && (
+          <div className="space-y-3">
+            {activities.map((act) => (
+              <ParentActivityCard
+                key={act.id}
+                activity={act}
+                studentId={student.id}
+                studentName={student.full_name}
+                parentToken={(student as any).parent_token || ""}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Featured Latest Audio Recitation Banner */}
         {(() => {

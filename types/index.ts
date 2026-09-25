@@ -99,6 +99,50 @@ export interface ParentProgressPayload {
     status: AttendanceStatusEnum;
     notes: string | null;
   }>;
+  activities?: ActivityWithResponse[];
+}
+
+export interface ActivityRow {
+  id: string;
+  title: string;
+  activity_type: string;
+  cost: string;
+  activity_date: string;
+  location?: string | null;
+  description?: string | null;
+  target_type: "all" | "halaqa";
+  target_group_id?: string | null;
+  target_group_name?: string | null;
+  is_active: boolean;
+  created_at: string;
+  created_by?: string | null;
+}
+
+export interface ActivityResponseRow {
+  id: string;
+  activity_id: string;
+  student_id: string;
+  status: "approved" | "rejected" | "pending";
+  notes?: string | null;
+  parent_phone?: string | null;
+  created_at: string;
+  updated_at?: string;
+  student_name?: string;
+  student_halaqa?: string;
+}
+
+export interface ActivityWithStats extends ActivityRow {
+  approved_count: number;
+  rejected_count: number;
+  pending_count: number;
+  total_targeted_students?: number;
+  responses?: ActivityResponseRow[];
+}
+
+export interface ActivityWithResponse extends ActivityRow {
+  parent_response?: "approved" | "rejected" | null;
+  parent_response_notes?: string | null;
+  parent_response_date?: string | null;
 }
 
 export interface HalaqaWithDetails {

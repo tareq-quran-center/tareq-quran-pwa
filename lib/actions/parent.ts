@@ -280,6 +280,20 @@ export async function getStudentProgressByToken(token: string): Promise<ParentPr
       }
     }
 
+    // ==========================================
+    // المرحلة الخامسة: استعلام النشاطات والرحلات الموجهة للطالب (مستقل)
+    // ==========================================
+    let safeActivities: any[] = [];
+    try {
+      const { getActivitiesForParent } = await import("./activity");
+      const studentGroupId = (studentRecord as any).group_id || null;
+      safeActivities = await getActivitiesForParent(studentRecord.id, studentGroupId);
+    } catch (err) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[getStudentProgressByToken] Activities query warning (non-fatal):", err);
+      }
+    }
+
     return {
       success: true,
       student: {
@@ -289,6 +303,7 @@ export async function getStudentProgressByToken(token: string): Promise<ParentPr
       siblings: safeSiblings,
       logs: safeLogs,
       attendance: safeAttendance,
+      activities: safeActivities,
     };
   } catch (err) {
     if (process.env.NODE_ENV === "development") {

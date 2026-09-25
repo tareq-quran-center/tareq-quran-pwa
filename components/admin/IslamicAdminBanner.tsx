@@ -12,11 +12,13 @@ import {
   ExternalLink,
   Plus,
   UserPlus,
+  Compass,
 } from "lucide-react";
 
 interface IslamicAdminBannerProps {
   onOpenCreateHalaqa?: () => void;
   onOpenCreateTeacher?: () => void;
+  onOpenActivities?: () => void;
   totalStudents?: number;
   totalHalaqat?: number;
   totalTeachers?: number;
@@ -25,6 +27,7 @@ interface IslamicAdminBannerProps {
 export function IslamicAdminBanner({
   onOpenCreateHalaqa,
   onOpenCreateTeacher,
+  onOpenActivities,
   totalStudents = 0,
   totalHalaqat = 0,
   totalTeachers = 0,
@@ -143,6 +146,16 @@ export function IslamicAdminBanner({
             >
               <UserPlus className="w-4 h-4 text-islamicGold-300" />
               <span>إضافة معلم</span>
+            </Button>
+          )}
+
+          {onOpenActivities && (
+            <Button
+              onClick={onOpenActivities}
+              className="bg-white/10 hover:bg-white/20 border border-islamicGold-400/50 text-white font-bold text-xs px-4 py-2 rounded-xl backdrop-blur-xs gap-1.5 active:scale-95 transition-all"
+            >
+              <Compass className="w-4 h-4 text-islamicGold-300" />
+              <span>النشاطات والرحلات 🚌</span>
             </Button>
           )}
 

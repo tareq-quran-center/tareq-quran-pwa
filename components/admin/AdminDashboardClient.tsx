@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import {
@@ -9,7 +9,15 @@ import {
   TeacherWithHalaqat,
   StudentRow,
   SeasonRow,
+  ActivityWithStats,
 } from "@/types";
+import { ActivityDialog } from "./ActivityDialog";
+import { ActivitiesManagerTab } from "./ActivitiesManagerTab";
+import {
+  getActivitiesForAdmin,
+  createActivity,
+  deleteActivity,
+} from "@/lib/actions/activity";
 
 const BulkStudentImportDialog = dynamic(
   () =>
@@ -40,6 +48,7 @@ import {
   UserPlus,
   GraduationCap,
   FileText,
+  Compass,
   Plus,
   Edit2,
   Trash2,
@@ -84,8 +93,25 @@ interface AdminDashboardClientProps {
 export function AdminDashboardClient({ initialData }: AdminDashboardClientProps) {
   const currentUserId = initialData.currentUserId;
   const [activeTab, setActiveTab] = useState<
-    "overview" | "halaqat" | "teachers" | "students" | "reports"
+    "overview" | "halaqat" | "teachers" | "students" | "activities" | "reports"
   >("overview");
+
+  const [activities, setActivities] = useState<ActivityWithStats[]>([]);
+  const [isActivityDialogOpen, setIsActivityDialogOpen] = useState(false);
+  const [isUsingActivityFallback, setIsUsingActivityFallback] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    getActivitiesForAdmin().then((res) => {
+      if (isMounted && res.success) {
+        setActivities(res.data);
+        if (res.isUsingFallback) setIsUsingActivityFallback(true);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const [seasons] = useState<SeasonRow[]>(
     initialData.seasons && initialData.seasons.length > 0
@@ -187,6 +213,31 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 3000);
+  };
+
+  const handleCreateActivity = async (data: any) => {
+    const res = await createActivity(data);
+    if (res.success && res.data) {
+      showToast("تم نشر النشاط بنجاح لأولياء الأمور 🎉");
+      const refreshed = await getActivitiesForAdmin();
+      if (refreshed.success) setActivities(refreshed.data);
+      return true;
+    } else {
+      showToast(res.error || "تعذر حفظ النشاط");
+      return false;
+    }
+  };
+
+  const handleDeleteActivity = async (id: string) => {
+    const res = await deleteActivity(id);
+    if (res.success) {
+      setActivities((prev) => prev.filter((a) => a.id !== id));
+      showToast("تم حذف النشاط بنجاح");
+      return true;
+    } else {
+      showToast(res.error || "تعذر حذف النشاط");
+      return false;
+    }
   };
 
   // Filtered halaqat by selected season
@@ -514,6 +565,9 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
       <IslamicAdminBanner
         onOpenCreateHalaqa={handleOpenCreateHalaqa}
         onOpenCreateTeacher={handleOpenCreateTeacherModal}
+        onOpenActivities={() => {
+          setActiveTab("activities");
+        }}
         totalStudents={displayedOverview.totalStudents}
         totalHalaqat={displayedOverview.totalHalaqat}
         totalTeachers={displayedOverview.totalTeachers}
@@ -577,6 +631,18 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
         >
           <GraduationCap className="w-4 h-4" />
           <span>الطلاب ({displayedStudents.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("activities")}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all whitespace-nowrap ${
+            activeTab === "activities"
+              ? "bg-burgundy-900 text-white shadow-md"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-white dark:hover:bg-slate-800"
+          }`}
+        >
+          <Compass className="w-4 h-4" />
+          <span>النشاطات والرحلات 🚌 ({activities.length})</span>
         </button>
 
         <button
@@ -1168,6 +1234,19 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
       )}
 
       {/* ========================================================================= */}
+      {/* TAB: ACTIVITIES & TRIPS (النشاطات والرحلات) */}
+      {/* ========================================================================= */}
+      {activeTab === "activities" && (
+        <ActivitiesManagerTab
+          activities={activities}
+          halaqat={halaqat}
+          onOpenCreate={() => setIsActivityDialogOpen(true)}
+          onDelete={handleDeleteActivity}
+          isUsingFallback={isUsingActivityFallback}
+        />
+      )}
+
+      {/* ========================================================================= */}
       {/* TAB 5: REPORTS */}
       {/* ========================================================================= */}
       {activeTab === "reports" && (
@@ -1753,6 +1832,18 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
             ]);
             showToast(`تم استيراد ${newStudents.length} طالب بنجاح 🎉`);
           }}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* ACTIVITY & TRIP CREATION DIALOG */}
+      {/* ========================================================================= */}
+      {isActivityDialogOpen && (
+        <ActivityDialog
+          isOpen={isActivityDialogOpen}
+          onClose={() => setIsActivityDialogOpen(false)}
+          onSubmit={handleCreateActivity}
+          halaqat={halaqat}
         />
       )}
     </div>

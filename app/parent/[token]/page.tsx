@@ -74,7 +74,7 @@ export default async function ParentPortalPage({ params }: ParentPortalPageProps
     );
   }
 
-  const { student, logs = [], attendance = [], siblings = [] } = payload;
+  const { student, logs = [], attendance = [], siblings = [], activities = [] } = payload;
 
   return (
     <>
@@ -84,6 +84,7 @@ export default async function ParentPortalPage({ params }: ParentPortalPageProps
         logs={logs}
         attendance={attendance}
         siblings={siblings}
+        activities={activities}
       />
     </>
   );

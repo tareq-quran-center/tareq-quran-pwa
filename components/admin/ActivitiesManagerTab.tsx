@@ -146,29 +146,16 @@ export function ActivitiesManagerTab({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCopySql}
-            className="bg-white/10 hover:bg-white/20 text-white border-white/20 text-xs px-3.5 py-2.5 rounded-xl gap-1.5 active:scale-95 transition-all"
-            title="نسخ سكريبت SQL لإنشاء جداول النشاطات"
-          >
-            {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{isCopied ? "تم النسخ!" : "كود SQL 📋"}</span>
-          </Button>
-
-          <Button
-            onClick={() => {
-              lightHaptic();
-              onOpenCreate();
-            }}
-            className="bg-gradient-to-r from-islamicGold-600 to-amber-500 hover:from-islamicGold-700 hover:to-amber-600 text-burgundy-950 font-black text-xs px-5 py-2.5 rounded-xl shadow-md border border-islamicGold-300 gap-2 shrink-0 active:scale-95 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>إضافة رحلة أو نشاط جديد 🌟</span>
-          </Button>
-        </div>
+        <Button
+          onClick={() => {
+            lightHaptic();
+            onOpenCreate();
+          }}
+          className="bg-gradient-to-r from-islamicGold-600 to-amber-500 hover:from-islamicGold-700 hover:to-amber-600 text-burgundy-950 font-black text-xs px-5 py-2.5 rounded-xl shadow-md border border-islamicGold-300 gap-2 shrink-0 active:scale-95 transition-all"
+        >
+          <Plus className="w-4 h-4" />
+          <span>إضافة رحلة أو نشاط جديد 🌟</span>
+        </Button>
       </div>
 
       {/* Aggregate Stats Bar */}

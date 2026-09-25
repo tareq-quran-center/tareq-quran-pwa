@@ -10,7 +10,6 @@ import {
   Plus,
   UserPlus,
   Compass,
-  Settings,
   BookOpen,
   Users,
   GraduationCap,
@@ -151,15 +150,15 @@ export function IslamicAdminBanner({
           </div>
         </div>
 
-        {/* Left side: Professional Quick Action Buttons Grid */}
+        {/* Left side: Professional Quick Action Buttons */}
         <div className="w-full xl:w-auto shrink-0">
           <div className="p-2 sm:p-2.5 rounded-2xl bg-black/30 border border-islamicGold-400/30 backdrop-blur-md shadow-inner">
-            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2.5">
               {/* 1. Create Halaqa (Primary Action) */}
               {onOpenCreateHalaqa && (
                 <Button
                   onClick={onOpenCreateHalaqa}
-                  className="h-11 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-islamicGold-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-burgundy-950 font-black text-xs sm:text-sm shadow-md border border-amber-200 gap-2 active:scale-95 transition-all"
+                  className="h-11 px-4.5 rounded-xl bg-gradient-to-r from-amber-400 via-islamicGold-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-burgundy-950 font-black text-xs sm:text-sm shadow-md border border-amber-200 gap-2 active:scale-95 transition-all"
                 >
                   <Plus className="w-4 h-4 stroke-[3]" />
                   <span>إنشاء حلقة</span>
@@ -185,17 +184,6 @@ export function IslamicAdminBanner({
                 >
                   <Compass className="w-4 h-4 text-islamicGold-300" />
                   <span>الأنشطة والرحلات 🚌</span>
-                </Button>
-              )}
-
-              {/* 4. Account Settings */}
-              {onOpenSettings && (
-                <Button
-                  onClick={onOpenSettings}
-                  className="h-11 px-4 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/60 text-amber-200 hover:text-white font-black text-xs sm:text-sm shadow-sm gap-2 backdrop-blur-xs active:scale-95 transition-all"
-                >
-                  <Settings className="w-4 h-4 text-islamicGold-400" />
-                  <span>إعدادات الحساب ⚙️</span>
                 </Button>
               )}
             </div>

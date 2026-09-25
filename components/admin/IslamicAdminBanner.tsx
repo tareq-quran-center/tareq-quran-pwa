@@ -1,19 +1,19 @@
 "use client";
 
 import React, { useMemo } from "react";
-import Link from "next/link";
 import { MosqueLogo } from "@/components/common/MosqueLogo";
 import { Button } from "@/components/ui/button";
 import {
   ShieldCheck,
-  BookOpen,
   Calendar,
   Sparkles,
-  ExternalLink,
   Plus,
   UserPlus,
   Compass,
   Settings,
+  BookOpen,
+  Users,
+  GraduationCap,
 } from "lucide-react";
 
 interface IslamicAdminBannerProps {
@@ -65,58 +65,61 @@ export function IslamicAdminBanner({
   }, []);
 
   return (
-    <div className="no-print relative overflow-hidden rounded-3xl border-2 border-islamicGold-400/60 shadow-xl bg-gradient-to-br from-burgundy-950 via-burgundy-900 to-burgundy-950 text-white">
-      {/* Islamic Geometric Background Pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(#C5A059_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-20 pointer-events-none" />
+    <div className="no-print relative overflow-hidden rounded-3xl border-2 border-islamicGold-400/60 shadow-2xl bg-gradient-to-br from-burgundy-950 via-[#3B0711] to-burgundy-950 text-white">
+      {/* Islamic Geometric Subtle Background Pattern */}
+      <div className="absolute inset-0 bg-[radial-gradient(#C5A059_1.2px,transparent_1.2px)] [background-size:22px_22px] opacity-15 pointer-events-none" />
 
-      {/* Decorative Arch Flairs (Left & Right) */}
-      <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-islamicGold-500/10 blur-2xl pointer-events-none" />
-      <div className="absolute -bottom-12 -right-12 w-48 h-48 rounded-full bg-burgundy-500/20 blur-2xl pointer-events-none" />
+      {/* Decorative Golden Arch Flairs */}
+      <div className="absolute -top-16 -left-16 w-56 h-56 rounded-full bg-islamicGold-500/15 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-16 -right-16 w-56 h-56 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
 
-      {/* Top Islamic Date Ribbon (مستوحى من شريط التاريخ في الموقع المرجعي) */}
-      <div className="relative z-10 px-4 sm:px-8 py-2.5 bg-black/30 border-b border-islamicGold-400/30 flex flex-wrap items-center justify-between gap-2 text-xs">
+      {/* Top Islamic Date & Motto Ribbon */}
+      <div className="relative z-10 px-4 sm:px-8 py-2.5 bg-black/40 border-b border-islamicGold-400/30 flex flex-wrap items-center justify-between gap-2.5 text-xs">
         <div className="flex items-center gap-2 text-islamicGold-200 font-bold">
           <Calendar className="w-3.5 h-3.5 text-islamicGold-400 shrink-0" />
           <span>{hijriDate}</span>
           {gregorianDate && (
             <>
               <span className="text-islamicGold-400/40">•</span>
-              <span className="text-slate-300 text-[11px]">{gregorianDate} م</span>
+              <span className="text-slate-300 text-[11px] font-sans">{gregorianDate} م</span>
             </>
           )}
         </div>
 
         <div className="flex items-center gap-3 text-[11px]">
-          <span className="hidden sm:inline-block text-islamicGold-300 font-medium">
-            ﴿ وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا ﴾
+          <span className="hidden md:inline-flex items-center gap-1.5 text-islamicGold-300 font-medium">
+            <Sparkles className="w-3 h-3 text-islamicGold-400" />
+            <span>﴿ وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا ﴾</span>
           </span>
-          <span className="px-2.5 py-0.5 rounded-full bg-islamicGold-400/20 border border-islamicGold-400/40 text-islamicGold-300 font-black">
-            بوابة الإدارة العامة 👑
+          <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-islamicGold-500/20 border border-islamicGold-400/40 text-islamicGold-300 font-black shadow-2xs">
+            <ShieldCheck className="w-3 h-3 text-islamicGold-400" />
+            <span>بوابة الإدارة والإشراف العام 👑</span>
           </span>
         </div>
       </div>
 
       {/* Main Banner Content */}
-      <div className="relative z-10 p-5 sm:p-7 flex flex-col lg:flex-row items-center justify-between gap-6">
-        {/* Right side: Logo & Title */}
-        <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-right gap-4 sm:gap-5">
+      <div className="relative z-10 p-5 sm:p-7 flex flex-col xl:flex-row items-center justify-between gap-6">
+        {/* Right side: Logo, Identity & Center Statistics */}
+        <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-right gap-4 sm:gap-6 w-full xl:w-auto">
+          {/* Logo Frame */}
           <div className="relative shrink-0">
-            <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-islamicGold-600 to-amber-200 opacity-60 blur-xs" />
-            <div className="relative p-1 rounded-full bg-burgundy-950 border-2 border-islamicGold-400 shadow-md">
+            <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-islamicGold-600 via-amber-300 to-islamicGold-500 opacity-75 blur-xs" />
+            <div className="relative p-1.5 rounded-full bg-burgundy-950 border-2 border-islamicGold-400 shadow-xl">
               <MosqueLogo
                 variant="full"
                 size="lg"
-                width={78}
-                height={78}
+                width={80}
+                height={80}
                 className="object-contain"
                 priority
               />
             </div>
           </div>
 
-          <div className="space-y-1.5">
+          {/* Titles & Summary Badges */}
+          <div className="space-y-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/10 border border-islamicGold-400/40 text-islamicGold-300 text-[11px] font-black">
-              <ShieldCheck className="w-3.5 h-3.5 text-islamicGold-400" />
               <span>مجمع حلقات مركز طارق بن زياد القرآني</span>
             </div>
 
@@ -124,69 +127,84 @@ export function IslamicAdminBanner({
               لوحة تحكم مدير المركز والإشراف العام
             </h1>
 
-            <p className="text-xs sm:text-sm text-burgundy-100 font-medium max-w-xl">
-              تَمَيُّزٌ وَارْتِقَاءْ .. فِي تَرْبِيَةِ وَتَعْلِيمِ أَبْنَائِنَا كِتَابَ اللهِ عَزَّ وَجَلّْ
+            <p className="text-xs sm:text-sm text-burgundy-100/90 font-medium">
+              الشيخ عدنان الجالودي • تَمَيُّزٌ وَارْتِقَاءْ فِي خِدْمَةِ كِتَابِ اللهِ تَعَالَى 🌸
             </p>
+
+            {/* Quick Live Stats Pills */}
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-black/25 border border-islamicGold-400/30 text-[11px] font-bold text-slate-200">
+                <BookOpen className="w-3.5 h-3.5 text-islamicGold-400" />
+                <span>{totalHalaqat} حلقة قرآنية</span>
+              </div>
+
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-black/25 border border-islamicGold-400/30 text-[11px] font-bold text-slate-200">
+                <Users className="w-3.5 h-3.5 text-islamicGold-400" />
+                <span>{totalTeachers} معلماً</span>
+              </div>
+
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-black/25 border border-islamicGold-400/30 text-[11px] font-bold text-slate-200">
+                <GraduationCap className="w-3.5 h-3.5 text-islamicGold-400" />
+                <span>{totalStudents} طالباً</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Left side: Quick Management Actions */}
-        <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2.5 shrink-0 w-full sm:w-auto">
-          {onOpenCreateHalaqa && (
-            <Button
-              onClick={onOpenCreateHalaqa}
-              className="bg-gradient-to-r from-islamicGold-600 to-amber-500 hover:from-islamicGold-700 hover:to-amber-600 text-burgundy-950 font-black text-xs px-4 py-2 rounded-xl shadow-md border border-islamicGold-300 gap-1.5 active:scale-95 transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              <span>إنشاء حلقة قرآنية</span>
-            </Button>
-          )}
+        {/* Left side: Professional Quick Action Buttons Grid */}
+        <div className="w-full xl:w-auto shrink-0">
+          <div className="p-2 sm:p-2.5 rounded-2xl bg-black/30 border border-islamicGold-400/30 backdrop-blur-md shadow-inner">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-center gap-2">
+              {/* 1. Create Halaqa (Primary Action) */}
+              {onOpenCreateHalaqa && (
+                <Button
+                  onClick={onOpenCreateHalaqa}
+                  className="h-11 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-islamicGold-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-burgundy-950 font-black text-xs sm:text-sm shadow-md border border-amber-200 gap-2 active:scale-95 transition-all"
+                >
+                  <Plus className="w-4 h-4 stroke-[3]" />
+                  <span>إنشاء حلقة</span>
+                </Button>
+              )}
 
-          {onOpenCreateTeacher && (
-            <Button
-              onClick={onOpenCreateTeacher}
-              className="bg-white/10 hover:bg-white/20 border border-islamicGold-400/50 text-white font-bold text-xs px-4 py-2 rounded-xl backdrop-blur-xs gap-1.5 active:scale-95 transition-all"
-            >
-              <UserPlus className="w-4 h-4 text-islamicGold-300" />
-              <span>إضافة معلم</span>
-            </Button>
-          )}
+              {/* 2. Add Teacher */}
+              {onOpenCreateTeacher && (
+                <Button
+                  onClick={onOpenCreateTeacher}
+                  className="h-11 px-4 rounded-xl bg-white/10 hover:bg-white/20 border border-islamicGold-400/40 text-white font-bold text-xs sm:text-sm shadow-sm gap-2 backdrop-blur-xs active:scale-95 transition-all"
+                >
+                  <UserPlus className="w-4 h-4 text-islamicGold-300" />
+                  <span>إضافة معلم</span>
+                </Button>
+              )}
 
-          {onOpenActivities && (
-            <Button
-              onClick={onOpenActivities}
-              className="bg-white/10 hover:bg-white/20 border border-islamicGold-400/50 text-white font-bold text-xs px-4 py-2 rounded-xl backdrop-blur-xs gap-1.5 active:scale-95 transition-all"
-            >
-              <Compass className="w-4 h-4 text-islamicGold-300" />
-              <span>النشاطات والرحلات 🚌</span>
-            </Button>
-          )}
+              {/* 3. Activities & Trips */}
+              {onOpenActivities && (
+                <Button
+                  onClick={onOpenActivities}
+                  className="h-11 px-4 rounded-xl bg-white/10 hover:bg-white/20 border border-islamicGold-400/40 text-white font-bold text-xs sm:text-sm shadow-sm gap-2 backdrop-blur-xs active:scale-95 transition-all"
+                >
+                  <Compass className="w-4 h-4 text-islamicGold-300" />
+                  <span>الأنشطة والرحلات 🚌</span>
+                </Button>
+              )}
 
-          {onOpenSettings && (
-            <Button
-              onClick={onOpenSettings}
-              className="bg-gradient-to-r from-amber-400 via-islamicGold-300 to-amber-400 hover:brightness-105 text-burgundy-950 font-black text-xs px-4 py-2 rounded-xl shadow-lg border-2 border-white/80 gap-1.5 active:scale-95 transition-all"
-            >
-              <Settings className="w-4 h-4 text-burgundy-950" />
-              <span>إعدادات الحساب ⚙️</span>
-            </Button>
-          )}
-
-          <Link href="/dashboard">
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-transparent hover:bg-white/10 border-white/30 text-white rounded-xl text-xs font-bold gap-1.5"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-islamicGold-300" />
-              <span>لوحة المعلم</span>
-            </Button>
-          </Link>
+              {/* 4. Account Settings */}
+              {onOpenSettings && (
+                <Button
+                  onClick={onOpenSettings}
+                  className="h-11 px-4 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/60 text-amber-200 hover:text-white font-black text-xs sm:text-sm shadow-sm gap-2 backdrop-blur-xs active:scale-95 transition-all"
+                >
+                  <Settings className="w-4 h-4 text-islamicGold-400" />
+                  <span>إعدادات الحساب ⚙️</span>
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Bottom Architectural Border Accent */}
-      <div className="relative h-1.5 w-full bg-gradient-to-r from-islamicGold-600 via-amber-300 to-islamicGold-600 opacity-80" />
+      <div className="relative h-1.5 w-full bg-gradient-to-r from-islamicGold-600 via-amber-300 to-islamicGold-600 opacity-90" />
     </div>
   );
 }

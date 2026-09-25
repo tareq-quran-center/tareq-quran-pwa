@@ -33,8 +33,9 @@ export default function LoginPage() {
     const res = await loginTeacher(data);
     if (res.success) {
       setSuccessMessage("تم تسجيل الدخول بنجاح! جاري التوجيه...");
+      const targetPath = res.data?.role === "admin" ? "/admin" : "/dashboard";
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push(targetPath);
         router.refresh();
       }, 500);
     } else {

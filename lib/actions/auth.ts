@@ -11,7 +11,7 @@ export interface ActionResult<T = void> {
   error?: string;
 }
 
-export async function loginTeacher(data: LoginInput): Promise<ActionResult> {
+export async function loginTeacher(data: LoginInput): Promise<ActionResult<{ role: string }>> {
   const validation = loginSchema.safeParse(data);
   if (!validation.success) {
     return {
@@ -22,7 +22,7 @@ export async function loginTeacher(data: LoginInput): Promise<ActionResult> {
 
   try {
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
       email: validation.data.email,
       password: validation.data.password,
     });
@@ -54,8 +54,18 @@ export async function loginTeacher(data: LoginInput): Promise<ActionResult> {
       };
     }
 
+    let role = "teacher";
+    if (authData?.user?.id) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", authData.user.id)
+        .maybeSingle();
+      if (profile?.role) role = profile.role;
+    }
+
     revalidatePath("/", "layout");
-    return { success: true };
+    return { success: true, data: { role } };
   } catch (err) {
     return {
       success: false,

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, LogOut, WifiOff, RefreshCw, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Users, LogOut, WifiOff, RefreshCw, ShieldCheck, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logoutTeacher } from "@/lib/actions/auth";
 import { useNetworkSync } from "@/lib/hooks/useNetworkSync";
@@ -98,6 +98,17 @@ export function Header({ isAdmin = false }: HeaderProps) {
             </div>
           )}
 
+          {isAdmin && (
+            <Link
+              href="/admin?settings=open"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/50 dark:hover:bg-amber-900/50 text-burgundy-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-xs font-bold transition-all shadow-2xs"
+              title="إعدادات حساب المدير (تغيير كلمة المرور أو البريد)"
+            >
+              <Settings className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>إعدادات الحساب ⚙️</span>
+            </Link>
+          )}
+
           <form action={logoutTeacher}>
             <Button
               type="submit"
@@ -160,6 +171,18 @@ export function Header({ isAdmin = false }: HeaderProps) {
 
           {/* Integrated Sleek Install App Pill */}
           <PWAInstallButton variant="header" />
+
+          {/* Admin Account Settings Quick Button on Mobile */}
+          {isAdmin && (
+            <Link
+              href="/admin?settings=open"
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 transition-colors"
+              title="إعدادات الحساب ⚙️"
+              aria-label="إعدادات الحساب"
+            >
+              <Settings className="w-4 h-4" />
+            </Link>
+          )}
 
           {/* Visually Secondary Logout Button */}
           <form action={logoutTeacher}>

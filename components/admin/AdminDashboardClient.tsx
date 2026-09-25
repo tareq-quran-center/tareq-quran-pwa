@@ -123,6 +123,15 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
   const [isMissingActivityTables, setIsMissingActivityTables] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("settings") === "open" || params.get("settings") === "1") {
+        setIsSettingsOpen(true);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
     getActivitiesForAdmin().then((res) => {
       if (isMounted) {

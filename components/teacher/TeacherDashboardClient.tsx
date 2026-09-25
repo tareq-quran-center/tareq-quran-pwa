@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, Zap } from "lucide-react";
+import { Sparkles, Zap, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface TeacherDashboardClientProps {
@@ -44,13 +44,23 @@ export function TeacherDashboardClient({
             )}
 
             {isAdmin && (
-              <a
-                href="/admin"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-islamicGold-400/50 text-white text-xs font-bold transition-all shadow-xs backdrop-blur-xs"
-              >
-                <span>لوحة المدير</span>
-                <span className="text-islamicGold-300">👑</span>
-              </a>
+              <>
+                <a
+                  href="/admin"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-islamicGold-400/50 text-white text-xs font-bold transition-all shadow-xs backdrop-blur-xs"
+                >
+                  <span>لوحة المدير</span>
+                  <span className="text-islamicGold-300">👑</span>
+                </a>
+                <a
+                  href="/admin?settings=open"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-islamicGold-500 hover:from-amber-600 hover:to-islamicGold-600 text-burgundy-950 text-xs font-black transition-all shadow-md border border-islamicGold-300 active:scale-95"
+                  title="إعدادات حساب المدير"
+                >
+                  <Settings className="w-3.5 h-3.5 text-burgundy-950" />
+                  <span>إعدادات الحساب ⚙️</span>
+                </a>
+              </>
             )}
           </div>
         </div>

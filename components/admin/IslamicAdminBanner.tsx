@@ -165,9 +165,9 @@ export function IslamicAdminBanner({
           {onOpenSettings && (
             <Button
               onClick={onOpenSettings}
-              className="bg-gradient-to-r from-amber-600/90 to-islamicGold-600/90 hover:from-amber-700 hover:to-islamicGold-700 text-burgundy-950 font-black text-xs px-4 py-2 rounded-xl shadow-md border border-islamicGold-300 gap-1.5 active:scale-95 transition-all"
+              className="bg-gradient-to-r from-amber-400 via-islamicGold-300 to-amber-400 hover:brightness-105 text-burgundy-950 font-black text-xs px-4 py-2 rounded-xl shadow-lg border-2 border-white/80 gap-1.5 active:scale-95 transition-all"
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-4 h-4 text-burgundy-950" />
               <span>إعدادات الحساب ⚙️</span>
             </Button>
           )}

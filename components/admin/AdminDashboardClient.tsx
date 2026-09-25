@@ -27,6 +27,9 @@ import {
   deleteTeacher,
   transferStudentHalaqa,
 } from "@/lib/actions/admin";
+import { IslamicAdminBanner } from "./IslamicAdminBanner";
+import { IslamicHalaqaCard } from "./IslamicHalaqaCard";
+import { IslamicSidebarWidgets } from "./IslamicSidebarWidgets";
 import { SeasonSelector } from "@/components/common/SeasonSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -507,38 +510,14 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
         </div>
       )}
 
-      {/* Admin Hero Banner */}
-      <div className="no-print relative overflow-hidden bg-gradient-to-br from-burgundy-950 via-burgundy-900 to-burgundy-950 text-white p-6 sm:p-7 rounded-3xl shadow-xl border-2 border-islamicGold-500/40">
-        <div className="absolute inset-0 bg-[radial-gradient(#C5A059_1.5px,transparent_1.5px)] [background-size:20px_20px] opacity-15 pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-burgundy-800/80 border border-islamicGold-400/50 text-islamicGold-300 text-xs font-black">
-              <ShieldCheck className="w-4 h-4 text-islamicGold-400" />
-              <span>لوحة الإدارة العليا • مركز طارق القرآني</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              لوحة تحكم مدير المركز 👑
-            </h1>
-            <p className="text-xs sm:text-sm text-burgundy-100 font-medium">
-              إدارة شاملة للحلقات القرآنية، المعلمين، شؤون الطلاب، وتقارير الإنجاز العام
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Link href="/dashboard">
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-white/10 hover:bg-white/20 border-white/30 text-white rounded-xl text-xs font-bold gap-1.5"
-              >
-                <BookOpen className="w-3.5 h-3.5 text-islamicGold-300" />
-                <span>لوحة المعلم</span>
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+      {/* Admin Islamic Hero Banner */}
+      <IslamicAdminBanner
+        onOpenCreateHalaqa={handleOpenCreateHalaqa}
+        onOpenCreateTeacher={handleOpenCreateTeacherModal}
+        totalStudents={displayedOverview.totalStudents}
+        totalHalaqat={displayedOverview.totalHalaqat}
+        totalTeachers={displayedOverview.totalTeachers}
+      />
 
       {/* Elegant Season Selector Bar */}
       <div className="no-print">
@@ -614,44 +593,46 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
       </div>
 
       {/* ========================================================================= */}
-      {/* TAB 1: OVERVIEW */}
+      {/* TAB 1: OVERVIEW & HALAQAT PORTAL (مستوحى من تصميم مجمع الحلقات بأسلوب إبداعي) */}
       {/* ========================================================================= */}
       {activeTab === "overview" && (
         <div className="space-y-6 animate-in fade-in duration-200">
           {/* Active Season Banner Indicator */}
-          <div className="flex items-center justify-between px-4 py-2.5 bg-burgundy-50 dark:bg-burgundy-950/40 rounded-2xl border border-burgundy-200/60 dark:border-burgundy-900/60 text-xs font-bold text-burgundy-950 dark:text-burgundy-200">
+          <div className="flex items-center justify-between px-4 py-2.5 bg-amber-50/80 dark:bg-burgundy-950/40 rounded-2xl border border-amber-300/60 dark:border-burgundy-900/60 text-xs font-bold text-burgundy-950 dark:text-burgundy-200 shadow-2xs">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-islamicGold-500 animate-pulse" />
               <span>
-                بيانات وإحصائيات:{" "}
+                نطاق العرض الحالي:{" "}
                 <span className="font-black text-burgundy-900 dark:text-islamicGold-300">
                   {selectedSeasonId === "all" ? "جميع الأندية والفصول" : currentSeasonObj?.name}
                 </span>
               </span>
             </div>
-            <span className="text-[11px] text-slate-500">
-              {displayedHalaqat.length} حلقة • {displayedStudents.length} طالب
-            </span>
+            <div className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-400">
+              <span className="font-bold">{displayedHalaqat.length} حلقة قرآنية</span>
+              <span>•</span>
+              <span className="font-bold">{displayedStudents.length} طالب</span>
+            </div>
           </div>
 
           {/* 5 Core Metric Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             {/* 1. Students */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border-2 border-amber-200/60 dark:border-slate-800 shadow-xs">
               <span className="text-xs text-slate-500 font-bold block mb-1">إجمالي الطلاب</span>
               <div className="flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
                   {displayedOverview.totalStudents}
                 </span>
-                <GraduationCap className="w-5 h-5 text-burgundy-800" />
+                <GraduationCap className="w-5 h-5 text-burgundy-800 dark:text-islamicGold-400" />
               </div>
-              <span className="text-[11px] text-islamicGold-700 dark:text-islamicGold-400 mt-1 block">
-                طالب مسجل في {currentSeasonObj?.name || "النادي"}
+              <span className="text-[11px] text-islamicGold-700 dark:text-islamicGold-400 mt-1 block font-bold">
+                طالب مسجل في المركز
               </span>
             </div>
 
             {/* 2. Halaqat */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border-2 border-amber-200/60 dark:border-slate-800 shadow-xs">
               <span className="text-xs text-slate-500 font-bold block mb-1">عدد الحلقات</span>
               <div className="flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
@@ -659,23 +640,23 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                 </span>
                 <BookOpen className="w-5 h-5 text-islamicGold-600" />
               </div>
-              <span className="text-[11px] text-slate-400 mt-1 block">حلقة قرآنية تابعة</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block font-bold">حلقة قرآنية تابعة</span>
             </div>
 
             {/* 3. Teachers */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border-2 border-amber-200/60 dark:border-slate-800 shadow-xs">
               <span className="text-xs text-slate-500 font-bold block mb-1">عدد المعلمين</span>
               <div className="flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
                   {displayedOverview.totalTeachers}
                 </span>
-                <Users className="w-5 h-5 text-burgundy-700" />
+                <Users className="w-5 h-5 text-burgundy-700 dark:text-islamicGold-400" />
               </div>
-              <span className="text-[11px] text-slate-400 mt-1 block">معلم ومشرف</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block font-bold">معلم ومشرف</span>
             </div>
 
             {/* 4. Attendance Rate */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border-2 border-amber-200/60 dark:border-slate-800 shadow-xs">
               <span className="text-xs text-slate-500 font-bold block mb-1">نسبة الحضور</span>
               <div className="flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
@@ -689,7 +670,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
             </div>
 
             {/* 5. Total Pages */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs col-span-2 lg:col-span-1">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border-2 border-amber-200/60 dark:border-slate-800 shadow-xs col-span-2 lg:col-span-1">
               <span className="text-xs text-slate-500 font-bold block mb-1">إجمالي الإنجاز</span>
               <div className="flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
@@ -703,68 +684,146 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
             </div>
           </div>
 
-          {/* Halaqat Quick Table */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
-                  ملخص أداء الحلقات ({selectedSeasonId === "all" ? "جميع الأندية" : currentSeasonObj?.name})
-                </h3>
-                <p className="text-xs text-slate-500">نظرة سريعة على حلقات هذا النادي في المركز</p>
+          {/* ========================================================================= */}
+          {/* THE CLASSICAL ISLAMIC PORTAL LAYOUT (مستوحى من تصميم مجمع حلقات الصديق) */}
+          {/* Main Area: Halaqat Grid (Right/Center) + Sidebar Widgets (Left) */}
+          {/* ========================================================================= */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            {/* Right/Center Main Column: Halaqat Showcase */}
+            <div className="lg:col-span-2 space-y-5">
+              {/* Ornamental Classical Ribbon Banner (تماثل شريط "حلقات مجمع الصديق" في الصورة) */}
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-100 via-amber-200/80 to-amber-100 dark:from-burgundy-950 dark:via-burgundy-900 dark:to-burgundy-950 p-3 sm:p-3.5 border-2 border-islamicGold-400 shadow-xs flex items-center justify-between text-burgundy-950 dark:text-islamicGold-300">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-burgundy-950 dark:bg-islamicGold-400/20 text-islamicGold-300 flex items-center justify-center font-bold text-sm shadow-2xs">
+                    📖
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-black tracking-tight text-burgundy-950 dark:text-white">
+                      حلقات مجمع مركز طارق بن زياد القرآني
+                    </h2>
+                    <p className="text-[11px] text-burgundy-900/80 dark:text-burgundy-200 font-medium">
+                      بوابة المتابعة الشاملة للحلقات القرآنية المسندة للمعلمين
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleOpenCreateHalaqa}
+                  size="sm"
+                  className="bg-burgundy-950 hover:bg-burgundy-900 text-islamicGold-300 hover:text-white text-xs font-black rounded-xl border border-islamicGold-400/40 shadow-xs gap-1.5 shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">إضافة حلقة جديدة</span>
+                  <span className="sm:hidden">إضافة</span>
+                </Button>
               </div>
-              <Button
-                onClick={handleOpenCreateHalaqa}
-                size="sm"
-                className="bg-burgundy-900 hover:bg-burgundy-800 text-white rounded-xl gap-1.5"
-              >
-                <Plus className="w-4 h-4" />
-                <span>إضافة حلقة</span>
-              </Button>
+
+              {/* Halaqat Cards Grid (عمودان من البطاقات المزخرفة كما في نموذج مجمع الحلقات) */}
+              {displayedHalaqat.length === 0 ? (
+                <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-amber-300 dark:border-slate-800 space-y-3">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-50 dark:bg-burgundy-950 flex items-center justify-center text-burgundy-800 dark:text-burgundy-300 border border-amber-200 dark:border-burgundy-800">
+                    <BookOpen className="w-7 h-7" />
+                  </div>
+                  <h4 className="text-base font-black text-slate-900 dark:text-white">
+                    لا توجد حلقات قرآنية مسجلة في {currentSeasonObj?.name || "هذا النادي"}
+                  </h4>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    ابدأ بإنشاء أول حلقة وربطها بهذا النادي لتمكين المعلمين والطلاب من بدء التسميع والمتابعة.
+                  </p>
+                  <Button
+                    onClick={handleOpenCreateHalaqa}
+                    className="bg-burgundy-900 hover:bg-burgundy-800 text-white rounded-xl gap-1.5 text-xs font-black"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>إنشاء حلقة جديدة الآن</span>
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {displayedHalaqat.map((h) => (
+                    <IslamicHalaqaCard
+                      key={h.id}
+                      halaqa={h}
+                      onViewStudents={(halaqaId) => {
+                        setSelectedHalaqaFilter(halaqaId);
+                        setActiveTab("students");
+                      }}
+                      onEdit={handleOpenEditHalaqa}
+                      onDelete={handleDeleteHalaqa}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Detailed Halaqat Performance Table */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border-2 border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <Award className="w-4 h-4 text-islamicGold-600" />
+                    <span>سجل أداء الحلقات التفصيلي</span>
+                  </h3>
+                  <span className="text-[11px] text-slate-500">
+                    {displayedHalaqat.length} حلقة نشطة
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-right text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 font-black">
+                        <th className="py-2.5 px-3">اسم الحلقة</th>
+                        <th className="py-2.5 px-3">النادي</th>
+                        <th className="py-2.5 px-3">المعلم المشرف</th>
+                        <th className="py-2.5 px-3 text-center">الطلاب</th>
+                        <th className="py-2.5 px-3 text-center">نسبة الحضور</th>
+                        <th className="py-2.5 px-3 text-center">الصفحات المنجزة</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-bold">
+                      {displayedHalaqat.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="py-6 text-center text-slate-400">
+                            لا توجد حلقات مسجلة في هذا النادي حالياً.
+                          </td>
+                        </tr>
+                      ) : (
+                        displayedHalaqat.map((h) => (
+                          <tr key={h.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <td className="py-3 px-3 font-black text-slate-900 dark:text-slate-100">
+                              {h.name}
+                            </td>
+                            <td className="py-3 px-3">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-burgundy-50 dark:bg-burgundy-950 text-burgundy-900 dark:text-burgundy-300 border border-islamicGold-400/30">
+                                {h.season_name || "النادي الدائم"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 text-slate-600 dark:text-slate-300">
+                              {h.teacher_name}
+                            </td>
+                            <td className="py-3 px-3 text-center">{h.students_count} طالب</td>
+                            <td className="py-3 px-3 text-center text-emerald-600">{h.attendance_rate}٪</td>
+                            <td className="py-3 px-3 text-center text-islamicGold-700 dark:text-islamicGold-400">
+                              {h.total_pages} ص
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-right text-xs">
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 font-black">
-                    <th className="py-2.5 px-3">اسم الحلقة</th>
-                    <th className="py-2.5 px-3">النادي</th>
-                    <th className="py-2.5 px-3">المعلم المشرف</th>
-                    <th className="py-2.5 px-3 text-center">الطلاب</th>
-                    <th className="py-2.5 px-3 text-center">نسبة الحضور</th>
-                    <th className="py-2.5 px-3 text-center">الصفحات المنجزة</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-bold">
-                  {displayedHalaqat.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="py-6 text-center text-slate-400">
-                        لا توجد حلقات مسجلة في هذا النادي حالياً. اضغط على "إضافة حلقة" لإنشاء حلقة جديدة.
-                      </td>
-                    </tr>
-                  ) : (
-                    displayedHalaqat.map((h) => (
-                      <tr key={h.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                        <td className="py-3 px-3 font-black text-slate-900 dark:text-slate-100">
-                          {h.name}
-                        </td>
-                        <td className="py-3 px-3">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-burgundy-50 dark:bg-burgundy-950 text-burgundy-900 dark:text-burgundy-300 border border-islamicGold-400/30">
-                            {h.season_name || "النادي الدائم"}
-                          </span>
-                        </td>
-                        <td className="py-3 px-3 text-slate-600 dark:text-slate-300">
-                          {h.teacher_name}
-                        </td>
-                        <td className="py-3 px-3 text-center">{h.students_count} طالب</td>
-                        <td className="py-3 px-3 text-center text-emerald-600">{h.attendance_rate}٪</td>
-                        <td className="py-3 px-3 text-center text-islamicGold-700 dark:text-islamicGold-400">
-                          {h.total_pages} ص
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+            {/* Left Column: Sidebar Widgets (الطالب المثالي، المصحف، العدادات، والروابط) */}
+            <div className="lg:col-span-1">
+              <IslamicSidebarWidgets
+                students={students}
+                totalStudents={displayedOverview.totalStudents}
+                totalHalaqat={displayedOverview.totalHalaqat}
+                totalTeachers={displayedOverview.totalTeachers}
+                attendanceRate={displayedOverview.attendanceRate}
+                totalPages={displayedOverview.totalPagesMemorized}
+              />
             </div>
           </div>
         </div>
@@ -815,90 +874,21 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
               </div>
             ) : (
               displayedHalaqat.map((h) => (
-                <div
+                <IslamicHalaqaCard
                   key={h.id}
-                  className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between space-y-4 hover:border-burgundy-700/50 transition-colors"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <span className="p-2 rounded-xl bg-burgundy-50 dark:bg-burgundy-950 text-burgundy-800 dark:text-burgundy-300">
-                          <BookOpen className="w-5 h-5" />
-                        </span>
-                        <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-burgundy-50 dark:bg-burgundy-950/80 text-burgundy-900 dark:text-burgundy-300 border border-islamicGold-400/30">
-                          {h.season_name || "النادي الدائم"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          onClick={() => handleOpenEditHalaqa(h)}
-                          variant="ghost"
-                          size="sm"
-                          className="w-8 h-8 p-0 text-slate-500 hover:text-burgundy-800 rounded-lg"
-                          title="تعديل الحلقة"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={() => handleDeleteHalaqa(h.id)}
-                          variant="ghost"
-                          size="sm"
-                          className="w-8 h-8 p-0 text-slate-500 hover:text-rose-600 rounded-lg"
-                          title="حذف الحلقة"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <h3 className="text-base font-black text-slate-900 dark:text-white">
-                      {h.name}
-                    </h3>
-
-                    <p className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-islamicGold-600" />
-                      <span>المعلم: </span>
-                      <span className="font-bold text-slate-900 dark:text-slate-200">
-                        {h.teacher_name}
-                      </span>
-                    </p>
-                  </div>
-
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-3 gap-2 text-center text-xs">
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl">
-                    <span className="text-[10px] text-slate-400 block">الطلاب</span>
-                    <span className="font-black text-slate-900 dark:text-white">
-                      {h.students_count}
-                    </span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl">
-                    <span className="text-[10px] text-slate-400 block">الحضور</span>
-                    <span className="font-black text-emerald-600">{h.attendance_rate}٪</span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl">
-                    <span className="text-[10px] text-slate-400 block">الإنجاز</span>
-                    <span className="font-black text-islamicGold-600">{h.total_pages} ص</span>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={() => {
-                    setSelectedHalaqaFilter(h.id);
+                  halaqa={h}
+                  onViewStudents={(halaqaId) => {
+                    setSelectedHalaqaFilter(halaqaId);
                     setActiveTab("students");
                   }}
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-xs font-bold rounded-xl border-slate-200 dark:border-slate-700"
-                >
-                  <span>عرض طلاب الحلقة</span>
-                  <ExternalLink className="w-3.5 h-3.5 mr-1" />
-                </Button>
-              </div>
-            ))
-          )}
+                  onEdit={handleOpenEditHalaqa}
+                  onDelete={handleDeleteHalaqa}
+                />
+              ))
+            )}
+          </div>
         </div>
-      </div>
-    )}
+      )}
 
       {/* ========================================================================= */}
       {/* TAB 3: TEACHERS */}

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useMemo } from "react";
 import { MosqueLogo } from "@/components/common/MosqueLogo";
@@ -112,7 +112,7 @@ export function IslamicAdminBanner({
           {/* Simple, Clean, Uncrowded Title Area */}
           <div className="space-y-1.5">
             <p className="text-xs font-bold text-islamicGold-300 tracking-wide">
-              مجمع حلقات مركز طارق بن زياد القرآني
+              مجمع حلقات مركز مركز طارق القرآني
             </p>
 
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useMemo } from "react";
 import { HalaqaWithDetails, StudentRow } from "@/types";
@@ -103,7 +103,7 @@ export function HalaqatHonorBoard({
                 <span>فرسان الحلقات المتميزون</span>
               </h2>
               <p className="text-xs text-burgundy-100/90 mt-0.5">
-                تكريم الطالب الأكثر إنجازاً والتزاماً في كل حلقة قرآنية بمركز طارق بن زياد
+                تكريم الطالب الأكثر إنجازاً والتزاماً في كل حلقة قرآنية بمركز مركز طارق القرآني
               </p>
             </div>
           </div>

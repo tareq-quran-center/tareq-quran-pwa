@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -63,7 +63,7 @@ export default function LoginPage() {
             تسجيل الدخول
           </CardTitle>
           <CardDescription className="text-slate-500 font-medium">
-            بوابة المعلمين والإدارة • مركز طارق بن زياد القرآني
+            بوابة المعلمين والإدارة • مركز مركز طارق القرآني
           </CardDescription>
         </CardHeader>
 

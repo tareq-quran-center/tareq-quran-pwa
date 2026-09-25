@@ -644,37 +644,199 @@ export async function toggleTeacherActive(id: string, is_active: boolean) {
 
 /**
  * Transfer student to another Halaqa and optionally another teacher
+ * Includes multi-strategy fallback: Safe RPC, Service Role (if configured), and Standard Update
  */
 export async function transferStudentHalaqa(
   studentId: string,
   newHalaqaId: string,
   newTeacherId?: string
-) {
+): Promise<{ success: boolean; error?: string; warning?: string; isRlsError?: boolean }> {
   try {
-    const supabase = createClient();
-
-    const updatePayload: {
-      group_id: string | null;
-      teacher_id?: string;
-    } = {
-      group_id: newHalaqaId || null,
-    };
-    if (newTeacherId) {
-      updatePayload.teacher_id = newTeacherId;
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) {
+      return { success: false, error: "غير مصرح، هذه العملية تتطلب صلاحية مدير المركز" };
     }
 
-    const { error } = await supabase
+    if (!studentId) {
+      return { success: false, error: "معرف الطالب مطلوب" };
+    }
+
+    const supabase = createClient();
+
+    // 1. Fetch current student record
+    const { data: currentStudent, error: fetchErr } = await supabase
+      .from("students")
+      .select("id, name, group_id, teacher_id")
+      .eq("id", studentId)
+      .maybeSingle();
+
+    if (fetchErr || !currentStudent) {
+      return { success: false, error: "لم يتم العثور على بيانات الطالب المحدد" };
+    }
+
+    const cleanHalaqaId = newHalaqaId && newHalaqaId.trim() !== "" ? newHalaqaId.trim() : null;
+    let cleanTeacherId = newTeacherId && newTeacherId.trim() !== "" ? newTeacherId.trim() : null;
+
+    // 2. If target halaqa provided, ensure it exists in groups table for foreign key constraint
+    if (cleanHalaqaId) {
+      const { data: existingGroup } = await supabase
+        .from("groups")
+        .select("id, name, created_by")
+        .eq("id", cleanHalaqaId)
+        .maybeSingle();
+
+      if (!existingGroup) {
+        // Sync name from circles if available
+        const { data: circleData } = await supabase
+          .from("circles")
+          .select("id, name, teacher_id")
+          .eq("id", cleanHalaqaId)
+          .maybeSingle();
+
+        const groupName = circleData?.name || "حلقة قرآنية";
+        const { error: groupInsertErr } = await supabase.from("groups").insert({
+          id: cleanHalaqaId,
+          name: groupName,
+          created_by: auth.user.id,
+        });
+
+        if (groupInsertErr) {
+          console.warn("transferStudentHalaqa: could not ensure group existence:", groupInsertErr);
+        }
+      }
+
+      // If teacher not explicitly passed, resolve from group_members or circles
+      if (!cleanTeacherId) {
+        const { data: gm } = await supabase
+          .from("group_members")
+          .select("user_id")
+          .eq("group_id", cleanHalaqaId)
+          .limit(1)
+          .maybeSingle();
+
+        if (gm?.user_id) {
+          cleanTeacherId = gm.user_id;
+        } else {
+          const { data: c } = await supabase
+            .from("circles")
+            .select("teacher_id")
+            .eq("id", cleanHalaqaId)
+            .maybeSingle();
+          if (c?.teacher_id) {
+            cleanTeacherId = c.teacher_id;
+          }
+        }
+      }
+    }
+
+    // 3. Validate teacher ID in profiles table
+    let finalTeacherId = currentStudent.teacher_id;
+    if (cleanTeacherId) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", cleanTeacherId)
+        .maybeSingle();
+      if (prof) {
+        finalTeacherId = prof.id;
+      }
+    }
+
+    // Strategy 1: Safe RPC Function (if installed in Supabase)
+    try {
+      const { data: rpcData, error: rpcError } = await (supabase.rpc as any)("transfer_student_safe", {
+        p_student_id: studentId,
+        p_new_group_id: cleanHalaqaId,
+        p_new_teacher_id: finalTeacherId,
+      });
+
+      if (!rpcError && (rpcData as any)?.success) {
+        revalidatePath("/admin");
+        revalidatePath("/students");
+        revalidatePath("/dashboard");
+        return { success: true };
+      }
+    } catch {
+      // Proceed to next strategy
+    }
+
+    // Strategy 2: Admin Service Role Client (if SUPABASE_SERVICE_ROLE_KEY is present)
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (serviceKey && supabaseUrl) {
+      try {
+        const adminClient = createSupabaseJsClient(supabaseUrl, serviceKey, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
+
+        const { error: adminUpdateErr } = await adminClient
+          .from("students")
+          .update({
+            group_id: cleanHalaqaId,
+            teacher_id: finalTeacherId,
+          })
+          .eq("id", studentId);
+
+        if (!adminUpdateErr) {
+          revalidatePath("/admin");
+          revalidatePath("/students");
+          revalidatePath("/dashboard");
+          return { success: true };
+        }
+      } catch (adminClientErr) {
+        console.warn("transferStudentHalaqa: admin service client update failed:", adminClientErr);
+      }
+    }
+
+    // Strategy 3: Standard Client Update
+    const updatePayload: {
+      group_id: string | null;
+      teacher_id: string;
+    } = {
+      group_id: cleanHalaqaId,
+      teacher_id: finalTeacherId,
+    };
+
+    const { error: updateError } = await supabase
       .from("students")
       .update(updatePayload)
       .eq("id", studentId);
 
-    if (error) {
-      return { success: false, error: "فشل نقل الطالب: " + error.message };
+    if (!updateError) {
+      revalidatePath("/admin");
+      revalidatePath("/students");
+      revalidatePath("/dashboard");
+      return { success: true };
     }
 
-    revalidatePath("/admin");
-    revalidatePath("/students");
-    return { success: true };
+    // Strategy 4: If changing teacher_id violated RLS, try updating group_id alone
+    if (finalTeacherId !== currentStudent.teacher_id) {
+      const { error: groupOnlyErr } = await supabase
+        .from("students")
+        .update({ group_id: cleanHalaqaId })
+        .eq("id", studentId);
+
+      if (!groupOnlyErr) {
+        revalidatePath("/admin");
+        revalidatePath("/students");
+        revalidatePath("/dashboard");
+        return {
+          success: true,
+          warning: "تم نقل الطالب إلى الحلقة بنجاح مع إبقاء المعلم السابق لسياسات الأمان.",
+        };
+      }
+    }
+
+    const errMsg = (updateError.message || "").toLowerCase();
+    if (errMsg.includes("row-level security") || errMsg.includes("policy")) {
+      return {
+        success: false,
+        error: "فشل النقل بسبب سياسة أمان قاعدة البيانات (RLS): جدول الطلاب يتطلب تفعيل صلاحية المدير لنقل الطلاب بين الحلقات. يرجى تشغيل كود SQL الخاص بالصلاحيات في Supabase.",
+        isRlsError: true,
+      };
+    }
+
+    return { success: false, error: "فشل نقل الطالب: " + updateError.message };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "خطأ غير متوقع" };
   }

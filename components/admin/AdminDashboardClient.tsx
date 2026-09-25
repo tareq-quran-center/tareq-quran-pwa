@@ -35,6 +35,10 @@ import {
   deleteTeacher,
   transferStudentHalaqa,
 } from "@/lib/actions/admin";
+import {
+  TRANSFER_RLS_MIGRATION_SQL,
+  SUPABASE_SQL_EDITOR_URL,
+} from "@/lib/constants/transferSql";
 import { IslamicAdminBanner } from "./IslamicAdminBanner";
 import { IslamicHalaqaCard } from "./IslamicHalaqaCard";
 import { IslamicSidebarWidgets } from "./IslamicSidebarWidgets";
@@ -72,6 +76,8 @@ import {
   FileSpreadsheet,
   Crown,
   Trophy,
+  Copy,
+  Check,
 } from "lucide-react";
 
 interface AdminDashboardClientProps {
@@ -194,6 +200,8 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
   const [transferModalStudent, setTransferModalStudent] = useState<any | null>(null);
   const [transferTargetHalaqa, setTransferTargetHalaqa] = useState("");
   const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false);
+  const [transferRlsModalOpen, setTransferRlsModalOpen] = useState(false);
+  const [copiedTransferSql, setCopiedTransferSql] = useState(false);
 
   // Reports Tab States
   const [reportType, setReportType] = useState<"center" | "halaqa" | "student">("center");
@@ -518,36 +526,81 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
   // Handlers: Student Transfer
   // ==========================================
   const handleExecuteTransfer = async () => {
-    if (!transferModalStudent || !transferTargetHalaqa) return;
+    if (!transferModalStudent) return;
+
+    const targetHalaqaId = transferTargetHalaqa && transferTargetHalaqa !== "none" ? transferTargetHalaqa : "";
+    const prevGroupId = transferModalStudent.group_id || "";
+
+    if (targetHalaqaId === prevGroupId) {
+      showToast("الطالب مسجل بالفعل في هذه الحلقة");
+      return;
+    }
+
     setIsSubmittingTransfer(true);
     try {
-      const targetGroup = halaqat.find((h) => h.id === transferTargetHalaqa);
+      const targetGroup = halaqat.find((h) => h.id === targetHalaqaId);
       const res = await transferStudentHalaqa(
         transferModalStudent.id,
-        transferTargetHalaqa,
+        targetHalaqaId,
         targetGroup?.teacher_id || undefined
       );
 
       if (res.success) {
-        showToast("تم نقل الطالب إلى الحلقة الجديدة بنجاح");
+        if (res.warning) {
+          showToast(res.warning);
+        } else {
+          showToast(
+            targetHalaqaId
+              ? "تم نقل الطالب إلى الحلقة الجديدة بنجاح"
+              : "تم إلغاء تعيين الطالب من الحلقة بنجاح"
+          );
+        }
+
+        const newHalaqaName = targetGroup?.name || "بدون حلقة";
+        const newTeacherName = targetGroup?.teacher_name || "غير محدد";
+
         setStudents((prev) =>
           prev.map((s) =>
             s.id === transferModalStudent.id
               ? {
                   ...s,
-                  group_id: transferTargetHalaqa,
-                  halaqa_name: targetGroup?.name || "بدون حلقة",
-                  teacher_name: targetGroup?.teacher_name || "غير محدد",
+                  group_id: targetHalaqaId || null,
+                  halaqa_name: newHalaqaName,
+                  teacher_name: newTeacherName,
                 }
               : s
           )
         );
+
+        // Update halaqat student counts immediately
+        if (prevGroupId) {
+          setHalaqat((prev) =>
+            prev.map((h) =>
+              h.id === prevGroupId
+                ? { ...h, students_count: Math.max(0, (h.students_count || 1) - 1) }
+                : h
+            )
+          );
+        }
+        if (targetHalaqaId) {
+          setHalaqat((prev) =>
+            prev.map((h) =>
+              h.id === targetHalaqaId
+                ? { ...h, students_count: (h.students_count || 0) + 1 }
+                : h
+            )
+          );
+        }
+
         setTransferModalStudent(null);
       } else {
+        if (res.isRlsError) {
+          setTransferRlsModalOpen(true);
+        }
         showToast(res.error || "فشل نقل الطالب");
       }
     } catch {
-      showToast("حدث خطأ أثناء نقل الطالب");
+      showToast("حدث خطأ غير متوقع أثناء نقل الطالب");
     } finally {
       setIsSubmittingTransfer(false);
     }
@@ -1584,53 +1637,160 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
       {/* MODAL: TRANSFER STUDENT */}
       {/* ========================================================================= */}
       {transferModalStudent && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 animate-in zoom-in-95">
-            <h3 className="text-lg font-black text-slate-900 dark:text-white">
-              نقل الطالب بين الحلقات
-            </h3>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-6 sm:p-7 shadow-2xl border border-islamicGold-400/30 space-y-5 animate-in zoom-in-95 duration-200" dir="rtl">
+            <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="w-10 h-10 rounded-2xl bg-burgundy-50 dark:bg-burgundy-950/60 border border-burgundy-200/50 dark:border-burgundy-800/50 flex items-center justify-center text-burgundy-800 dark:text-burgundy-300">
+                <ArrowUpDown className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                  نقل الطالب بين الحلقات
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  إسناد الطالب إلى حلقة قرآنية ومعلم جديد
+                </p>
+              </div>
+            </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              نقل الطالب <span className="font-bold text-burgundy-900 dark:text-burgundy-300">"{transferModalStudent.full_name}"</span> إلى حلقة جديدة في المركز:
+            {/* Current Student Details Card */}
+            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-700/60 space-y-2 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 dark:text-slate-400 font-bold">اسم الطالب:</span>
+                <span className="font-black text-slate-900 dark:text-slate-100 text-sm">
+                  {transferModalStudent.full_name || transferModalStudent.name}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 dark:text-slate-400 font-bold">الحلقة الحالية:</span>
+                <span className="font-bold text-burgundy-800 dark:text-burgundy-300">
+                  {transferModalStudent.halaqa_name || "بدون حلقة"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 dark:text-slate-400 font-bold">المعلم الحالي:</span>
+                <span className="font-bold text-slate-700 dark:text-slate-300">
+                  {transferModalStudent.teacher_name || "غير محدد"}
+                </span>
+              </div>
+            </div>
+
+            {/* Target Halaqa Selection */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                اختر الحلقة المستهدفة الجديدة:
+              </label>
+              <select
+                value={transferTargetHalaqa}
+                onChange={(e) => setTransferTargetHalaqa(e.target.value)}
+                className="w-full h-11 px-3.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-burgundy-800"
+              >
+                <option value="">بدون حلقة (فك ربط الطالب من أي حلقة)</option>
+                {halaqat.map((h) => {
+                  const isCurrent = h.id === transferModalStudent.group_id;
+                  return (
+                    <option key={h.id} value={h.id}>
+                      {h.name} - المعلم: {h.teacher_name} {isCurrent ? "★ (الحلقة الحالية)" : ""}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <Button
+                type="button"
+                onClick={() => setTransferModalStudent(null)}
+                variant="ghost"
+                className="rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                إلغاء
+              </Button>
+              <Button
+                type="button"
+                onClick={handleExecuteTransfer}
+                disabled={isSubmittingTransfer || transferTargetHalaqa === (transferModalStudent.group_id || "")}
+                className="bg-burgundy-900 hover:bg-burgundy-800 text-white rounded-xl text-xs font-bold px-4"
+              >
+                {isSubmittingTransfer ? "جارٍ حفظ النقل..." : "تأكيد النقل"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: RLS / DATABASE SETUP ASSISTANT */}
+      {/* ========================================================================= */}
+      {transferRlsModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl p-6 sm:p-7 shadow-2xl border border-amber-500/40 space-y-4 animate-in zoom-in-95 duration-200" dir="rtl">
+            <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                  تفعيل صلاحية نقل الطلاب في Supabase
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  مطلوب تنفيذ سياسة الأمان (RLS) مرة واحدة لمنح المدير صلاحية النقل
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              لحماية بيانات الطلاب، تفرض قاعدة البيانات سياسة أمان افتراضية تمنع نقل الطالب لمعلم آخر إلا بعد تفعيل صلاحيات إدارة المركز. انسخ الكود التالي وشغّله في محرر SQL في Supabase:
             </p>
 
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                  الحلقة المستهدفة
-                </label>
-                <select
-                  value={transferTargetHalaqa}
-                  onChange={(e) => setTransferTargetHalaqa(e.target.value)}
-                  className="w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold"
-                >
-                  <option value="">بدون حلقة</option>
-                  {halaqat.map((h) => (
-                    <option key={h.id} value={h.id}>
-                      {h.name} (المعلم: {h.teacher_name})
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="relative">
+              <pre className="p-3.5 bg-slate-900 text-slate-200 text-2xs rounded-2xl overflow-x-auto max-h-48 font-mono border border-slate-800 text-left" dir="ltr">
+                {TRANSFER_RLS_MIGRATION_SQL}
+              </pre>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(TRANSFER_RLS_MIGRATION_SQL);
+                  setCopiedTransferSql(true);
+                  showToast("تم نسخ كود SQL بنجاح!");
+                  setTimeout(() => setCopiedTransferSql(false), 3000);
+                }}
+                className="absolute top-2.5 right-2.5 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-burgundy-900 hover:bg-burgundy-800 text-white text-xs font-bold shadow-md transition-all active:scale-95"
+              >
+                {copiedTransferSql ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>تم النسخ</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>نسخ كود SQL</span>
+                  </>
+                )}
+              </button>
+            </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <Button
-                  type="button"
-                  onClick={() => setTransferModalStudent(null)}
-                  variant="ghost"
-                  className="rounded-xl text-xs font-bold"
-                >
-                  إلغاء
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleExecuteTransfer}
-                  disabled={isSubmittingTransfer}
-                  className="bg-burgundy-900 hover:bg-burgundy-800 text-white rounded-xl text-xs font-bold"
-                >
-                  {isSubmittingTransfer ? "جارٍ النقل..." : "تأكيد النقل"}
-                </Button>
-              </div>
+            <div className="flex items-center justify-between pt-2">
+              <a
+                href={SUPABASE_SQL_EDITOR_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-burgundy-800 dark:text-burgundy-300 hover:underline"
+              >
+                <span>فتح محرر SQL في Supabase</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+
+              <Button
+                type="button"
+                onClick={() => setTransferRlsModalOpen(false)}
+                variant="ghost"
+                className="rounded-xl text-xs font-bold"
+              >
+                إغلاق
+              </Button>
             </div>
           </div>
         </div>

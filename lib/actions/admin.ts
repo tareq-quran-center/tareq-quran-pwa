@@ -1352,3 +1352,125 @@ export async function bulkImportStudents(payload: BulkImportPayload): Promise<Bu
   }
 }
 
+/**
+ * Permanently deletes a single student and all their associated records
+ * (attendance, logs, activity responses, avatars) from the database completely.
+ * STRICTLY restricted to Center Admins.
+ */
+export async function permanentlyDeleteStudentByAdmin(
+  studentId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) {
+      return { success: false, error: "غير مصرح، هذه العملية تتطلب صلاحية مدير المركز" };
+    }
+
+    if (!studentId) {
+      return { success: false, error: "معرف الطالب مطلوب" };
+    }
+
+    const supabase = createClient();
+
+    // 1. Fetch student info for avatar cleanup
+    const { data: student, error: fetchErr } = await supabase
+      .from("students")
+      .select("id, name, avatar_url")
+      .eq("id", studentId)
+      .maybeSingle();
+
+    if (fetchErr || !student) {
+      return { success: false, error: "لم يتم العثور على بيانات الطالب المحدد" };
+    }
+
+    // Determine client to use: service role (if available) or standard authenticated client
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    let clientToUse: any = supabase;
+
+    if (serviceKey && supabaseUrl) {
+      try {
+        clientToUse = createSupabaseJsClient(supabaseUrl, serviceKey, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
+      } catch {
+        clientToUse = supabase;
+      }
+    }
+
+    // 2. Cascade delete activity responses
+    try {
+      await clientToUse
+        .from("activity_responses")
+        .delete()
+        .eq("student_id", studentId);
+    } catch (e) {
+      console.warn("Could not delete activity_responses for student:", e);
+    }
+
+    // 3. Cascade delete attendance records
+    try {
+      await clientToUse
+        .from("attendance_records")
+        .delete()
+        .eq("student_id", studentId);
+
+      await clientToUse
+        .from("attendance")
+        .delete()
+        .eq("student_id", studentId);
+    } catch (e) {
+      console.warn("Could not delete attendance records for student:", e);
+    }
+
+    // 4. Cascade delete memorization logs
+    try {
+      await clientToUse
+        .from("memorization_logs")
+        .delete()
+        .eq("student_id", studentId);
+    } catch (e) {
+      console.warn("Could not delete memorization logs for student:", e);
+    }
+
+    // 5. Permanently delete student record
+    const { error: delError } = await clientToUse
+      .from("students")
+      .delete()
+      .eq("id", studentId);
+
+    if (delError) {
+      return {
+        success: false,
+        error: "فشل حذف الطالب نهائياً من قاعدة البيانات: " + delError.message,
+      };
+    }
+
+    // 6. Non-blocking avatar cleanup
+    if (student.avatar_url && student.avatar_url.includes("/avatars/")) {
+      try {
+        const path = student.avatar_url.split("/avatars/")[1];
+        if (path) {
+          await supabase.storage.from("avatars").remove([path]);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/students");
+    revalidatePath("/dashboard");
+    revalidatePath("/trash");
+
+    return { success: true };
+  } catch (err) {
+    console.error("Unexpected error in permanentlyDeleteStudentByAdmin:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "حدث خطأ غير متوقع أثناء حذف الطالب",
+    };
+  }
+}
+
+

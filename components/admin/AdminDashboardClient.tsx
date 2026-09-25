@@ -34,6 +34,7 @@ import {
   createTeacher,
   deleteTeacher,
   transferStudentHalaqa,
+  permanentlyDeleteStudentByAdmin,
 } from "@/lib/actions/admin";
 import {
   TRANSFER_RLS_MIGRATION_SQL,
@@ -158,7 +159,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
 
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>(defaultActiveSeason.id);
 
-  const [overview] = useState<AdminCenterOverview>(
+  const [overview, setOverview] = useState<AdminCenterOverview>(
     initialData.overview || {
       totalStudents: 0,
       totalHalaqat: 0,
@@ -202,6 +203,10 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
   const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false);
   const [transferRlsModalOpen, setTransferRlsModalOpen] = useState(false);
   const [copiedTransferSql, setCopiedTransferSql] = useState(false);
+
+  // Permanent Delete Student Modal States (Admin Only)
+  const [studentToDeletePermanently, setStudentToDeletePermanently] = useState<any | null>(null);
+  const [isDeletingStudentPermanently, setIsDeletingStudentPermanently] = useState(false);
 
   // Reports Tab States
   const [reportType, setReportType] = useState<"center" | "halaqa" | "student">("center");
@@ -603,6 +608,54 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
       showToast("حدث خطأ غير متوقع أثناء نقل الطالب");
     } finally {
       setIsSubmittingTransfer(false);
+    }
+  };
+
+  // ==========================================
+  // Handlers: Student Permanent Delete (Admin Only)
+  // ==========================================
+  const handleExecutePermanentDeleteStudent = async () => {
+    if (!studentToDeletePermanently) return;
+    setIsDeletingStudentPermanently(true);
+    try {
+      const targetStudent = studentToDeletePermanently;
+      const res = await permanentlyDeleteStudentByAdmin(targetStudent.id);
+      if (res.success) {
+        showToast(
+          `تم حذف الطالب «${targetStudent.full_name || targetStudent.name}» وجميع سجلاته نهائياً بنجاح`
+        );
+
+        const deletedId = targetStudent.id;
+        const deletedGroupId = targetStudent.group_id;
+
+        // 1. Remove from students list
+        setStudents((prev) => prev.filter((s) => s.id !== deletedId));
+
+        // 2. Decrement overview totalStudents count
+        setOverview((prev) => ({
+          ...prev,
+          totalStudents: Math.max(0, (prev.totalStudents || 1) - 1),
+        }));
+
+        // 3. Decrement halaqat student count
+        if (deletedGroupId) {
+          setHalaqat((prev) =>
+            prev.map((h) =>
+              h.id === deletedGroupId
+                ? { ...h, students_count: Math.max(0, (h.students_count || 1) - 1) }
+                : h
+            )
+          );
+        }
+
+        setStudentToDeletePermanently(null);
+      } else {
+        showToast(res.error || "فشل حذف الطالب نهائياً");
+      }
+    } catch {
+      showToast("حدث خطأ غير متوقع أثناء حذف الطالب");
+    } finally {
+      setIsDeletingStudentPermanently(false);
     }
   };
 
@@ -1272,12 +1325,13 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                   <th className="py-2.5 px-3 text-center">إجمالي الإنجاز</th>
                   <th className="py-2.5 px-3 text-center">رابط المتابعة</th>
                   <th className="py-2.5 px-3 text-center">نقل الحلقة</th>
+                  <th className="py-2.5 px-3 text-center">حذف نهائي</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-bold">
                 {displayedStudents.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400">
+                    <td colSpan={7} className="py-8 text-center text-slate-400">
                       لا يوجد طلاب مسجلون في {currentSeasonObj?.name || "هذا النادي"} يطابقون شروط البحث.
                     </td>
                   </tr>
@@ -1329,10 +1383,22 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                           }}
                           size="sm"
                           variant="ghost"
-                          className="h-8 px-2.5 text-xs font-bold text-burgundy-800 dark:text-burgundy-300 hover:bg-burgundy-50 rounded-xl"
+                          className="h-8 px-2.5 text-xs font-bold text-burgundy-800 dark:text-burgundy-300 hover:bg-burgundy-50 dark:hover:bg-burgundy-950/40 rounded-xl"
                         >
                           <ArrowUpDown className="w-3.5 h-3.5 ml-1" />
                           <span>نقل</span>
+                        </Button>
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <Button
+                          onClick={() => setStudentToDeletePermanently(s)}
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 px-2.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl"
+                          title="حذف الطالب بشكل كامل ونهائي من قاعدة البيانات"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 ml-1" />
+                          <span>حذف</span>
                         </Button>
                       </td>
                     </tr>
@@ -1789,7 +1855,83 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                 variant="ghost"
                 className="rounded-xl text-xs font-bold"
               >
-                إغلاق
+                إلغاء
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: PERMANENT DELETE STUDENT (ADMIN ONLY) */}
+      {/* ========================================================================= */}
+      {studentToDeletePermanently && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div
+            className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 max-w-md w-full border border-rose-300/40 dark:border-rose-900/50 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200"
+            dir="rtl"
+          >
+            <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200/50 dark:border-rose-800/50 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                  حذف الطالب نهائياً من المركز
+                </h3>
+                <p className="text-xs text-rose-600 dark:text-rose-400 font-bold">
+                  تحذير: هذا الإجراء دائم ولا يمكن التراجع عنه
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-rose-50/60 dark:bg-rose-950/30 rounded-2xl p-4 border border-rose-200/60 dark:border-rose-900/40 space-y-2 text-xs">
+              <p className="text-slate-700 dark:text-slate-300 font-bold leading-relaxed">
+                هل أنت متأكد من رغبتك في حذف الطالب التالي بشكل كامل من النظام وقاعدة البيانات؟
+              </p>
+              <div className="pt-1.5 space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 font-bold">اسم الطالب:</span>
+                  <span className="font-black text-rose-700 dark:text-rose-300 text-sm">
+                    {studentToDeletePermanently.full_name || studentToDeletePermanently.name}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 font-bold">الحلقة:</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {studentToDeletePermanently.halaqa_name || "بدون حلقة"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 font-bold">المعلم المشرف:</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {studentToDeletePermanently.teacher_name || "غير محدد"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-2xl border border-amber-200/60 dark:border-amber-800/40 text-2xs text-amber-900 dark:text-amber-200 font-medium leading-relaxed">
+              ⚠️ <strong>تنبيه إداري:</strong> سيتم حذف كافة سجلات التسميع واليوميات وسجلات الحضور والغياب وردود الأنشطة المرتبطة بالطالب بشكل نهائي من قاعدة البيانات.
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <Button
+                type="button"
+                onClick={() => setStudentToDeletePermanently(null)}
+                variant="ghost"
+                disabled={isDeletingStudentPermanently}
+                className="rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                إلغاء
+              </Button>
+              <Button
+                type="button"
+                onClick={handleExecutePermanentDeleteStudent}
+                disabled={isDeletingStudentPermanently}
+                className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold px-4"
+              >
+                {isDeletingStudentPermanently ? "جارٍ الحذف نهائياً..." : "تأكيد الحذف نهائياً"}
               </Button>
             </div>
           </div>

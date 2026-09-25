@@ -29,14 +29,15 @@ export function SeasonSelector({
   const searchParams = useSearchParams();
 
   // Helper to get matching icon for season name
-  const getSeasonIcon = (name: string) => {
+  const getSeasonIcon = (name: string, isSelected: boolean) => {
+    const iconClass = "w-3.5 h-3.5 shrink-0";
     if (name.includes("صيف") || name.toLowerCase().includes("summer")) {
-      return <Sun className="w-4 h-4 text-amber-500 shrink-0" />;
+      return <Sun className={`${iconClass} ${isSelected ? "text-amber-300" : "text-amber-500"}`} />;
     }
     if (name.includes("شتو") || name.toLowerCase().includes("winter")) {
-      return <Snowflake className="w-4 h-4 text-sky-400 shrink-0" />;
+      return <Snowflake className={`${iconClass} ${isSelected ? "text-sky-200" : "text-sky-400"}`} />;
     }
-    return <BookOpen className="w-4 h-4 text-islamicGold-500 shrink-0" />;
+    return <BookOpen className={`${iconClass} ${isSelected ? "text-islamicGold-300" : "text-islamicGold-600 dark:text-islamicGold-400"}`} />;
   };
 
   // Synchronize initial selection from URL query param or localStorage
@@ -110,28 +111,22 @@ export function SeasonSelector({
 
   return (
     <div
-      className={`relative p-1.5 sm:p-2 rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-sm ${className}`}
+      className={`inline-flex items-center p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/60 backdrop-blur-xs border border-slate-200/70 dark:border-slate-700/60 max-w-full overflow-x-auto no-scrollbar ${className}`}
       dir="rtl"
     >
-      <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth">
-        {/* Label badge */}
-        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-xs font-black text-slate-500 dark:text-slate-400 shrink-0 select-none">
-          <span className="w-2 h-2 rounded-full bg-islamicGold-500 animate-pulse" />
-          <span>النادي المعتمد:</span>
-        </div>
-
+      <div className="flex items-center gap-1 sm:gap-1.5 min-w-max">
         {/* Optional 'All Clubs' pill */}
         {showAllOption && (
           <button
             type="button"
             onClick={() => handleSelectSeason("all")}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition-all shrink-0 cursor-pointer select-none ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer select-none ${
               selectedSeasonId === "all"
-                ? "bg-gradient-to-r from-burgundy-950 via-burgundy-900 to-burgundy-950 text-white border border-islamicGold-400/50 shadow-md shadow-burgundy-950/25 ring-1 ring-islamicGold-400/30 scale-[1.02]"
-                : "bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/60"
+                ? "bg-burgundy-900 text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-700/50"
             }`}
           >
-            <Layers className={`w-3.5 h-3.5 ${selectedSeasonId === "all" ? "text-islamicGold-300" : "text-slate-400"}`} />
+            <Layers className={`w-3.5 h-3.5 shrink-0 ${selectedSeasonId === "all" ? "text-islamicGold-300" : "text-slate-400"}`} />
             <span>جميع الأندية</span>
           </button>
         )}
@@ -144,24 +139,21 @@ export function SeasonSelector({
               key={season.id}
               type="button"
               onClick={() => handleSelectSeason(season.id)}
-              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0 cursor-pointer select-none ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer select-none ${
                 isSelected
-                  ? "bg-gradient-to-r from-burgundy-950 via-burgundy-900 to-burgundy-950 text-white border-2 border-islamicGold-400 shadow-md shadow-burgundy-950/20 ring-1 ring-islamicGold-400/40 scale-[1.02]"
-                  : "bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-burgundy-50/50 dark:hover:bg-slate-800 hover:text-burgundy-900 dark:hover:text-burgundy-200 border border-slate-200 dark:border-slate-700/60"
+                  ? "bg-burgundy-900 text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-700/50"
               }`}
             >
-              {getSeasonIcon(season.name)}
+              {getSeasonIcon(season.name, isSelected)}
               <span>{season.name}</span>
               {season.is_active && (
                 <span
-                  className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
-                    isSelected
-                      ? "bg-islamicGold-400/20 text-islamicGold-300 border border-islamicGold-400/40"
-                      : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                  title="النادي النشط حالياً"
+                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                    isSelected ? "bg-islamicGold-400" : "bg-emerald-500"
                   }`}
-                >
-                  النشط
-                </span>
+                />
               )}
             </button>
           );

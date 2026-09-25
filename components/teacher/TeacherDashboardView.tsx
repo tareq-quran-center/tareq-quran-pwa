@@ -153,23 +153,19 @@ export function TeacherDashboardView({
       />
 
       {/* Season Selector with persistence & teacher auto-selection */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <SeasonSelector
           seasons={seasons}
           selectedSeasonId={selectedSeasonId}
           onSeasonChange={setSelectedSeasonId}
           showAllOption={true}
           defaultSeasonId={teacherSeasonIds.length === 1 ? teacherSeasonIds[0] : undefined}
-          className="w-full sm:w-auto"
         />
 
-        {/* Informative indicator badge */}
-        <div className="text-xs font-bold text-slate-500 dark:text-slate-400 px-2 flex items-center gap-1.5 self-end sm:self-auto">
-          <span>عرض بيانات:</span>
-          <span className="text-burgundy-900 dark:text-burgundy-300 bg-burgundy-50 dark:bg-burgundy-950/60 px-2.5 py-0.5 rounded-full border border-burgundy-200 dark:border-burgundy-800">
-            {currentSeasonName}
-          </span>
-          <span className="text-slate-400">({filteredStudents.length} طالب)</span>
+        {/* Clean, calm student count indicator */}
+        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium px-1 flex items-center gap-1.5">
+          <span className="font-bold text-slate-800 dark:text-slate-200">{filteredStudents.length}</span>
+          <span>طالب مسجل</span>
         </div>
       </div>
 

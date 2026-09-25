@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Search, UserPlus, Users, CalendarCheck, Trash2, Zap } from "lucide-react";
+import { Search, UserPlus, Users, CalendarCheck, Trash2 } from "lucide-react";
 import { StudentRow, AttendanceRecordRow, MemorizationLogRow } from "@/types";
 import { getAttendanceAlertsMap } from "@/lib/attendanceAlerts";
 import { StudentInput } from "@/lib/validations/student";
@@ -18,7 +18,6 @@ import { getStudentDisplayName } from "@/lib/utils";
 const StudentDialog = dynamic(() => import("./StudentDialog").then((mod) => mod.StudentDialog), { ssr: false });
 const DeleteStudentDialog = dynamic(() => import("./DeleteStudentDialog").then((mod) => mod.DeleteStudentDialog), { ssr: false });
 const QuickAttendanceSheet = dynamic(() => import("./QuickAttendanceSheet").then((mod) => mod.QuickAttendanceSheet), { ssr: false });
-const LiveRecitationModal = dynamic(() => import("./LiveRecitationModal").then((mod) => mod.LiveRecitationModal), { ssr: false });
 
 interface StudentListProps {
   initialStudents: StudentRow[];
@@ -40,7 +39,6 @@ export function StudentList({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isQuickAttendanceOpen, setIsQuickAttendanceOpen] = useState(false);
-  const [isLiveRecitationOpen, setIsLiveRecitationOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<StudentRow | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -253,23 +251,9 @@ export function StudentList({
           </select>
         </div>
 
-        {/* Row 2: Action Buttons */}
-        <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 sm:gap-2">
-          {/* Action 1: Live Recitation */}
-          <Button
-            size="sm"
-            onClick={() => {
-              lightHaptic();
-              setIsLiveRecitationOpen(true);
-            }}
-            className="h-9 px-3 gap-1.5 shadow-sm bg-gradient-to-r from-islamicGold-600 to-amber-500 hover:from-islamicGold-700 hover:to-amber-600 text-burgundy-950 font-black rounded-xl text-xs justify-center active:scale-95 transition-all"
-            title="بدء جلسة تسميع سريع لجميع طلاب الحلقة"
-          >
-            <Zap className="w-3.5 h-3.5 fill-current shrink-0" />
-            <span className="truncate">التسميع السريع ⚡</span>
-          </Button>
-
-          {/* Action 2: Bulk Attendance */}
+        {/* Row 2: 3-Action Compact Grid */}
+        <div className="grid grid-cols-3 sm:flex sm:items-center gap-1.5 sm:gap-2">
+          {/* Action 1: Bulk Attendance */}
           <Button
             variant="outline"
             size="sm"
@@ -284,7 +268,7 @@ export function StudentList({
             <span className="truncate">تحضير الحلقة</span>
           </Button>
 
-          {/* Action 3: Add Student */}
+          {/* Action 2: Add Student */}
           <Button
             size="sm"
             onClick={() => {
@@ -298,7 +282,7 @@ export function StudentList({
             <span className="truncate">إضافة طالب</span>
           </Button>
 
-          {/* Action 4: Trash */}
+          {/* Action 3: Trash */}
           <Link href="/trash">
             <Button
               variant="outline"
@@ -376,13 +360,6 @@ export function StudentList({
         onClose={() => setIsQuickAttendanceOpen(false)}
         students={students}
         onSuccess={() => setAlertMessage({ type: "success", text: "تم تسجيل حضور الحلقة بنجاح!" })}
-      />
-
-      <LiveRecitationModal
-        isOpen={isLiveRecitationOpen}
-        onClose={() => setIsLiveRecitationOpen(false)}
-        students={filteredStudents}
-        logs={logs}
       />
     </div>
   );

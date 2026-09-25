@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import dynamic from "next/dynamic";
-import { User, Phone, Copy, Check, Edit3, Trash2, ExternalLink, BookOpen, MessageSquare, AlertTriangle, MoreVertical, Zap } from "lucide-react";
+import { User, Phone, Copy, Check, Edit3, Trash2, ExternalLink, BookOpen, MessageSquare, AlertTriangle, MoreVertical } from "lucide-react";
 import { StudentRow, AttendanceRecordRow, MemorizationLogRow } from "@/types";
 import { AttendanceAlert } from "@/lib/attendanceAlerts";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
@@ -12,11 +11,6 @@ import { generateWhatsAppShareUrl } from "@/lib/whatsappUtils";
 import { calculateRecitationPages } from "@/lib/quranMetadata";
 import { getStudentDisplayName, getStudentInitial } from "@/lib/utils";
 import Link from "next/link";
-
-const QuickRecitationSheet = dynamic(
-  () => import("./QuickRecitationSheet").then((mod) => mod.QuickRecitationSheet),
-  { ssr: false }
-);
 
 interface StudentCardProps {
   student: StudentRow;
@@ -34,7 +28,6 @@ export function StudentCard({ student, logs, attendance, alert, weeklyTopStudent
   const [copied, setCopied] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isQuickRecitationOpen, setIsQuickRecitationOpen] = useState(false);
 
   // Pre-aggregated all-time total completed pages with resilient fallback
   const totalCompletedPages = useMemo(() => {
@@ -255,33 +248,17 @@ export function StudentCard({ student, logs, attendance, alert, weeklyTopStudent
 
         {/* CARD FOOTER: Primary Profile Recitation Action + Compact Secondary Row */}
         <CardFooter className="p-4 pt-0 flex flex-col gap-1.5">
-          {/* PRIMARY ACTION: Quick Recitation (1-Click) & Full Profile */}
-          <div className="grid grid-cols-2 gap-1.5 w-full">
+          {/* PRIMARY ACTION: Open Full Profile & Daily Recitation */}
+          <Link href={`/students/${student.id}`} className="w-full">
             <Button
+              variant="outline"
               size="sm"
-              onClick={() => {
-                lightHaptic();
-                setIsQuickRecitationOpen(true);
-              }}
-              className="min-h-[38px] gap-1.5 font-black text-xs bg-gradient-to-r from-islamicGold-600 to-amber-500 hover:from-islamicGold-700 hover:to-amber-600 text-burgundy-950 rounded-xl shadow-xs active:scale-95 transition-all"
-              title="تسميع سريع للطالب دون الدخول لملفه"
+              className="w-full min-h-[38px] gap-2 font-bold text-xs bg-slate-50 dark:bg-slate-800/80 hover:bg-burgundy-50 dark:hover:bg-burgundy-950/40 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-burgundy-300 rounded-xl transition-all"
             >
-              <Zap className="w-4 h-4 fill-current shrink-0" />
-              <span>تسميع سريع ⚡</span>
+              <BookOpen className="w-4 h-4 text-burgundy-700 dark:text-burgundy-400" />
+              <span>عرض الملف والتسميع اليومي</span>
             </Button>
-
-            <Link href={`/students/${student.id}`} className="w-full">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full min-h-[38px] gap-1.5 font-bold text-xs bg-slate-50 dark:bg-slate-800/80 hover:bg-burgundy-50 dark:hover:bg-burgundy-950/40 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-burgundy-300 rounded-xl transition-all"
-                title="عرض ملف الطالب وسجل التسميع الكامل"
-              >
-                <BookOpen className="w-3.5 h-3.5 text-burgundy-700 dark:text-burgundy-400 shrink-0" />
-                <span>الملف الكامل</span>
-              </Button>
-            </Link>
-          </div>
+          </Link>
 
           {/* SECONDARY ROW: WhatsApp (1-Click) & Copy Link (1-Click) */}
           <div className="grid grid-cols-2 gap-1.5 w-full pt-0.5">
@@ -324,15 +301,6 @@ export function StudentCard({ student, logs, attendance, alert, weeklyTopStudent
           </div>
         </CardFooter>
       </Card>
-
-      {/* Quick Recitation Bottom Sheet (1-Click from Card) */}
-      <QuickRecitationSheet
-        isOpen={isQuickRecitationOpen}
-        onClose={() => setIsQuickRecitationOpen(false)}
-        studentId={student.id}
-        studentName={displayName}
-        latestSurah={latestSurah}
-      />
     </>
   );
 }

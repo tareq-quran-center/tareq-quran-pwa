@@ -9,7 +9,7 @@ import { StatsCards } from "@/components/dashboard/StatsCards";
 import { SummaryReportTable } from "@/components/dashboard/SummaryReportTable";
 import dynamic from "next/dynamic";
 import { FALLBACK_SEASONS } from "@/lib/constants/seasons";
-import { AlertCircle, Zap } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const LiveRecitationModal = dynamic(
@@ -163,23 +163,13 @@ export function TeacherDashboardView({
           className="w-full sm:w-auto"
         />
 
-        <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
-          <Button
-            onClick={() => setIsLiveRecitationOpen(true)}
-            className="bg-gradient-to-r from-islamicGold-600 to-amber-500 hover:from-islamicGold-700 hover:to-amber-600 text-burgundy-950 font-black text-xs px-3.5 py-1.5 h-9 rounded-xl shadow-xs gap-1.5 active:scale-95 transition-all"
-          >
-            <Zap className="w-3.5 h-3.5 fill-current" />
-            <span>التسميع السريع ⚡</span>
-          </Button>
-
-          {/* Informative indicator badge */}
-          <div className="text-xs font-bold text-slate-500 dark:text-slate-400 px-2 flex items-center gap-1.5">
-            <span>عرض بيانات:</span>
-            <span className="text-burgundy-900 dark:text-burgundy-300 bg-burgundy-50 dark:bg-burgundy-950/60 px-2.5 py-0.5 rounded-full border border-burgundy-200 dark:border-burgundy-800">
-              {currentSeasonName}
-            </span>
-            <span className="text-slate-400">({filteredStudents.length} طالب)</span>
-          </div>
+        {/* Informative indicator badge */}
+        <div className="text-xs font-bold text-slate-500 dark:text-slate-400 px-2 flex items-center gap-1.5 self-end sm:self-auto">
+          <span>عرض بيانات:</span>
+          <span className="text-burgundy-900 dark:text-burgundy-300 bg-burgundy-50 dark:bg-burgundy-950/60 px-2.5 py-0.5 rounded-full border border-burgundy-200 dark:border-burgundy-800">
+            {currentSeasonName}
+          </span>
+          <span className="text-slate-400">({filteredStudents.length} طالب)</span>
         </div>
       </div>
 

@@ -68,7 +68,7 @@ export function ActivityDialog({
     nextDate.setHours(9, 0, 0, 0);
     return nextDate.toISOString().slice(0, 16);
   });
-  const [location, setLocation] = useState("التجمع في ساحة مركز مركز طارق القرآني");
+  const [location, setLocation] = useState("التجمع في ساحة مركز طارق القرآني");
   const [description, setDescription] = useState("يرجى إحضار زجاجة ماء وقبعة شمسية، والانضباط بآداب الرحلة القرآنية.");
   const [targetType, setTargetType] = useState<"all" | "halaqa">("all");
   const [targetGroupId, setTargetGroupId] = useState<string>("");

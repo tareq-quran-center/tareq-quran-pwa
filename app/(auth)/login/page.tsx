@@ -63,7 +63,7 @@ export default function LoginPage() {
             تسجيل الدخول
           </CardTitle>
           <CardDescription className="text-slate-500 font-medium">
-            بوابة المعلمين والإدارة • مركز مركز طارق القرآني
+            بوابة المعلمين والإدارة • مركز طارق القرآني
           </CardDescription>
         </CardHeader>
 

@@ -264,7 +264,7 @@ export function IslamicSidebarWidgets({
       {/* ========================================================================= */}
       <div className="p-4 rounded-3xl bg-slate-100/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-center space-y-2">
         <span className="text-[11px] font-black text-slate-700 dark:text-slate-300 block">
-          مركز مركز طارق القرآني
+          مركز طارق القرآني
         </span>
         <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
           نظام المتابعة والإشراف الإداري والتربوي لحلقات القرآن الكريم

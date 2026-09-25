@@ -1040,7 +1040,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                   </div>
                   <div>
                     <h2 className="text-base sm:text-lg font-black tracking-tight text-burgundy-950 dark:text-white">
-                      حلقات مجمع مركز مركز طارق القرآني
+                      حلقات مجمع مركز طارق القرآني
                     </h2>
                     <p className="text-[11px] text-burgundy-900/80 dark:text-burgundy-200 font-medium">
                       بوابة المتابعة الشاملة للحلقات القرآنية المسندة للمعلمين

@@ -38,6 +38,7 @@ import {
 import { IslamicAdminBanner } from "./IslamicAdminBanner";
 import { IslamicHalaqaCard } from "./IslamicHalaqaCard";
 import { IslamicSidebarWidgets } from "./IslamicSidebarWidgets";
+import { HalaqatHonorBoard } from "./HalaqatHonorBoard";
 import { SeasonSelector } from "@/components/common/SeasonSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,6 +70,8 @@ import {
   Eye,
   EyeOff,
   FileSpreadsheet,
+  Crown,
+  Trophy,
 } from "lucide-react";
 
 interface AdminDashboardClientProps {
@@ -93,7 +96,7 @@ interface AdminDashboardClientProps {
 export function AdminDashboardClient({ initialData }: AdminDashboardClientProps) {
   const currentUserId = initialData.currentUserId;
   const [activeTab, setActiveTab] = useState<
-    "overview" | "halaqat" | "teachers" | "students" | "activities" | "reports"
+    "overview" | "honor" | "halaqat" | "teachers" | "students" | "activities" | "reports"
   >("overview");
 
   const [activities, setActivities] = useState<ActivityWithStats[]>([]);
@@ -606,6 +609,18 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
         </button>
 
         <button
+          onClick={() => setActiveTab("honor")}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all whitespace-nowrap ${
+            activeTab === "honor"
+              ? "bg-gradient-to-r from-amber-500 to-islamicGold-600 text-burgundy-950 font-black shadow-md border border-islamicGold-300"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-white dark:hover:bg-slate-800"
+          }`}
+        >
+          <Crown className="w-4 h-4 text-amber-500" />
+          <span>لوحة الشرف 🏆</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab("halaqat")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all whitespace-nowrap ${
             activeTab === "halaqat"
@@ -759,6 +774,21 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
           </div>
 
           {/* ========================================================================= */}
+          {/* ROYAL ISLAMIC HONOR BOARD (لوحة الشرف للطالب المتميز لكل حلقة) */}
+          {/* ========================================================================= */}
+          <HalaqatHonorBoard
+            halaqat={displayedHalaqat}
+            students={displayedStudents}
+            onSelectStudent={(studentId) => {
+              const st = students.find((s) => s.id === studentId);
+              if (st) {
+                setStudentSearch(st.name || st.full_name || "");
+                setActiveTab("students");
+              }
+            }}
+          />
+
+          {/* ========================================================================= */}
           {/* THE CLASSICAL ISLAMIC PORTAL LAYOUT (مستوحى من تصميم مجمع حلقات الصديق) */}
           {/* Main Area: Halaqat Grid (Right/Center) + Sidebar Widgets (Left) */}
           {/* ========================================================================= */}
@@ -892,6 +922,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
             <div className="lg:col-span-1">
               <IslamicSidebarWidgets
                 students={students}
+                halaqat={displayedHalaqat}
                 totalStudents={displayedOverview.totalStudents}
                 totalHalaqat={displayedOverview.totalHalaqat}
                 totalTeachers={displayedOverview.totalTeachers}
@@ -900,6 +931,25 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
               />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB: HONOR BOARD (لوحة الشرف المستقلة) */}
+      {/* ========================================================================= */}
+      {activeTab === "honor" && (
+        <div className="space-y-4 animate-in fade-in duration-200">
+          <HalaqatHonorBoard
+            halaqat={displayedHalaqat}
+            students={displayedStudents}
+            onSelectStudent={(studentId) => {
+              const st = students.find((s) => s.id === studentId);
+              if (st) {
+                setStudentSearch(st.name || st.full_name || "");
+                setActiveTab("students");
+              }
+            }}
+          />
         </div>
       )}
 

@@ -1473,4 +1473,90 @@ export async function permanentlyDeleteStudentByAdmin(
   }
 }
 
+/**
+ * Permanently deletes ALL students and their cascading records from the center.
+ * STRICTLY restricted to Center Admins.
+ */
+export async function deleteAllStudentsPermanentlyByAdmin(): Promise<{
+  success: boolean;
+  error?: string;
+  deletedCount?: number;
+}> {
+  try {
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) {
+      return { success: false, error: "غير مصرح، هذه العملية تتطلب صلاحية مدير المركز" };
+    }
+
+    const supabase = createClient();
+
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    let clientToUse: any = supabase;
+
+    if (serviceKey && supabaseUrl) {
+      try {
+        clientToUse = createSupabaseJsClient(supabaseUrl, serviceKey, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
+      } catch {
+        clientToUse = supabase;
+      }
+    }
+
+    // 1. Cascade delete activity responses
+    try {
+      await clientToUse.from("activity_responses").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    } catch (e) {
+      console.warn("Could not delete activity_responses:", e);
+    }
+
+    // 2. Cascade delete attendance records
+    try {
+      await clientToUse.from("attendance_records").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      await clientToUse.from("attendance").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    } catch (e) {
+      console.warn("Could not delete attendance_records:", e);
+    }
+
+    // 3. Cascade delete memorization logs
+    try {
+      await clientToUse.from("memorization_logs").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    } catch (e) {
+      console.warn("Could not delete memorization_logs:", e);
+    }
+
+    // 4. Delete all students
+    const { data: deletedRows, error: delError } = await clientToUse
+      .from("students")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000")
+      .select("id");
+
+    if (delError) {
+      return {
+        success: false,
+        error: "فشل حذف بيانات الطلاب: " + delError.message,
+      };
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/students");
+    revalidatePath("/dashboard");
+    revalidatePath("/trash");
+
+    return {
+      success: true,
+      deletedCount: deletedRows?.length || 0,
+    };
+  } catch (err) {
+    console.error("Unexpected error in deleteAllStudentsPermanentlyByAdmin:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "حدث خطأ غير متوقع أثناء تصفير بيانات الطلاب",
+    };
+  }
+}
+
+
 

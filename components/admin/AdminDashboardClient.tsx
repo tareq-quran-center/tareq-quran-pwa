@@ -35,6 +35,7 @@ import {
   deleteTeacher,
   transferStudentHalaqa,
   permanentlyDeleteStudentByAdmin,
+  deleteAllStudentsPermanentlyByAdmin,
 } from "@/lib/actions/admin";
 import {
   TRANSFER_RLS_MIGRATION_SQL,
@@ -207,6 +208,9 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
   // Permanent Delete Student Modal States (Admin Only)
   const [studentToDeletePermanently, setStudentToDeletePermanently] = useState<any | null>(null);
   const [isDeletingStudentPermanently, setIsDeletingStudentPermanently] = useState(false);
+  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
+  const [isDeletingAllStudents, setIsDeletingAllStudents] = useState(false);
+  const [confirmDeleteText, setConfirmDeleteText] = useState("");
 
   // Reports Tab States
   const [reportType, setReportType] = useState<"center" | "halaqa" | "student">("center");
@@ -656,6 +660,39 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
       showToast("حدث خطأ غير متوقع أثناء حذف الطالب");
     } finally {
       setIsDeletingStudentPermanently(false);
+    }
+  };
+
+  const handleExecuteDeleteAllStudents = async () => {
+    setIsDeletingAllStudents(true);
+    try {
+      const res = await deleteAllStudentsPermanentlyByAdmin();
+      if (res.success) {
+        showToast("تم مسح وتصفير كافة بيانات الطلاب وسجلاتهم نهائياً بنجاح");
+        setStudents([]);
+        setOverview((prev) => ({
+          ...prev,
+          totalStudents: 0,
+          totalPagesMemorized: 0,
+          totalRecitations: 0,
+          todayAttendanceCount: 0,
+        }));
+        setHalaqat((prev) =>
+          prev.map((h) => ({
+            ...h,
+            students_count: 0,
+            total_pages: 0,
+          }))
+        );
+        setIsDeleteAllModalOpen(false);
+        setConfirmDeleteText("");
+      } else {
+        showToast(res.error || "فشل مسح وتصفير بيانات الطلاب");
+      }
+    } catch {
+      showToast("حدث خطأ غير متوقع أثناء مسح وتصفير الطلاب");
+    } finally {
+      setIsDeletingAllStudents(false);
     }
   };
 
@@ -1268,18 +1305,33 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                 قائمة جميع الطلاب، نقل الطلاب بين الحلقات، وروابط متابعة أولياء الأمور
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {students.length > 0 && (
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setConfirmDeleteText("");
+                    setIsDeleteAllModalOpen(true);
+                  }}
+                  variant="outline"
+                  className="border-rose-300 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-xl gap-1.5 font-bold shadow-xs text-xs"
+                  title="حذف ومسح جميع بيانات الطلاب وسجلاتهم نهائياً من المركز"
+                >
+                  <Trash2 className="w-4 h-4 text-rose-500" />
+                  <span>تصفير وحذف جميع الطلاب</span>
+                </Button>
+              )}
               <Button
                 type="button"
                 onClick={() => setIsBulkImportOpen(true)}
                 variant="outline"
-                className="border-burgundy-300 dark:border-burgundy-800 text-burgundy-900 dark:text-burgundy-200 hover:bg-burgundy-50 dark:hover:bg-burgundy-950/60 rounded-xl gap-1.5 font-bold shadow-xs"
+                className="border-burgundy-300 dark:border-burgundy-800 text-burgundy-900 dark:text-burgundy-200 hover:bg-burgundy-50 dark:hover:bg-burgundy-950/60 rounded-xl gap-1.5 font-bold shadow-xs text-xs"
               >
                 <FileSpreadsheet className="w-4 h-4 text-islamicGold-600" />
                 <span>استيراد جماعي (Excel)</span>
               </Button>
               <Link href="/students">
-                <Button className="bg-burgundy-900 hover:bg-burgundy-800 text-white rounded-xl gap-1.5">
+                <Button className="bg-burgundy-900 hover:bg-burgundy-800 text-white rounded-xl gap-1.5 text-xs font-bold">
                   <Plus className="w-4 h-4" />
                   <span>إضافة طالب جديد</span>
                 </Button>
@@ -1932,6 +1984,83 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                 className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold px-4"
               >
                 {isDeletingStudentPermanently ? "جارٍ الحذف نهائياً..." : "تأكيد الحذف نهائياً"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: BULK DELETE ALL STUDENTS (ADMIN ONLY) */}
+      {/* ========================================================================= */}
+      {isDeleteAllModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div
+            className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 max-w-md w-full border border-rose-400 dark:border-rose-900/60 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200"
+            dir="rtl"
+          >
+            <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="w-11 h-11 rounded-2xl bg-rose-100 dark:bg-rose-950/80 border border-rose-300 dark:border-rose-800 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-rose-700 dark:text-rose-400">
+                  تصفير وحذف جميع الطلاب نهائياً
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  مسح شامل لكافة بيانات الطلاب في المركز
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-rose-50/70 dark:bg-rose-950/40 rounded-2xl p-4 border border-rose-200/80 dark:border-rose-900/50 space-y-2.5 text-xs">
+              <p className="text-slate-800 dark:text-slate-200 font-black leading-relaxed text-sm">
+                هل أنت متأكد تماماً من رغبتك في حذف جميع طلاب المركز ({students.length} طالب)؟
+              </p>
+              <p className="text-rose-700 dark:text-rose-300 font-bold leading-normal">
+                سيؤدي هذا الإجراء إلى مسح دائم وتصفير شامل لكافة:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-300 font-medium text-2xs">
+                <li>سجلات الطلاب وبيانات أولياء الأمور كاملة.</li>
+                <li>جميع سجلات الحفظ والتسميع والصفحات المنجزة.</li>
+                <li>كافة سجلات الحضور والغياب اليومية.</li>
+                <li>ردود وتصويتات أولياء الأمور على كافة الأنشطة والرحلات.</li>
+              </ul>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                لتأكيد العملية، يرجى كتابة كلمة <span className="text-rose-600 font-black">"حذف الكل"</span> أدناه:
+              </label>
+              <Input
+                type="text"
+                placeholder='اكتب: حذف الكل'
+                value={confirmDeleteText}
+                onChange={(e) => setConfirmDeleteText(e.target.value)}
+                className="h-10 text-xs font-bold border-rose-300 dark:border-rose-900 text-center"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <Button
+                type="button"
+                onClick={() => {
+                  setIsDeleteAllModalOpen(false);
+                  setConfirmDeleteText("");
+                }}
+                variant="ghost"
+                disabled={isDeletingAllStudents}
+                className="rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                إلغاء
+              </Button>
+              <Button
+                type="button"
+                onClick={handleExecuteDeleteAllStudents}
+                disabled={isDeletingAllStudents || confirmDeleteText.trim() !== "حذف الكل"}
+                className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold px-4 shadow-md disabled:opacity-50"
+              >
+                {isDeletingAllStudents ? "جارٍ التصفير والحذف..." : "تأكيد مسح جميع الطلاب"}
               </Button>
             </div>
           </div>

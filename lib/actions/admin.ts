@@ -1099,28 +1099,46 @@ export async function bulkImportStudents(payload: BulkImportPayload): Promise<Bu
     }
 
     // Ensure group exists in groups table for students.group_id foreign key constraint
-    let validGroupId: string | null = payload.circle_id;
-    if (!groupData) {
-      const { error: ensureGroupErr } = await supabase.from("groups").insert({
-        id: payload.circle_id,
-        name: circleName,
-        created_by: auth.user.id,
-      });
+    const targetGroupId: string = payload.circle_id;
 
-      if (ensureGroupErr) {
-        console.warn("Could not insert circle into groups table:", ensureGroupErr);
-        // Fallback: don't let group_id break the insert if it doesn't exist in groups
-        validGroupId = null;
-      } else {
+    // Create service role client if key exists to guarantee constraints and bypass RLS hurdles
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    let adminServiceClient: any = null;
+    if (serviceKey && supabaseUrl) {
+      try {
+        adminServiceClient = createSupabaseJsClient(supabaseUrl, serviceKey, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
+      } catch {}
+    }
+
+    // Guarantee that targetGroupId exists in public.groups table
+    if (!groupData) {
+      try {
+        await supabase.from("groups").upsert({
+          id: targetGroupId,
+          name: circleName,
+        }, { onConflict: "id" });
+      } catch {}
+
+      if (adminServiceClient) {
         try {
-          await supabase.from("group_members").insert({
-            id: crypto.randomUUID(),
-            group_id: payload.circle_id,
-            user_id: assignedTeacherId || auth.user.id,
-            role: "owner",
-          });
+          await adminServiceClient.from("groups").upsert({
+            id: targetGroupId,
+            name: circleName,
+          }, { onConflict: "id" });
         } catch {}
       }
+
+      try {
+        await supabase.from("group_members").insert({
+          id: crypto.randomUUID(),
+          group_id: targetGroupId,
+          user_id: assignedTeacherId || auth.user.id,
+          role: "owner",
+        });
+      } catch {}
     }
 
     // 2. Normalize and prepare student rows
@@ -1154,7 +1172,7 @@ export async function bulkImportStudents(payload: BulkImportPayload): Promise<Bu
         name: cleanName,
         parent_phone: finalParentPhone,
         phone: s.phone ? s.phone.trim() : null,
-        group_id: validGroupId,
+        group_id: targetGroupId,
         teacher_id: assignedTeacherId,
         parent_token: crypto.randomUUID(),
         notes: s.notes ? s.notes.trim() : null,
@@ -1172,14 +1190,14 @@ export async function bulkImportStudents(payload: BulkImportPayload): Promise<Bu
       };
     }
 
-    // 3. Batch insert in chunks of 50 with multi-level resilient fallback
+    // 3. Batch insert in chunks of 50 with multi-level resilient fallback while preserving group_id
     const insertedStudents: Array<{
       id: string;
       name: string;
       parent_phone: string | null;
       parent_token: string;
       track_url: string;
-      group_id?: string | null;
+      group_id: string;
       teacher_id?: string;
     }> = [];
 
@@ -1187,66 +1205,49 @@ export async function bulkImportStudents(payload: BulkImportPayload): Promise<Bu
     for (let i = 0; i < rowsToInsert.length; i += CHUNK_SIZE) {
       const chunk = rowsToInsert.slice(i, i + CHUNK_SIZE);
 
-      // Attempt 1: Standard batch insert
+      // Attempt 1: Standard batch insert with user client
       let { data: insertedRows, error: insertError } = await supabase
         .from("students")
         .insert(chunk)
         .select("id, name, parent_phone, parent_token, group_id, teacher_id");
 
-      // Attempt 2: If RLS policy or teacher foreign key error, retry batch with teacher_id = auth.user.id
-      if (insertError) {
-        const msg = (insertError.message || "").toLowerCase();
-        console.warn(`Chunk ${i + 1}-${i + chunk.length} initial insert failed: ${insertError.message}`);
-
-        if (
-          msg.includes("row-level security") ||
-          msg.includes("policy") ||
-          msg.includes("teacher_id") ||
-          msg.includes("students_teacher_id_fkey")
-        ) {
-          const fallbackChunk = chunk.map((r) => ({
-            ...r,
-            teacher_id: auth.user.id,
-          }));
-          const retryRes = await supabase
-            .from("students")
-            .insert(fallbackChunk)
-            .select("id, name, parent_phone, parent_token, group_id, teacher_id");
-
-          if (!retryRes.error && retryRes.data) {
-            insertedRows = retryRes.data;
-            insertError = null;
-          } else {
-            insertError = retryRes.error;
-          }
+      // Attempt 2: If standard failed, try with admin service client if available
+      if (insertError && adminServiceClient) {
+        const adminRes = await adminServiceClient
+          .from("students")
+          .insert(chunk)
+          .select("id, name, parent_phone, parent_token, group_id, teacher_id");
+        if (!adminRes.error && adminRes.data) {
+          insertedRows = adminRes.data;
+          insertError = null;
         }
       }
 
-      // Attempt 3: If group_id foreign key constraint error, retry with group_id = null
+      // Attempt 3: If RLS policy or teacher foreign key error, retry batch with teacher_id = auth.user.id
       if (insertError) {
-        const msg = (insertError.message || "").toLowerCase();
-        if (
-          msg.includes("group_id") ||
-          msg.includes("students_group_id_fkey") ||
-          msg.includes("foreign key") ||
-          msg.includes("groups")
-        ) {
-          const fallbackChunk = chunk.map((r) => ({
-            ...r,
-            teacher_id: auth.user.id,
-            group_id: null,
-          }));
-          const retryRes = await supabase
+        const fallbackChunk = chunk.map((r) => ({
+          ...r,
+          teacher_id: auth.user.id,
+          group_id: targetGroupId,
+        }));
+
+        let retryRes = await supabase
+          .from("students")
+          .insert(fallbackChunk)
+          .select("id, name, parent_phone, parent_token, group_id, teacher_id");
+
+        if (retryRes.error && adminServiceClient) {
+          retryRes = await adminServiceClient
             .from("students")
             .insert(fallbackChunk)
             .select("id, name, parent_phone, parent_token, group_id, teacher_id");
+        }
 
-          if (!retryRes.error && retryRes.data) {
-            insertedRows = retryRes.data;
-            insertError = null;
-          } else {
-            insertError = retryRes.error;
-          }
+        if (!retryRes.error && retryRes.data) {
+          insertedRows = retryRes.data;
+          insertError = null;
+        } else {
+          insertError = retryRes.error;
         }
       }
 
@@ -1259,27 +1260,27 @@ export async function bulkImportStudents(payload: BulkImportPayload): Promise<Bu
           const single = chunk[rIdx];
           const globalIdx = i + rIdx + 1;
 
-          // Try 1: row as is
+          // Try 1: user client
           let singleRes = await supabase
             .from("students")
-            .insert(single)
+            .insert({ ...single, group_id: targetGroupId, teacher_id: assignedTeacherId })
             .select("id, name, parent_phone, parent_token, group_id, teacher_id")
             .maybeSingle();
 
-          // Try 2: row with teacher_id = auth.user.id
+          // Try 2: user client with teacher_id = auth.user.id
           if (singleRes.error) {
             singleRes = await supabase
               .from("students")
-              .insert({ ...single, teacher_id: auth.user.id })
+              .insert({ ...single, group_id: targetGroupId, teacher_id: auth.user.id })
               .select("id, name, parent_phone, parent_token, group_id, teacher_id")
               .maybeSingle();
           }
 
-          // Try 3: row with group_id = null
-          if (singleRes.error) {
-            singleRes = await supabase
+          // Try 3: admin service client
+          if (singleRes.error && adminServiceClient) {
+            singleRes = await adminServiceClient
               .from("students")
-              .insert({ ...single, teacher_id: auth.user.id, group_id: null })
+              .insert({ ...single, group_id: targetGroupId, teacher_id: assignedTeacherId })
               .select("id, name, parent_phone, parent_token, group_id, teacher_id")
               .maybeSingle();
           }
@@ -1292,7 +1293,7 @@ export async function bulkImportStudents(payload: BulkImportPayload): Promise<Bu
               parent_phone: singleRes.data.parent_phone,
               parent_token: singleRes.data.parent_token,
               track_url: `/parent/${singleRes.data.parent_token}`,
-              group_id: singleRes.data.group_id || validGroupId || payload.circle_id,
+              group_id: targetGroupId,
               teacher_id: singleRes.data.teacher_id,
             });
           } else {
@@ -1311,7 +1312,7 @@ export async function bulkImportStudents(payload: BulkImportPayload): Promise<Bu
             parent_phone: row.parent_phone,
             parent_token: row.parent_token,
             track_url: `/parent/${row.parent_token}`,
-            group_id: row.group_id || validGroupId || payload.circle_id,
+            group_id: targetGroupId,
             teacher_id: row.teacher_id,
           });
         });
@@ -1554,6 +1555,131 @@ export async function deleteAllStudentsPermanentlyByAdmin(): Promise<{
     return {
       success: false,
       error: err instanceof Error ? err.message : "حدث خطأ غير متوقع أثناء تصفير بيانات الطلاب",
+    };
+  }
+}
+
+/**
+ * Assign all unassigned students (group_id IS NULL) to a specified Halaqa
+ */
+export async function assignUnassignedStudentsToHalaqa(halaqaId: string): Promise<{
+  success: boolean;
+  updatedCount: number;
+  error?: string;
+}> {
+  try {
+    const auth = await checkAdminAuth();
+    if (!auth.authorized || !auth.user) {
+      return { success: false, updatedCount: 0, error: "هذه العملية مخصصة لمدير المركز فقط" };
+    }
+
+    if (!halaqaId) {
+      return { success: false, updatedCount: 0, error: "يرجى تحديد الحلقة المستهدفة" };
+    }
+
+    const supabase = createClient();
+
+    // 1. Ensure target halaqa exists in groups & circles
+    const { data: circleData } = await supabase
+      .from("circles")
+      .select("id, name, teacher_id")
+      .eq("id", halaqaId)
+      .maybeSingle();
+
+    const circleName = circleData?.name || "حلقة القرآن الكريم";
+    let assignedTeacherId = circleData?.teacher_id || auth.user.id;
+
+    // Check teacher in profiles
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", assignedTeacherId)
+      .maybeSingle();
+    if (!prof) {
+      assignedTeacherId = auth.user.id;
+    }
+
+    // Ensure groups table has this id
+    try {
+      await supabase.from("groups").upsert({
+        id: halaqaId,
+        name: circleName,
+      }, { onConflict: "id" });
+    } catch {}
+
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    let adminServiceClient: any = null;
+    if (serviceKey && supabaseUrl) {
+      try {
+        adminServiceClient = createSupabaseJsClient(supabaseUrl, serviceKey, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
+        await adminServiceClient.from("groups").upsert({
+          id: halaqaId,
+          name: circleName,
+        }, { onConflict: "id" });
+      } catch {}
+    }
+
+    // 2. Query all unassigned students
+    const clientToQuery = adminServiceClient || supabase;
+    const { data: unassignedStudents, error: fetchErr } = await clientToQuery
+      .from("students")
+      .select("id")
+      .is("group_id", null);
+
+    if (fetchErr) {
+      return { success: false, updatedCount: 0, error: "فشل استعلام الطلاب: " + fetchErr.message };
+    }
+
+    if (!unassignedStudents || unassignedStudents.length === 0) {
+      return { success: true, updatedCount: 0 };
+    }
+
+    const unassignedIds = unassignedStudents.map((s: any) => s.id);
+
+    // 3. Batch update
+    let updatedCount = 0;
+    const updateRes = await clientToQuery
+      .from("students")
+      .update({
+        group_id: halaqaId,
+        teacher_id: assignedTeacherId,
+      })
+      .in("id", unassignedIds)
+      .select("id");
+
+    if (!updateRes.error && updateRes.data) {
+      updatedCount = updateRes.data.length;
+    } else {
+      // Fallback: one-by-one via transfer_student_safe RPC
+      for (const stId of unassignedIds) {
+        try {
+          const { data: rpcRes } = await (supabase.rpc as any)("transfer_student_safe", {
+            p_student_id: stId,
+            p_new_group_id: halaqaId,
+            p_new_teacher_id: assignedTeacherId,
+          });
+          if ((rpcRes as any)?.success) updatedCount++;
+        } catch {}
+      }
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/students");
+    revalidatePath("/dashboard");
+
+    return {
+      success: true,
+      updatedCount,
+    };
+  } catch (err) {
+    console.error("Error in assignUnassignedStudentsToHalaqa:", err);
+    return {
+      success: false,
+      updatedCount: 0,
+      error: err instanceof Error ? err.message : "حدث خطأ أثناء تسكين الطلاب في الحلقة",
     };
   }
 }

@@ -36,6 +36,7 @@ import {
   transferStudentHalaqa,
   permanentlyDeleteStudentByAdmin,
   deleteAllStudentsPermanentlyByAdmin,
+  assignUnassignedStudentsToHalaqa,
 } from "@/lib/actions/admin";
 import {
   TRANSFER_RLS_MIGRATION_SQL,
@@ -78,10 +79,11 @@ import {
   EyeOff,
   FileSpreadsheet,
   Crown,
-  Trophy,
   Copy,
   Check,
   Settings,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 
 interface AdminDashboardClientProps {
@@ -232,6 +234,10 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
   const [isDeletingAllStudents, setIsDeletingAllStudents] = useState(false);
   const [confirmDeleteText, setConfirmDeleteText] = useState("");
 
+  // Unassigned Students Bulk Assignment States
+  const [selectedHalaqaForUnassigned, setSelectedHalaqaForUnassigned] = useState<string>("");
+  const [isAssigningUnassigned, setIsAssigningUnassigned] = useState(false);
+
   // Reports Tab States
   const [reportType, setReportType] = useState<"center" | "halaqa" | "student">("center");
   const [selectedReportHalaqa, setSelectedReportHalaqa] = useState<string>(halaqat[0]?.id || "");
@@ -294,19 +300,75 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
     return halaqat.filter((h) => h.season_id === selectedSeasonId);
   }, [halaqat, selectedSeasonId]);
 
-  // Filtered students by selected season and search
+  // Unassigned students across the center
+  const unassignedStudents = useMemo(
+    () => students.filter((s) => !s.group_id),
+    [students]
+  );
+
+  // Filtered students by selected season, halaqa, and search
   const displayedStudents = useMemo(() => {
     return students.filter((s) => {
       const matchesSeason =
         !selectedSeasonId || selectedSeasonId === "all" || s.season_id === selectedSeasonId;
       const matchesHalaqa =
-        selectedHalaqaFilter === "all" || s.group_id === selectedHalaqaFilter;
+        selectedHalaqaFilter === "all"
+          ? true
+          : selectedHalaqaFilter === "unassigned"
+          ? !s.group_id
+          : s.group_id === selectedHalaqaFilter;
       const matchesSearch =
         !studentSearch.trim() ||
-        s.full_name?.toLowerCase().includes(studentSearch.toLowerCase().trim());
+        s.full_name?.toLowerCase().includes(studentSearch.toLowerCase().trim()) ||
+        (s.parent_phone && s.parent_phone.includes(studentSearch.trim()));
       return matchesSeason && matchesHalaqa && matchesSearch;
     });
   }, [students, selectedSeasonId, selectedHalaqaFilter, studentSearch]);
+
+  const handleAssignAllUnassigned = async () => {
+    if (!selectedHalaqaForUnassigned) {
+      showToast("يرجى اختيار الحلقة المستهدفة لتسكين الطلاب");
+      return;
+    }
+    setIsAssigningUnassigned(true);
+    try {
+      const targetH = halaqat.find((h) => h.id === selectedHalaqaForUnassigned);
+      const res = await assignUnassignedStudentsToHalaqa(selectedHalaqaForUnassigned);
+      if (res.success) {
+        showToast(`تم تسكين ${res.updatedCount} طالب في حلقة (${targetH?.name || "المحددة"}) بنجاح 🎉`);
+        setStudents((prev) =>
+          prev.map((s) =>
+            !s.group_id
+              ? {
+                  ...s,
+                  group_id: selectedHalaqaForUnassigned,
+                  season_id: targetH?.season_id || s.season_id,
+                  season_name: targetH?.season_name || s.season_name,
+                  halaqa_name: targetH?.name || "الحلقة",
+                  teacher_name: targetH?.teacher_name || "غير معين",
+                }
+              : s
+          )
+        );
+        if (targetH) {
+          setHalaqat((prev) =>
+            prev.map((h) =>
+              h.id === targetH.id
+                ? { ...h, students_count: (h.students_count || 0) + res.updatedCount }
+                : h
+            )
+          );
+          setSelectedHalaqaFilter(targetH.id);
+        }
+      } else {
+        showToast(res.error || "فشل تسكين الطلاب في الحلقة");
+      }
+    } catch {
+      showToast("حدث خطأ غير متوقع أثناء تسكين الطلاب");
+    } finally {
+      setIsAssigningUnassigned(false);
+    }
+  };
 
   // Overview KPIs recalculated for the selected season
   const displayedOverview = useMemo(() => {
@@ -1371,6 +1433,58 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
             </div>
           </div>
 
+          {/* Quick-Assignment Banner for Unassigned Students */}
+          {unassignedStudents.length > 0 && (
+            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-amber-500/10 dark:from-amber-950/40 dark:via-amber-900/20 dark:to-amber-950/40 border-2 border-amber-300 dark:border-amber-700/60 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-sm shrink-0">
+                  <AlertCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-amber-950 dark:text-amber-200">
+                    تنبيه: يوجد {unassignedStudents.length} طالب غير مسكنين في أي حلقة
+                  </h4>
+                  <p className="text-xs text-amber-900/80 dark:text-amber-300/80 mt-0.5">
+                    يمكنك تسكينهم دفعة واحدة في الحلقة المناسبة بنقرة زر واحدة أو نقل كل طالب منفرداً من الجدول أدناه.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <select
+                  value={selectedHalaqaForUnassigned}
+                  onChange={(e) => setSelectedHalaqaForUnassigned(e.target.value)}
+                  className="h-10 px-3 bg-white dark:bg-slate-900 border-2 border-amber-300 dark:border-amber-700 rounded-xl text-xs font-bold flex-1 md:w-60 text-slate-900 dark:text-slate-100"
+                >
+                  <option value="">-- اختر حلقة التسكين --</option>
+                  {displayedHalaqat.map((h) => (
+                    <option key={h.id} value={h.id}>
+                      {h.name} — {h.teacher_name} ({h.season_name})
+                    </option>
+                  ))}
+                </select>
+
+                <Button
+                  onClick={handleAssignAllUnassigned}
+                  disabled={isAssigningUnassigned || !selectedHalaqaForUnassigned}
+                  className="h-10 px-4 bg-amber-600 hover:bg-amber-700 text-white font-black text-xs rounded-xl shadow-xs gap-1.5 shrink-0 disabled:opacity-50"
+                >
+                  {isAssigningUnassigned ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>جاري التسكين...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>تسكين الكل في الحلقة</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Filters & Search */}
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="relative flex-1 w-full">
@@ -1387,12 +1501,17 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
             <select
               value={selectedHalaqaFilter}
               onChange={(e) => setSelectedHalaqaFilter(e.target.value)}
-              className="h-11 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold w-full sm:w-56"
+              className="h-11 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold w-full sm:w-64"
             >
-              <option value="all">جميع حلقات النادي ({displayedStudents.length} طالب)</option>
+              <option value="all">عرض كافة الحلقات ({displayedStudents.length} طالب)</option>
+              {unassignedStudents.length > 0 && (
+                <option value="unassigned" className="text-amber-600 font-bold">
+                  ⚠️ طلاب بدون حلقة (غير مسكنين) ({unassignedStudents.length})
+                </option>
+              )}
               {displayedHalaqat.map((h) => (
                 <option key={h.id} value={h.id}>
-                  {h.name} ({h.season_name})
+                  {h.name} ({h.season_name}) — {h.students_count || 0} طالب
                 </option>
               ))}
             </select>
@@ -2332,26 +2451,51 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
           onClose={() => setIsBulkImportOpen(false)}
           halaqat={halaqat}
           selectedSeasonId={selectedSeasonId}
-          onSuccess={(newStudents) => {
+          onSuccess={(newStudents, targetCircleId) => {
+            const targetId = targetCircleId || newStudents[0]?.group_id;
+            const hObj = halaqat.find((h) => h.id === targetId);
+            const count = newStudents.length;
+
             setStudents((prev) => [
               ...newStudents.map((ns) => {
-                const hObj = halaqat.find((h) => h.id === ns.group_id);
+                const gid = targetId || ns.group_id;
                 return {
                   id: ns.id,
                   name: ns.name,
                   full_name: ns.name,
                   parent_phone: ns.parent_phone,
                   parent_token: ns.parent_token,
+                  group_id: gid,
+                  teacher_id: ns.teacher_id || hObj?.teacher_id,
                   created_at: new Date().toISOString(),
                   season_id: hObj?.season_id,
                   season_name: hObj?.season_name,
                   halaqa_name: hObj?.name || "الحلقة",
                   teacher_name: hObj?.teacher_name || "غير معين",
+                  total_pages_memorized: 0,
+                  total_pages_count: 0,
                 } as any;
               }),
               ...prev,
             ]);
-            showToast(`تم استيراد ${newStudents.length} طالب بنجاح 🎉`);
+
+            if (hObj) {
+              setHalaqat((prev) =>
+                prev.map((h) =>
+                  h.id === hObj.id
+                    ? { ...h, students_count: (h.students_count || 0) + count }
+                    : h
+                )
+              );
+              setSelectedHalaqaFilter(hObj.id);
+            }
+
+            setOverview((prev) => ({
+              ...prev,
+              totalStudents: (prev.totalStudents || 0) + count,
+            }));
+
+            showToast(`تم استيراد ${count} طالب وتسكينهم بنجاح في حلقة (${hObj?.name || "المحددة"}) 🎉`);
           }}
         />
       )}

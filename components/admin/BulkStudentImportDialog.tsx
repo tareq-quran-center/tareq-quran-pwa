@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   FileSpreadsheet,
   ClipboardPaste,
@@ -39,7 +39,7 @@ interface BulkStudentImportDialogProps {
   onClose: () => void;
   halaqat: HalaqaWithDetails[];
   selectedSeasonId?: string;
-  onSuccess?: (insertedStudents: any[]) => void;
+  onSuccess?: (insertedStudents: any[], targetCircleId?: string) => void;
 }
 
 export function BulkStudentImportDialog({
@@ -62,6 +62,15 @@ export function BulkStudentImportDialog({
   const [selectedCircleId, setSelectedCircleId] = useState<string>(
     filteredHalaqat[0]?.id || ""
   );
+
+  // Auto-sync selectedCircleId if halaqat list updates or changes
+  useEffect(() => {
+    if (filteredHalaqat.length > 0) {
+      if (!selectedCircleId || !filteredHalaqat.some((h) => h.id === selectedCircleId)) {
+        setSelectedCircleId(filteredHalaqat[0].id);
+      }
+    }
+  }, [filteredHalaqat, selectedCircleId]);
 
   const selectedCircle = useMemo(
     () => halaqat.find((h) => h.id === selectedCircleId),
@@ -236,7 +245,7 @@ export function BulkStudentImportDialog({
         setImportResult(res);
         setStep("success");
         if (onSuccess) {
-          onSuccess(res.insertedStudents);
+          onSuccess(res.insertedStudents, selectedCircleId);
         }
       } else {
         const detailedError =
@@ -485,6 +494,43 @@ export function BulkStudentImportDialog({
           {/* ========================================================================= */}
           {step === "preview" && (
             <div className="space-y-5">
+              {/* Target Halaqa Banner & Selector in Preview */}
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-50/70 dark:bg-burgundy-950/40 border-2 border-amber-300/80 dark:border-burgundy-800 flex items-center justify-between flex-wrap gap-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-burgundy-900 text-islamicGold-300 flex items-center justify-center shrink-0">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-black text-burgundy-950 dark:text-islamicGold-200 block">
+                      سيتم تسكين الطلاب في الحلقة:
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-bold">
+                      المعلم المشرف:{" "}
+                      <strong className="text-slate-800 dark:text-slate-200">
+                        {selectedCircle?.teacher_name || "غير محدد"}
+                      </strong>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                    تغيير الحلقة:
+                  </label>
+                  <select
+                    value={selectedCircleId}
+                    onChange={(e) => setSelectedCircleId(e.target.value)}
+                    className="h-9 px-3 text-xs font-bold rounded-xl border border-amber-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                  >
+                    {filteredHalaqat.map((h) => (
+                      <option key={h.id} value={h.id}>
+                        {h.name} — {h.season_name} (المعلم: {h.teacher_name})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               {/* Column Mapping Toolbar */}
               <div className="p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-2.5">
                 <div className="flex items-center justify-between">

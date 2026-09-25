@@ -98,14 +98,18 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
 
   const [activities, setActivities] = useState<ActivityWithStats[]>([]);
   const [isActivityDialogOpen, setIsActivityDialogOpen] = useState(false);
-  const [isUsingActivityFallback, setIsUsingActivityFallback] = useState(false);
+  const [isMissingActivityTables, setIsMissingActivityTables] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     getActivitiesForAdmin().then((res) => {
-      if (isMounted && res.success) {
-        setActivities(res.data);
-        if (res.isUsingFallback) setIsUsingActivityFallback(true);
+      if (isMounted) {
+        if (res.success && res.data) {
+          setActivities(res.data);
+        }
+        if (res.isMissingTables) {
+          setIsMissingActivityTables(true);
+        }
       }
     });
     return () => {
@@ -219,12 +223,16 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
     const res = await createActivity(data);
     if (res.success && res.data) {
       showToast("تم نشر النشاط بنجاح لأولياء الأمور 🎉");
+      setIsMissingActivityTables(false);
       const refreshed = await getActivitiesForAdmin();
       if (refreshed.success) setActivities(refreshed.data);
-      return true;
+      return { success: true };
     } else {
+      if (res.errorCode === "TABLES_NOT_FOUND") {
+        setIsMissingActivityTables(true);
+      }
       showToast(res.error || "تعذر حفظ النشاط");
-      return false;
+      return { success: false, error: res.error, errorCode: res.errorCode };
     }
   };
 
@@ -1242,7 +1250,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
           halaqat={halaqat}
           onOpenCreate={() => setIsActivityDialogOpen(true)}
           onDelete={handleDeleteActivity}
-          isUsingFallback={isUsingActivityFallback}
+          isMissingTables={isMissingActivityTables}
         />
       )}
 

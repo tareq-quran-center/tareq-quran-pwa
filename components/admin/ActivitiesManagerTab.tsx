@@ -23,15 +23,22 @@ import {
   FileSpreadsheet,
   AlertCircle,
   Sparkles,
+  Copy,
+  Check,
+  ExternalLink,
 } from "lucide-react";
 import { lightHaptic, successHaptic } from "@/lib/haptics";
+import {
+  ACTIVITIES_MIGRATION_SQL,
+  SUPABASE_SQL_EDITOR_URL,
+} from "@/lib/constants/activitySql";
 
 interface ActivitiesManagerTabProps {
   activities: ActivityWithStats[];
   halaqat: HalaqaWithDetails[];
   onOpenCreate: () => void;
   onDelete: (id: string) => Promise<boolean>;
-  isUsingFallback?: boolean;
+  isMissingTables?: boolean;
 }
 
 export function ActivitiesManagerTab({
@@ -39,10 +46,18 @@ export function ActivitiesManagerTab({
   halaqat = [],
   onOpenCreate,
   onDelete,
-  isUsingFallback = false,
+  isMissingTables = false,
 }: ActivitiesManagerTabProps) {
   const [selectedActivityForResponses, setSelectedActivityForResponses] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopySql = () => {
+    navigator.clipboard.writeText(ACTIVITIES_MIGRATION_SQL);
+    setIsCopied(true);
+    lightHaptic();
+    setTimeout(() => setIsCopied(false), 3000);
+  };
 
   // Compute aggregate numbers
   const totalActivities = activities.length;
@@ -76,6 +91,41 @@ export function ActivitiesManagerTab({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
+      {/* Missing Tables Notice Banner */}
+      {isMissingTables && (
+        <div className="p-4 sm:p-5 rounded-3xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-in fade-in">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-200/80 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 flex items-center justify-center shrink-0">
+              <AlertCircle className="w-5 h-5 text-amber-700 dark:text-amber-300" />
+            </div>
+            <div>
+              <h4 className="text-sm font-black">تنبيه لقاعدة البيانات: يلزم تفعيل جداول النشاطات في Supabase (لمرة واحدة)</h4>
+              <p className="text-xs text-amber-800/90 dark:text-amber-300/80 mt-1 leading-relaxed">
+                لتتمكن من نشر الرحلات وحفظ ردود أولياء الأمور، انسخ كود الـ SQL التالي وشغله لمرة واحدة في صفحة SQL في Supabase.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              onClick={handleCopySql}
+              className="bg-amber-600 hover:bg-amber-700 text-white font-black text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
+            >
+              {isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              <span>{isCopied ? "تم النسخ! ✅" : "نسخ كود الـ SQL 📋"}</span>
+            </Button>
+            <a
+              href={SUPABASE_SQL_EDITOR_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>فتح Supabase SQL</span>
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Top Banner and Action */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-burgundy-950 via-burgundy-900 to-burgundy-950 text-white p-5 sm:p-6 border-2 border-islamicGold-400/40 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3.5 text-center sm:text-right">
@@ -96,16 +146,29 @@ export function ActivitiesManagerTab({
           </div>
         </div>
 
-        <Button
-          onClick={() => {
-            lightHaptic();
-            onOpenCreate();
-          }}
-          className="bg-gradient-to-r from-islamicGold-600 to-amber-500 hover:from-islamicGold-700 hover:to-amber-600 text-burgundy-950 font-black text-xs px-5 py-2.5 rounded-xl shadow-md border border-islamicGold-300 gap-2 shrink-0 active:scale-95 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          <span>إضافة رحلة أو نشاط جديد 🌟</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCopySql}
+            className="bg-white/10 hover:bg-white/20 text-white border-white/20 text-xs px-3.5 py-2.5 rounded-xl gap-1.5 active:scale-95 transition-all"
+            title="نسخ سكريبت SQL لإنشاء جداول النشاطات"
+          >
+            {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            <span>{isCopied ? "تم النسخ!" : "كود SQL 📋"}</span>
+          </Button>
+
+          <Button
+            onClick={() => {
+              lightHaptic();
+              onOpenCreate();
+            }}
+            className="bg-gradient-to-r from-islamicGold-600 to-amber-500 hover:from-islamicGold-700 hover:to-amber-600 text-burgundy-950 font-black text-xs px-5 py-2.5 rounded-xl shadow-md border border-islamicGold-300 gap-2 shrink-0 active:scale-95 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            <span>إضافة رحلة أو نشاط جديد 🌟</span>
+          </Button>
+        </div>
       </div>
 
       {/* Aggregate Stats Bar */}
@@ -198,105 +261,118 @@ export function ActivitiesManagerTab({
                     </Button>
                   </div>
 
-                  {/* Details List */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4 text-xs font-bold text-slate-600 dark:text-slate-300">
-                    <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60">
-                      <Calendar className="w-3.5 h-3.5 text-islamicGold-600 shrink-0" />
-                      <span className="truncate">{formatActivityDate(activity.activity_date)}</span>
+                  {/* Trip Details Info */}
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-burgundy-800 dark:text-islamicGold-400 shrink-0" />
+                      <span>{formatActivityDate(activity.activity_date)}</span>
                     </div>
 
-                    <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60">
-                      <DollarSign className="w-3.5 h-3.5 text-islamicGold-600 shrink-0" />
-                      <span>الرسوم: {activity.cost}</span>
+                    <div className="flex items-center gap-1.5">
+                      <DollarSign className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="font-bold text-emerald-700 dark:text-emerald-400">
+                        الرسوم: {activity.cost}
+                      </span>
                     </div>
 
                     {activity.location && (
-                      <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 sm:col-span-2">
-                        <MapPin className="w-3.5 h-3.5 text-islamicGold-600 shrink-0" />
-                        <span className="truncate">{activity.location}</span>
+                      <div className="flex items-center gap-1.5 col-span-1 sm:col-span-2">
+                        <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                        <span>{activity.location}</span>
                       </div>
                     )}
                   </div>
 
                   {activity.description && (
-                    <p className="mt-3 text-xs text-slate-500 dark:text-slate-400 bg-amber-50/40 dark:bg-slate-800/40 p-2.5 rounded-xl border border-amber-100 dark:border-slate-800">
+                    <p className="mt-2.5 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 leading-relaxed">
                       {activity.description}
                     </p>
                   )}
                 </div>
 
-                {/* Response Summary Bar */}
-                <div className="border-t border-slate-100 dark:border-slate-800 p-4 bg-slate-50/70 dark:bg-slate-900/60">
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 text-xs font-black">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                {/* Response Statistics & Expand Toggle */}
+                <div className="border-t border-slate-100 dark:border-slate-800 p-4 bg-slate-50/50 dark:bg-slate-800/30">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap text-xs">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>موافق: {activity.approved_count || 0}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-rose-700 dark:text-rose-300 text-xs font-black">
-                        <XCircle className="w-4 h-4 text-rose-600" />
-                        <span>اعتذار: {activity.rejected_count || 0}</span>
-                      </div>
+                      </span>
+
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 font-bold">
+                        <XCircle className="w-3.5 h-3.5" />
+                        <span>معتذر: {activity.rejected_count || 0}</span>
+                      </span>
+
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>إجمالي الردود: {responses.length}</span>
+                      </span>
                     </div>
 
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => {
                         lightHaptic();
-                        setSelectedActivityForResponses(isViewingResponses ? null : activity.id);
+                        setSelectedActivityForResponses(
+                          isViewingResponses ? null : activity.id
+                        );
                       }}
-                      className="text-xs font-black h-8 rounded-xl gap-1.5 bg-white dark:bg-slate-800"
+                      className="text-xs font-bold text-burgundy-900 dark:text-islamicGold-400 hover:bg-burgundy-50 dark:hover:bg-burgundy-950/60 rounded-xl gap-1 shrink-0"
                     >
-                      <span>كشف المشاركين ({responses.length})</span>
+                      <span>كشف المشاركين</span>
                       {isViewingResponses ? (
-                        <ChevronUp className="w-3.5 h-3.5" />
+                        <ChevronUp className="w-4 h-4" />
                       ) : (
-                        <ChevronDown className="w-3.5 h-3.5" />
+                        <ChevronDown className="w-4 h-4" />
                       )}
                     </Button>
                   </div>
 
-                  {/* Expanded Student Responses Table */}
+                  {/* Expanded Participant List */}
                   {isViewingResponses && (
-                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2 animate-in fade-in">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-black text-slate-900 dark:text-white">
-                          كشف ردود أولياء الأمور:
-                        </h4>
-                        <span className="text-[11px] text-slate-500 font-bold">
-                          {activity.approved_count} مقعد مؤكد
+                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 space-y-2 animate-in fade-in">
+                      <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                        <span>قائمة ردود أولياء الأمور:</span>
+                        <span className="text-[11px] text-slate-500">
+                          {responses.length} طالب مسجل
                         </span>
                       </div>
 
                       {responses.length > 0 ? (
-                        <div className="max-h-48 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 divide-y divide-slate-100 dark:divide-slate-800">
+                        <div className="max-h-52 overflow-y-auto space-y-1.5 pr-1">
                           {responses.map((resp) => (
                             <div
                               key={resp.id}
-                              className="p-2.5 flex items-center justify-between text-xs font-bold"
+                              className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs flex items-center justify-between gap-2"
                             >
-                              <div className="flex items-center gap-2">
-                                <span className="text-slate-800 dark:text-slate-200">
+                              <div className="min-w-0 flex-1">
+                                <span className="font-bold text-slate-900 dark:text-white block truncate">
                                   {resp.student_name || "طالب"}
                                 </span>
                                 {resp.parent_phone && (
-                                  <span dir="ltr" className="text-[10px] text-slate-400 font-mono">
+                                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block" dir="ltr">
                                     {resp.parent_phone}
                                   </span>
                                 )}
+                                {resp.notes && (
+                                  <p className="text-[10px] text-slate-500 italic mt-0.5 truncate">
+                                    ملاحظة ولي الأمر: {resp.notes}
+                                  </p>
+                                )}
                               </div>
 
-                              <div>
+                              <div className="shrink-0">
                                 {resp.status === "approved" ? (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200 border border-emerald-300">
-                                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                                    <CheckCircle2 className="w-3 h-3" />
                                     <span>موافق ✅</span>
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-200 border border-rose-300">
-                                    <XCircle className="w-3 h-3 text-rose-600" />
-                                    <span>اعتذار ❌</span>
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-black">
+                                    <XCircle className="w-3 h-3" />
+                                    <span>معتذر ❌</span>
                                   </span>
                                 )}
                               </div>

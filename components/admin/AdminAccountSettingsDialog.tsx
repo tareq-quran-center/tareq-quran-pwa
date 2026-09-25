@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,7 +47,24 @@ export function AdminAccountSettingsDialog({
   currentUser,
   onProfileUpdated,
 }: AdminAccountSettingsDialogProps) {
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<"profile" | "password" | "email">("profile");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   // Profile Form States
   const [fullName, setFullName] = useState(currentUser?.fullName || "");
@@ -102,7 +120,7 @@ export function AdminAccountSettingsDialog({
     }
   }, [isOpen, currentUser]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   // Handle Profile Update
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -189,10 +207,15 @@ export function AdminAccountSettingsDialog({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+  return createPortal(
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
+    >
       <div
-        className="relative w-full max-w-xl max-h-[92vh] flex flex-col bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border-2 border-islamicGold-400/50 overflow-hidden"
+        className="relative w-full max-w-xl max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border-2 border-islamicGold-400/50 overflow-hidden"
         dir="rtl"
       >
         {/* Header */}
@@ -552,6 +575,7 @@ export function AdminAccountSettingsDialog({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

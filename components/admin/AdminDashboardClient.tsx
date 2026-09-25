@@ -45,6 +45,7 @@ import { IslamicAdminBanner } from "./IslamicAdminBanner";
 import { IslamicHalaqaCard } from "./IslamicHalaqaCard";
 import { IslamicSidebarWidgets } from "./IslamicSidebarWidgets";
 import { HalaqatHonorBoard } from "./HalaqatHonorBoard";
+import { AdminAccountSettingsDialog } from "./AdminAccountSettingsDialog";
 import { SeasonSelector } from "@/components/common/SeasonSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,6 +81,7 @@ import {
   Trophy,
   Copy,
   Check,
+  Settings,
 } from "lucide-react";
 
 interface AdminDashboardClientProps {
@@ -98,6 +100,13 @@ interface AdminDashboardClientProps {
     seasons?: SeasonRow[];
     currentUserIsAdmin?: boolean;
     currentUserId?: string;
+    currentUserProfile?: {
+      id: string;
+      email: string;
+      fullName: string;
+      phone: string;
+      role: string;
+    };
   };
 }
 
@@ -107,6 +116,8 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
     "overview" | "honor" | "halaqat" | "teachers" | "students" | "activities" | "reports"
   >("overview");
 
+  const [currentUser, setCurrentUser] = useState(initialData.currentUserProfile);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activities, setActivities] = useState<ActivityWithStats[]>([]);
   const [isActivityDialogOpen, setIsActivityDialogOpen] = useState(false);
   const [isMissingActivityTables, setIsMissingActivityTables] = useState(false);
@@ -722,6 +733,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
         onOpenActivities={() => {
           setActiveTab("activities");
         }}
+        onOpenSettings={() => setIsSettingsOpen(true)}
         totalStudents={displayedOverview.totalStudents}
         totalHalaqat={displayedOverview.totalHalaqat}
         totalTeachers={displayedOverview.totalTeachers}
@@ -822,6 +834,17 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
           <FileText className="w-4 h-4" />
           <span>التقارير</span>
         </button>
+
+        <div className="mr-auto pr-2">
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-burgundy-900 hover:bg-white dark:hover:bg-slate-800 transition-all border border-slate-200/80 dark:border-slate-700 shadow-2xs whitespace-nowrap"
+            title="تعديل كلمة المرور أو البريد أو بيانات الحساب"
+          >
+            <Settings className="w-3.5 h-3.5 text-islamicGold-600" />
+            <span>إعدادات الحساب ⚙️</span>
+          </button>
+        </div>
       </div>
 
       {/* ========================================================================= */}
@@ -2333,6 +2356,30 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
           onClose={() => setIsActivityDialogOpen(false)}
           onSubmit={handleCreateActivity}
           halaqat={halaqat}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* ADMIN ACCOUNT SETTINGS DIALOG (SETTINGS MODAL) */}
+      {/* ========================================================================= */}
+      {isSettingsOpen && (
+        <AdminAccountSettingsDialog
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          currentUser={currentUser}
+          onProfileUpdated={(updated) => {
+            setCurrentUser((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    fullName: updated.fullName,
+                    phone: updated.phone,
+                    email: updated.email || prev.email,
+                  }
+                : undefined
+            );
+            showToast("تم حفظ إعدادات الحساب بنجاح ✨");
+          }}
         />
       )}
     </div>

@@ -60,6 +60,13 @@ export default async function AdminPage() {
           seasons: data.seasons,
           currentUserIsAdmin: data.currentUserIsAdmin,
           currentUserId: user?.id || data.currentUserId,
+          currentUserProfile: {
+            id: user?.id || "",
+            email: user?.email || "",
+            fullName: profile?.full_name || "",
+            phone: profile?.phone || "",
+            role: profile?.role || "admin",
+          },
         }}
       />
     </div>

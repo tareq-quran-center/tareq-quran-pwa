@@ -5,9 +5,12 @@ const withPWA = withPWAInit({
   disable: process.env.NODE_ENV === "development",
   register: true,
   skipWaiting: true,
-  cacheOnFrontEndNav: false,
-  aggressiveFrontEndNavCaching: false,
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
   reloadOnOnline: false,
+  fallbacks: {
+    document: "/~offline",
+  },
   workboxOptions: {
     disableDevLogs: true,
     runtimeCaching: [
@@ -34,7 +37,7 @@ const withPWA = withPWAInit({
           cacheName: "api-network-only",
         },
       },
-      // 3. Next.js RSC Payloads (_rsc query, headers, or RSC prefetch) -> NetworkOnly (NEVER CACHE)
+      // 3. Next.js RSC Payloads (_rsc query, headers, or RSC prefetch) -> NetworkFirst for Offline Support
       {
         urlPattern: ({ request, url: { search, pathname } }) =>
           request.headers.get("RSC") === "1" ||
@@ -42,12 +45,14 @@ const withPWA = withPWAInit({
           request.headers.get("Next-Router-State-Tree") !== null ||
           search.includes("_rsc=") ||
           pathname.includes("_rsc"),
-        handler: "NetworkOnly",
+        handler: "NetworkFirst",
         options: {
-          cacheName: "rsc-network-only",
+          cacheName: "rsc-cache-v1",
+          networkTimeoutSeconds: 3,
+          expiration: { maxEntries: 64, maxAgeSeconds: 7 * 24 * 60 * 60 },
         },
       },
-      // 4. Dynamic HTML Page Navigation (dashboard, students, parent, root, etc.) -> NetworkOnly (NEVER CACHE)
+      // 4. Dynamic HTML Page Navigation (dashboard, students, parent, root, etc.) -> NetworkFirst for Offline Support
       {
         urlPattern: ({ request, url: { pathname }, sameOrigin }) =>
           sameOrigin &&
@@ -60,9 +65,11 @@ const withPWA = withPWAInit({
             pathname.startsWith("/parent") ||
             pathname.startsWith("/login") ||
             pathname.startsWith("/attendance")),
-        handler: "NetworkOnly",
+        handler: "NetworkFirst",
         options: {
-          cacheName: "pages-network-only",
+          cacheName: "pages-cache-v1",
+          networkTimeoutSeconds: 3,
+          expiration: { maxEntries: 32, maxAgeSeconds: 7 * 24 * 60 * 60 },
         },
       },
       // 5. External Google Fonts (Webfonts & Stylesheets) -> CacheFirst

@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { queuePendingAction } from "@/lib/offlineQueue";
+import { successHaptic } from "@/lib/haptics";
+
 interface AttendanceDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -55,19 +58,46 @@ export function AttendanceDialog({
     setIsLoading(true);
     setError(null);
 
-    const res = await recordAttendance({
+    const payload = {
       ...data,
       student_id: studentId,
-    });
+    };
 
-    if (res.success && res.data) {
+    // If completely offline, immediately enqueue and advance optimistically
+    if (typeof window !== "undefined" && !navigator.onLine) {
+      queuePendingAction("attendance", [payload]);
+      successHaptic();
       reset();
-      onSuccess?.(res.data);
       onClose();
-    } else {
-      setError(res.error || "فشل تسجيل الحضور");
+      return;
     }
-    setIsLoading(false);
+
+    try {
+      const res = await recordAttendance(payload);
+
+      if (res.success && res.data) {
+        successHaptic();
+        reset();
+        onSuccess?.(res.data);
+        onClose();
+      } else {
+        if (!navigator.onLine || res.error?.includes("fetch") || res.error?.includes("network")) {
+          queuePendingAction("attendance", [payload]);
+          successHaptic();
+          reset();
+          onClose();
+        } else {
+          setError(res.error || "فشل تسجيل الحضور");
+        }
+      }
+    } catch {
+      queuePendingAction("attendance", [payload]);
+      successHaptic();
+      reset();
+      onClose();
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const statuses: Array<{ value: AttendanceStatusEnum; label: string; activeColor: string }> = [

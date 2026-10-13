@@ -90,39 +90,80 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
         }
       }
 
-      // 1. Search in parent_phone (strictly filter out deleted students)
-      const { data: byParentPhone } = await supabase
-        .from("students")
-        .select("*")
-        .in("parent_phone", searchVariations)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
+      // 0. Primary fast lookup via SECURITY DEFINER RPC (bypasses RLS and cleans phone formatting)
+      try {
+        const { data: rpcRes, error: rpcErr } = await (supabase as any).rpc("find_student_track_by_phone", {
+          p_phone: cleanCode,
+        });
+        if (!rpcErr && rpcRes && rpcRes.success && rpcRes.student) {
+          student = rpcRes.student;
+          if (student.parent_phone) {
+            const { data: siblingList } = await supabase
+              .from("students")
+              .select("id, name, parent_token, avatar_url")
+              .eq("parent_phone", student.parent_phone)
+              .is("deleted_at", null)
+              .order("created_at", { ascending: false });
 
-      if (byParentPhone && byParentPhone.length > 0) {
-        student = byParentPhone[0];
-        siblings = byParentPhone.map((st: any) => ({
-          id: st.id,
-          full_name: st.name || st.full_name || "طالب",
-          parent_token: st.parent_token,
-          avatar_url: st.avatar_url,
-        }));
-      } else {
-        // 2. Fallback: Search in student phone column
-        const { data: byPhoneCol } = await supabase
+            if (siblingList && siblingList.length > 0) {
+              siblings = siblingList.map((st: any) => ({
+                id: st.id,
+                full_name: st.name || (st as any).full_name || "طالب",
+                parent_token: st.parent_token,
+                avatar_url: st.avatar_url,
+              }));
+            }
+          }
+          if (siblings.length === 0) {
+            siblings = [
+              {
+                id: student.id,
+                full_name: student.name || student.full_name || "طالب",
+                parent_token: student.parent_token,
+                avatar_url: student.avatar_url,
+              },
+            ];
+          }
+        }
+      } catch {
+        // Continue to direct queries fallback
+      }
+
+      if (!student) {
+        // 1. Search in parent_phone (strictly filter out deleted students)
+        const { data: byParentPhone } = await supabase
           .from("students")
           .select("*")
-          .in("phone", searchVariations)
+          .in("parent_phone", searchVariations)
           .is("deleted_at", null)
           .order("created_at", { ascending: false });
 
-        if (byPhoneCol && byPhoneCol.length > 0) {
-          student = byPhoneCol[0];
-          siblings = byPhoneCol.map((st: any) => ({
+        if (byParentPhone && byParentPhone.length > 0) {
+          student = byParentPhone[0];
+          siblings = byParentPhone.map((st: any) => ({
             id: st.id,
             full_name: st.name || st.full_name || "طالب",
             parent_token: st.parent_token,
             avatar_url: st.avatar_url,
           }));
+        } else {
+          // 2. Fallback: Search in student phone column
+          const { data: byPhoneCol } = await supabase
+            .from("students")
+            .select("*")
+            .in("phone", searchVariations)
+            .is("deleted_at", null)
+            .order("created_at", { ascending: false });
+
+          if (byPhoneCol && byPhoneCol.length > 0) {
+            student = byPhoneCol[0];
+            siblings = byPhoneCol.map((st: any) => ({
+              id: st.id,
+              full_name: st.name || st.full_name || "طالب",
+              parent_token: st.parent_token,
+              avatar_url: st.avatar_url,
+            }));
+          }
         }
       }
     }

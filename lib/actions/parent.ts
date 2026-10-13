@@ -56,6 +56,28 @@ export async function findStudentByPhoneOrCode(input: string): Promise<ParentSea
       if (!searchVariations.includes(`+962${coreNum}`)) searchVariations.push(`+962${coreNum}`);
     }
 
+    // 0. Primary fast lookup via SECURITY DEFINER RPC (bypasses RLS and cleans phone formatting)
+    try {
+      const { data: rpcRes, error: rpcErr } = await (supabase as any).rpc("find_student_track_by_phone", {
+        p_phone: input,
+      });
+      if (!rpcErr && rpcRes && rpcRes.success && rpcRes.student) {
+        return {
+          success: true,
+          token: rpcRes.student.parent_token,
+          students: [
+            {
+              id: rpcRes.student.id,
+              full_name: rpcRes.student.name || rpcRes.student.full_name || "طالب",
+              parent_token: rpcRes.student.parent_token,
+            },
+          ],
+        };
+      }
+    } catch {
+      // Continue to direct queries fallback
+    }
+
     let { data: rawStudents, error } = await supabase
       .from("students")
       .select("*")

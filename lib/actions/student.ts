@@ -41,10 +41,32 @@ export async function getStudents(): Promise<ActionResult<StudentRow[]>> {
       };
     }
 
-    // 1. Query directly from public.students table under RLS (active students only)
-    const { data: rawStudents, error: studentsError } = await supabase
-      .from("students")
-      .select("*");
+    // Check if user is an admin
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, is_active")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const isAdmin = Boolean(profile && (profile.role === "admin" || profile.role === "superadmin") && profile.is_active);
+
+    // 1. Query directly from public.students table (scoped to teacher's own students unless admin)
+    let studentsQuery = supabase.from("students").select("*");
+    if (!isAdmin) {
+      const { data: teacherCircles } = await supabase
+        .from("circles")
+        .select("id")
+        .eq("teacher_id", user.id);
+
+      const circleIds = (teacherCircles || []).map((c: any) => c.id);
+      if (circleIds.length > 0) {
+        studentsQuery = studentsQuery.or(`teacher_id.eq.${user.id},group_id.in.(${circleIds.join(",")})`);
+      } else {
+        studentsQuery = studentsQuery.eq("teacher_id", user.id);
+      }
+    }
+
+    const { data: rawStudents, error: studentsError } = await studentsQuery;
 
     if (studentsError) {
       return {
@@ -135,6 +157,61 @@ export async function getStudents(): Promise<ActionResult<StudentRow[]>> {
   }
 }
 
+/**
+ * Helper to check whether the current user has access to manage a specific student.
+ * Center admins can manage all students.
+ * Teachers can only manage students assigned to them directly or via their circle.
+ */
+async function checkStudentAccess(
+  supabase: any,
+  userId: string,
+  studentId: string
+): Promise<{ allowed: boolean; isAdmin: boolean; student: any | null }> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, is_active")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const isAdmin = Boolean(profile && (profile.role === "admin" || profile.role === "superadmin") && profile.is_active);
+  if (isAdmin) {
+    const { data: student } = await supabase
+      .from("students")
+      .select("*")
+      .eq("id", studentId)
+      .maybeSingle();
+    return { allowed: Boolean(student), isAdmin: true, student };
+  }
+
+  const { data: student } = await supabase
+    .from("students")
+    .select("*")
+    .eq("id", studentId)
+    .maybeSingle();
+
+  if (!student) {
+    return { allowed: false, isAdmin: false, student: null };
+  }
+
+  if (student.teacher_id === userId) {
+    return { allowed: true, isAdmin: false, student };
+  }
+
+  if (student.group_id) {
+    const { data: circle } = await supabase
+      .from("circles")
+      .select("id")
+      .eq("id", student.group_id)
+      .eq("teacher_id", userId)
+      .maybeSingle();
+    if (circle) {
+      return { allowed: true, isAdmin: false, student };
+    }
+  }
+
+  return { allowed: false, isAdmin: false, student };
+}
+
 export async function createStudent(data: StudentInput): Promise<ActionResult<StudentRow>> {
   const validation = studentSchema.safeParse(data);
   if (!validation.success) {
@@ -172,6 +249,20 @@ export async function createStudent(data: StudentInput): Promise<ActionResult<St
     }
 
     let assignedGroupId: string | null = (validation.data as any).group_id || null;
+
+    if (!assignedGroupId) {
+      // Priority 1: Check if teacher has an assigned circle in `circles` table
+      const { data: teacherCircle } = await supabase
+        .from("circles")
+        .select("id")
+        .eq("teacher_id", user.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (teacherCircle) {
+        assignedGroupId = teacherCircle.id;
+      }
+    }
 
     if (!assignedGroupId) {
       const groupResult = await getActiveGroupId();
@@ -306,6 +397,14 @@ export async function updateStudent(id: string, data: StudentInput): Promise<Act
       };
     }
 
+    const { allowed } = await checkStudentAccess(supabase, user.id, id);
+    if (!allowed) {
+      return {
+        success: false,
+        error: "غير مصرح لك بتعديل بيانات هذا الطالب، الطالب يتبع لحلقة أخرى",
+      };
+    }
+
     const updatePayload: any = {
       name: validation.data.full_name,
       parent_phone: normalizedPhone,
@@ -373,6 +472,14 @@ export async function deleteStudent(id: string): Promise<ActionResult> {
       };
     }
 
+    const { allowed } = await checkStudentAccess(supabase, user.id, id);
+    if (!allowed) {
+      return {
+        success: false,
+        error: "غير مصرح لك بحذف هذا الطالب، الطالب يتبع لحلقة أخرى",
+      };
+    }
+
     // Soft delete: Mark student with deleted_at timestamp to protect historical logs and attendance records
     const { error } = await supabase
       .from("students")
@@ -417,6 +524,14 @@ export async function restoreStudent(id: string): Promise<ActionResult<StudentRo
       return {
         success: false,
         error: "غير مصرح لك باستعادة الطالب، يرجى تسجيل الدخول",
+      };
+    }
+
+    const { allowed } = await checkStudentAccess(supabase, user.id, id);
+    if (!allowed) {
+      return {
+        success: false,
+        error: "غير مصرح لك باستعادة هذا الطالب، الطالب يتبع لحلقة أخرى",
       };
     }
 
@@ -479,11 +594,26 @@ export async function getDeletedStudents(): Promise<ActionResult<StudentRow[]>> 
       };
     }
 
-    // 1. Query deleted students from public.students table under RLS
-    const { data: students, error: studentsError } = await supabase
+    // Check if user is an admin
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, is_active")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const isAdmin = Boolean(profile && (profile.role === "admin" || profile.role === "superadmin") && profile.is_active);
+
+    // 1. Query deleted students from public.students table (scoped to teacher unless admin)
+    let deletedQuery = supabase
       .from("students")
       .select("*")
-      .not("deleted_at", "is", null)
+      .not("deleted_at", "is", null);
+
+    if (!isAdmin) {
+      deletedQuery = deletedQuery.eq("teacher_id", user.id);
+    }
+
+    const { data: students, error: studentsError } = await deletedQuery
       .order("deleted_at", { ascending: false });
 
     if (studentsError) {
@@ -567,11 +697,35 @@ export async function emptyTrashStudents(): Promise<ActionResult<{ deletedCount:
       };
     }
 
-    // 1. Find all archived/soft-deleted students belonging to the teacher under RLS
-    const { data: trashedStudents, error: fetchErr } = await supabase
+    // Check if user is an admin
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, is_active")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const isAdmin = Boolean(profile && (profile.role === "admin" || profile.role === "superadmin") && profile.is_active);
+
+    // 1. Find archived/soft-deleted students (scoped to teacher's own students unless admin)
+    let trashedQuery = supabase
       .from("students")
       .select("id, avatar_url")
       .not("deleted_at", "is", null);
+
+    if (!isAdmin) {
+      const { data: teacherCircles } = await supabase
+        .from("circles")
+        .select("id")
+        .eq("teacher_id", user.id);
+      const circleIds = (teacherCircles || []).map((c: any) => c.id);
+      if (circleIds.length > 0) {
+        trashedQuery = trashedQuery.or(`teacher_id.eq.${user.id},group_id.in.(${circleIds.join(",")})`);
+      } else {
+        trashedQuery = trashedQuery.eq("teacher_id", user.id);
+      }
+    }
+
+    const { data: trashedStudents, error: fetchErr } = await trashedQuery;
 
     if (fetchErr) {
       return {
@@ -666,6 +820,14 @@ export async function regenerateParentToken(studentId: string): Promise<ActionRe
       return {
         success: false,
         error: "غير مصرح لك بتجديد الرابط، يرجى تسجيل الدخول",
+      };
+    }
+
+    const { allowed } = await checkStudentAccess(supabase, user.id, studentId);
+    if (!allowed) {
+      return {
+        success: false,
+        error: "غير مصرح لك بتجديد الرابط، الطالب يتبع لحلقة أخرى",
       };
     }
 
@@ -823,45 +985,45 @@ export async function getTeacherReportData(options?: TeacherReportDataOptions): 
 
     const { startStr, endStr } = resolveDateRange(options);
 
-    // 1. Fetch Active Students directly from public.students table under RLS
-    const studentsPromise = supabase
-      .from("students")
-      .select("*");
+    // Check if user is an admin
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, is_active")
+      .eq("id", user.id)
+      .maybeSingle();
 
-    // 2. Fetch Time-scoped Attendance Records (under teacher RLS)
-    let attendanceQuery = supabase
-      .from("attendance_records")
-      .select("*");
+    const isAdmin = Boolean(profile && (profile.role === "admin" || profile.role === "superadmin") && profile.is_active);
 
-    if (startStr) {
-      attendanceQuery = attendanceQuery.gte("date", startStr);
+    // If teacher (not admin), fetch circles assigned to this teacher
+    let teacherCircleIds: string[] = [];
+    if (!isAdmin) {
+      const { data: teacherCircles } = await supabase
+        .from("circles")
+        .select("id")
+        .eq("teacher_id", user.id);
+      teacherCircleIds = (teacherCircles || []).map((c: any) => c.id);
     }
-    if (endStr) {
-      attendanceQuery = attendanceQuery.lte("date", endStr);
-    }
-    const attendancePromise = attendanceQuery.order("date", { ascending: false });
 
-    // 3. Fetch Logs (under teacher RLS)
-    let logsQuery = supabase
-      .from("memorization_logs")
-      .select("*");
+    // 1. Fetch Active Students (scoped to teacher if not admin)
+    let studentsQuery = supabase.from("students").select("*");
+    if (!isAdmin) {
+      if (teacherCircleIds.length > 0) {
+        studentsQuery = studentsQuery.or(`teacher_id.eq.${user.id},group_id.in.(${teacherCircleIds.join(",")})`);
+      } else {
+        studentsQuery = studentsQuery.eq("teacher_id", user.id);
+      }
+    }
 
-    if (startStr) {
-      logsQuery = logsQuery.gte("date", startStr);
+    // 2. Fetch Seasons & Circles
+    let circlesQuery = supabase.from("circles").select("*");
+    if (!isAdmin) {
+      circlesQuery = circlesQuery.eq("teacher_id", user.id);
     }
-    if (endStr) {
-      logsQuery = logsQuery.lte("date", endStr);
-    }
-    if (options?.limit) {
-      logsQuery = logsQuery.limit(options.limit);
-    }
-    const logsPromise = logsQuery.order("created_at", { ascending: false });
 
-    // Execute core queries in parallel
-    const [studentsRes, attendanceRes, logsRes] = await Promise.all([
-      studentsPromise,
-      attendancePromise,
-      logsPromise,
+    const [studentsRes, seasonsRes, circlesRes] = await Promise.all([
+      studentsQuery,
+      getSeasons(),
+      circlesQuery,
     ]);
 
     const rawStudents = (studentsRes.data || [])
@@ -872,6 +1034,51 @@ export async function getTeacherReportData(options?: TeacherReportDataOptions): 
         name: s.name || s.full_name || "طالب",
       }));
     const studentIds = rawStudents.map((s) => s.id);
+
+    // 3. Fetch Time-scoped Attendance Records
+    let attendancePromise;
+    if (!isAdmin && studentIds.length === 0) {
+      attendancePromise = Promise.resolve({ data: [] as any[], error: null });
+    } else {
+      let attendanceQuery = supabase.from("attendance_records").select("*");
+      if (startStr) {
+        attendanceQuery = attendanceQuery.gte("date", startStr);
+      }
+      if (endStr) {
+        attendanceQuery = attendanceQuery.lte("date", endStr);
+      }
+      if (!isAdmin) {
+        attendanceQuery = attendanceQuery.in("student_id", studentIds);
+      }
+      attendancePromise = attendanceQuery.order("date", { ascending: false });
+    }
+
+    // 4. Fetch Logs
+    let logsPromise;
+    if (!isAdmin && studentIds.length === 0) {
+      logsPromise = Promise.resolve({ data: [] as any[], error: null });
+    } else {
+      let logsQuery = supabase.from("memorization_logs").select("*");
+      if (startStr) {
+        logsQuery = logsQuery.gte("date", startStr);
+      }
+      if (endStr) {
+        logsQuery = logsQuery.lte("date", endStr);
+      }
+      if (options?.limit) {
+        logsQuery = logsQuery.limit(options.limit);
+      }
+      if (!isAdmin) {
+        logsQuery = logsQuery.in("student_id", studentIds);
+      }
+      logsPromise = logsQuery.order("created_at", { ascending: false });
+    }
+
+    const [attendanceRes, logsRes] = await Promise.all([
+      attendancePromise,
+      logsPromise,
+    ]);
+
     const logs = logsRes.data || [];
 
     // 4. All-time logs summary for the teacher's active students to pre-aggregate totals accurately.
@@ -913,12 +1120,6 @@ export async function getTeacherReportData(options?: TeacherReportDataOptions): 
         logsMap.set(l.student_id, cur);
       }
     });
-
-    // 5. Fetch Seasons & Circles
-    const [seasonsRes, circlesRes] = await Promise.all([
-      getSeasons(),
-      supabase.from("circles").select("*"),
-    ]);
 
     const seasonsList = seasonsRes.data;
     const activeSeason = seasonsRes.activeSeason || seasonsList[0];
@@ -1019,12 +1220,16 @@ export async function markStudentContacted(studentId: string): Promise<ActionRes
       return { success: false, error: "غير مصرح لك بتسجيل التواصل، يرجى تسجيل الدخول أولاً" };
     }
 
+    const { allowed } = await checkStudentAccess(supabase, user.id, studentId);
+    if (!allowed) {
+      return { success: false, error: "غير مصرح لك بتسجيل التواصل مع هذا الطالب، يتبع لحلقة أخرى" };
+    }
+
     const now = new Date().toISOString();
     const { data, error } = await supabase
       .from("students")
       .update({ last_contacted_at: now, updated_at: now })
       .eq("id", studentId)
-      .eq("teacher_id", user.id)
       .select()
       .single();
 
@@ -1071,6 +1276,11 @@ export async function updateStudentAvatar(
 
     if (authError || !user) {
       return { success: false, error: "غير مصرح لك بتحديث صورة الطالب، يرجى تسجيل الدخول" };
+    }
+
+    const { allowed } = await checkStudentAccess(supabase, user.id, studentId);
+    if (!allowed) {
+      return { success: false, error: "غير مصرح لك بتحديث صورة هذا الطالب، يتبع لحلقة أخرى" };
     }
 
     const { data: updated, error } = await supabase

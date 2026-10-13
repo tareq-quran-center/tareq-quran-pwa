@@ -37,6 +37,35 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
     notFound();
   }
 
+  // Authorization Guard: Center admins can view any student.
+  // Teachers can only view students assigned to them directly or via their circle.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const isAdmin = Boolean(profile && (profile.role === "admin" || profile.role === "superadmin") && profile.is_active);
+
+  if (!isAdmin) {
+    let isAllowed = rawStudent.teacher_id === user.id;
+    if (!isAllowed && rawStudent.group_id) {
+      const { data: circle } = await supabase
+        .from("circles")
+        .select("teacher_id")
+        .eq("id", rawStudent.group_id)
+        .maybeSingle();
+
+      if (circle && circle.teacher_id === user.id) {
+        isAllowed = true;
+      }
+    }
+
+    if (!isAllowed) {
+      notFound();
+    }
+  }
+
   const student = {
     ...rawStudent,
     full_name: (rawStudent as any).name || rawStudent.full_name || "طالب",

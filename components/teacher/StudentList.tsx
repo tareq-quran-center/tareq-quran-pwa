@@ -283,7 +283,7 @@ export function StudentList({
           </Button>
 
           {/* Action 3: Trash */}
-          <Link href="/trash">
+          <Link href="/trash" prefetch={true}>
             <Button
               variant="outline"
               size="sm"

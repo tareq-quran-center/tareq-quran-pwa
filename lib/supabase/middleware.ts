@@ -56,8 +56,15 @@ export async function updateSession(request: NextRequest) {
 
   let user = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data?.user || null;
+    if (isLoginPage) {
+      // Strictly verify with Auth server on /login to avoid redirect loops with stale cookies
+      const { data } = await supabase.auth.getUser();
+      user = data?.user || null;
+    } else {
+      // Fast local session check on protected routes; Server Components/Actions verify getUser()
+      const { data } = await supabase.auth.getSession();
+      user = data?.session?.user || null;
+    }
   } catch {
     user = null;
   }

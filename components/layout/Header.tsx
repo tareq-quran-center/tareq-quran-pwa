@@ -44,7 +44,7 @@ export function Header({ isAdmin = false }: HeaderProps) {
       <div className="hidden md:flex max-w-7xl mx-auto px-4 h-16 items-center justify-between">
         {/* Brand Logo & Title */}
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="flex items-center gap-2.5 group">
+          <Link href="/dashboard" prefetch={true} className="flex items-center gap-2.5 group">
             <MosqueLogo variant="badge" size="sm" className="w-10 h-10" alt="شعار مركز طارق القرآني" />
             <div className="flex flex-col">
               <span className="font-black text-base sm:text-lg text-slate-900 dark:text-slate-50 leading-tight">
@@ -66,6 +66,7 @@ export function Header({ isAdmin = false }: HeaderProps) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={true}
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-bold transition-all ${
                     isActive
                       ? "bg-burgundy-50 dark:bg-burgundy-950/70 text-burgundy-900 dark:text-burgundy-300 shadow-sm border border-burgundy-200/60 dark:border-burgundy-800/60"
@@ -142,6 +143,7 @@ export function Header({ isAdmin = false }: HeaderProps) {
         {/* Right side (RTL start): Mosque Identity Icon Badge */}
         <Link
           href="/dashboard"
+          prefetch={true}
           className="flex items-center gap-2 group shrink-0 focus:outline-none"
           aria-label="الرئيسية - متابع الحفظ"
         >
@@ -151,6 +153,7 @@ export function Header({ isAdmin = false }: HeaderProps) {
         {/* Center: Main Visual Focal Point (Title «متابع الحفظ») */}
         <Link
           href="/dashboard"
+          prefetch={true}
           className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center justify-center text-center focus:outline-none max-w-[170px] pointer-events-auto"
         >
           <span className="font-black text-[15px] text-slate-900 dark:text-slate-50 tracking-tight leading-none">

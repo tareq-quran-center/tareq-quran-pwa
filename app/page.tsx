@@ -25,7 +25,7 @@ export default function HomePage() {
             </div>
           </Link>
 
-          <Link href="/login">
+          <Link href="/login" prefetch={true}>
             <Button
               variant="outline"
               size="sm"
@@ -77,7 +77,7 @@ export default function HomePage() {
           <HomeTrackSearch />
 
           {/* Teacher & Admin Login Button */}
-          <Link href="/login" className="w-full">
+          <Link href="/login" prefetch={true} className="w-full">
             <Button
               size="lg"
               className="w-full h-14 text-base sm:text-lg font-black bg-gradient-to-r from-burgundy-900 via-burgundy-800 to-burgundy-900 hover:from-burgundy-800 hover:to-burgundy-700 text-white rounded-2xl shadow-xl shadow-burgundy-950/25 border border-islamicGold-400/50 gap-3 group transition-all duration-300 active:scale-[0.98]"

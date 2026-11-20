@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { RoutePrefetcher } from "@/components/common/RoutePrefetcher";
@@ -12,7 +13,10 @@ export default async function TeacherLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAdmin, profile } = await getCurrentUserProfile();
+  const { user, isAdmin, profile } = await getCurrentUserProfile();
+  if (!user) {
+    redirect("/login");
+  }
   const isUserAdmin = Boolean(isAdmin && profile?.role === "admin");
 
   return (

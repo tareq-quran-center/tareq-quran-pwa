@@ -172,7 +172,7 @@ export function TrashStudentList({ initialStudents }: TrashStudentListProps) {
             </Button>
           )}
 
-          <Link href="/students">
+          <Link href="/students" prefetch={true}>
             <Button
               variant="outline"
               size="sm"
@@ -297,7 +297,7 @@ export function TrashStudentList({ initialStudents }: TrashStudentListProps) {
           </div>
 
           {!searchQuery && (
-            <Link href="/students">
+            <Link href="/students" prefetch={true}>
               <Button variant="outline" size="sm" className="gap-2 rounded-xl mt-2">
                 <ArrowRight className="w-4 h-4" />
                 <span>الذهاب لكشوفات الطلاب</span>

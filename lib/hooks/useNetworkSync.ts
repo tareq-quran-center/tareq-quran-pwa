@@ -56,9 +56,9 @@ export function useNetworkSync(): NetworkSyncState {
     setIsOnline(navigator.onLine);
     const supabase = createClient();
 
-    // 1. Initial auth user retrieval
-    supabase.auth.getUser().then(({ data }) => {
-      const activeId = data.user?.id || null;
+    // 1. Initial auth user retrieval from local session (0ms, no blocking network request)
+    supabase.auth.getSession().then(({ data }) => {
+      const activeId = data.session?.user?.id || null;
       userIdRef.current = activeId;
       setActiveUserId(activeId);
       updateQueueCount(activeId);

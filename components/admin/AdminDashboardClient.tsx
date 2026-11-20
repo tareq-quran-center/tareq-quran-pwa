@@ -1424,7 +1424,7 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
                 <FileSpreadsheet className="w-4 h-4 text-islamicGold-600" />
                 <span>استيراد جماعي (Excel)</span>
               </Button>
-              <Link href="/students">
+              <Link href="/students" prefetch={true}>
                 <Button className="bg-burgundy-900 hover:bg-burgundy-800 text-white rounded-xl gap-1.5 text-xs font-bold">
                   <Plus className="w-4 h-4" />
                   <span>إضافة طالب جديد</span>

@@ -1,10 +1,18 @@
 import type { Metadata, Viewport } from "next";
+import dynamic from "next/dynamic";
 import { Tajawal } from "next/font/google";
 import { OfflineBanner } from "@/components/common/OfflineBanner";
-import { PwaInstallPrompt } from "@/components/common/PwaInstallPrompt";
 import { PWAProvider } from "@/components/common/PWAProvider";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import "./globals.css";
+
+const PwaInstallPrompt = dynamic(
+  () =>
+    import("@/components/common/PwaInstallPrompt").then(
+      (m) => m.PwaInstallPrompt
+    ),
+  { ssr: false }
+);
 
 const tajawal = Tajawal({
   subsets: ["arabic"],

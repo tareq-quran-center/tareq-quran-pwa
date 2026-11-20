@@ -44,6 +44,7 @@ export function BottomNav({ isAdmin = false }: BottomNavProps) {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={true}
               className={`flex flex-col items-center justify-center flex-1 h-full py-1 px-2 rounded-xl transition-all duration-200 ${
                 isActive
                   ? "text-burgundy-900 dark:text-burgundy-300 font-black"

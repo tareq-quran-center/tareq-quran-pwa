@@ -204,7 +204,7 @@ export function IslamicSidebarWidgets({
           <span className="text-[10px] text-islamicGold-300 font-bold">
             {totalPages} صفحة مسجلة
           </span>
-          <Link href="/quran">
+          <Link href="/quran" prefetch={true}>
             <Button
               variant="outline"
               size="sm"

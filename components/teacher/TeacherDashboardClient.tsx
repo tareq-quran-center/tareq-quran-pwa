@@ -48,6 +48,7 @@ export function TeacherDashboardClient({
               <>
                 <Link
                   href="/admin"
+                  prefetch={true}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-islamicGold-400/50 text-white text-xs font-bold transition-all shadow-xs backdrop-blur-xs"
                 >
                   <span>لوحة المدير</span>
@@ -55,6 +56,7 @@ export function TeacherDashboardClient({
                 </Link>
                 <Link
                   href="/admin?settings=open"
+                  prefetch={true}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-islamicGold-500 hover:from-amber-600 hover:to-islamicGold-600 text-burgundy-950 text-xs font-black transition-all shadow-md border border-islamicGold-300 active:scale-95"
                   title="إعدادات حساب المدير"
                 >

@@ -136,6 +136,10 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   experimental: {
+    staleTimes: {
+      dynamic: 60,
+      static: 300,
+    },
     optimizePackageImports: [
       "lucide-react",
       "canvas-confetti",

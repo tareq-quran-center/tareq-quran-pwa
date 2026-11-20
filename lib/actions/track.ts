@@ -4,6 +4,112 @@ import { createClient } from "@/lib/supabase/server";
 import { StudentTrackData } from "@/types";
 import { validateAndFormatJordanianPhone } from "@/lib/phoneUtils";
 import { normalizeMemorizationLogRow } from "@/lib/logUtils";
+import { getSeasonsCached } from "./season";
+
+function buildPhoneSearchVariations(cleanCode: string): string[] {
+  const phoneValidation = validateAndFormatJordanianPhone(cleanCode);
+  const searchVariations: string[] = phoneValidation.isValid
+    ? [...phoneValidation.variations]
+    : [cleanCode];
+
+  const digitsOnly = cleanCode.replace(/\D/g, "");
+  if (digitsOnly) {
+    if (!searchVariations.includes(digitsOnly)) searchVariations.push(digitsOnly);
+    if (!digitsOnly.startsWith("0") && !searchVariations.includes(`0${digitsOnly}`)) {
+      searchVariations.push(`0${digitsOnly}`);
+    }
+    if (digitsOnly.startsWith("0") && !searchVariations.includes(digitsOnly.slice(1))) {
+      searchVariations.push(digitsOnly.slice(1));
+    }
+    const coreNum = digitsOnly.replace(/^(?:962|00962|0)/, "");
+    if (coreNum && !searchVariations.includes(`+962${coreNum}`)) {
+      searchVariations.push(`+962${coreNum}`);
+    }
+  }
+  return searchVariations;
+}
+
+/**
+ * Lightweight fast lookup returning ONLY parent_token for immediate redirect to /parent/[token]
+ */
+export async function resolveStudentParentToken(
+  code: string
+): Promise<{ success: boolean; parent_token?: string; error?: string }> {
+  if (!code || typeof code !== "string" || code.trim() === "" || code === "undefined" || code === "null") {
+    return { success: false, error: "يرجى إدخال رمز متابعة صالح أو رقم هاتف صحيح" };
+  }
+
+  const cleanCode = decodeURIComponent(code).trim();
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  try {
+    const supabase = createClient();
+
+    if (uuidRegex.test(cleanCode)) {
+      const { data: byToken } = await supabase
+        .from("students")
+        .select("parent_token")
+        .or(`parent_token.eq.${cleanCode},id.eq.${cleanCode}`)
+        .is("deleted_at", null)
+        .limit(1)
+        .maybeSingle();
+
+      if (byToken?.parent_token) {
+        return { success: true, parent_token: byToken.parent_token };
+      }
+      return {
+        success: false,
+        error: "لم يتم العثور على طالب مرتبط بهذا الرمز أو رقم الهاتف، يرجى مراجعة إدارة المركز أو المعلم.",
+      };
+    }
+
+    // Try fast SECURITY DEFINER RPC first
+    try {
+      const { data: rpcRes, error: rpcErr } = await (supabase as any).rpc("find_student_track_by_phone", {
+        p_phone: cleanCode,
+      });
+      if (!rpcErr && rpcRes?.success && rpcRes.student?.parent_token) {
+        return { success: true, parent_token: rpcRes.student.parent_token };
+      }
+    } catch {
+      // Fallback to direct query
+    }
+
+    const searchVariations = buildPhoneSearchVariations(cleanCode);
+    const { data: byParentPhone } = await supabase
+      .from("students")
+      .select("parent_token")
+      .in("parent_phone", searchVariations)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (byParentPhone?.parent_token) {
+      return { success: true, parent_token: byParentPhone.parent_token };
+    }
+
+    const { data: byPhoneCol } = await supabase
+      .from("students")
+      .select("parent_token")
+      .in("phone", searchVariations)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (byPhoneCol?.parent_token) {
+      return { success: true, parent_token: byPhoneCol.parent_token };
+    }
+
+    return {
+      success: false,
+      error: "لم يتم العثور على طالب مرتبط بهذا الرمز أو رقم الهاتف، يرجى مراجعة إدارة المركز أو المعلم.",
+    };
+  } catch {
+    return { success: false, error: "حدث خطأ أثناء تحميل بيانات متابعة الطالب" };
+  }
+}
 
 /**
  * Public resolver for student tracking card (No auth required)
@@ -178,89 +284,61 @@ export async function getStudentTrackData(code: string): Promise<StudentTrackDat
       };
     }
 
-    // 1. Fetch Halaqa & Season details
+    // Run Halaqa, Seasons, Teacher, Logs, and Attendance queries concurrently
+    const [circleRes, groupRes, seasonsRes, teacherRes, logsRes, attRes] = await Promise.all([
+      student.group_id
+        ? supabase.from("circles").select("id, name, season_id").eq("id", student.group_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      student.group_id
+        ? supabase.from("groups").select("id, name").eq("id", student.group_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      getSeasonsCached(),
+      student.teacher_id
+        ? supabase.from("profiles").select("id, full_name, phone").eq("id", student.teacher_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      supabase
+        .from("memorization_logs")
+        .select("*")
+        .eq("student_id", student.id)
+        .order("created_at", { ascending: false })
+        .limit(30),
+      supabase
+        .from("attendance_records")
+        .select("*")
+        .eq("student_id", student.id)
+        .order("date", { ascending: false })
+        .limit(30),
+    ]);
+
     let halaqa: { id: string; name: string } | null = null;
     let season: { id: string; name: string } | null = null;
 
-    if (student.group_id) {
-      const { data: circleData } = await supabase
-        .from("circles")
-        .select("id, name, season_id")
-        .eq("id", student.group_id)
-        .maybeSingle();
-
-      if (circleData) {
-        halaqa = { id: circleData.id, name: circleData.name };
-        if (circleData.season_id) {
-          const { data: seasonData } = await supabase
-            .from("seasons")
-            .select("id, name")
-            .eq("id", circleData.season_id)
-            .maybeSingle();
-          if (seasonData) {
-            season = seasonData;
-          }
-        }
-      } else {
-        const { data: groupData } = await supabase
-          .from("groups")
-          .select("id, name")
-          .eq("id", student.group_id)
-          .maybeSingle();
-        if (groupData) {
-          halaqa = groupData;
+    if (circleRes.data) {
+      halaqa = { id: circleRes.data.id, name: circleRes.data.name };
+      if (circleRes.data.season_id) {
+        const matchedSeason = seasonsRes.data.find((s) => s.id === circleRes.data!.season_id);
+        if (matchedSeason) {
+          season = { id: matchedSeason.id, name: matchedSeason.name };
         }
       }
+    } else if (groupRes.data) {
+      halaqa = groupRes.data;
     }
 
-    // If season was not resolved from circle, fallback to active season
     if (!season) {
-      const { data: activeSeasonData } = await supabase
-        .from("seasons")
-        .select("id, name")
-        .eq("is_active", true)
-        .maybeSingle();
-      if (activeSeasonData) {
-        season = activeSeasonData;
-      } else {
-        season = { id: "1cf3bae5-b259-4f96-babe-4dcd80598ed8", name: "النادي الدائم" };
-      }
+      const active = seasonsRes.activeSeason || seasonsRes.data[0];
+      season = active
+        ? { id: active.id, name: active.name }
+        : { id: "1cf3bae5-b259-4f96-babe-4dcd80598ed8", name: "النادي الدائم" };
     }
 
-    // 2. Fetch Teacher details
-    let teacher: { id: string; full_name: string; phone?: string | null } | null = null;
-    if (student.teacher_id) {
-      const { data: teacherProfile } = await supabase
-        .from("profiles")
-        .select("id, full_name, phone")
-        .eq("id", student.teacher_id)
-        .maybeSingle();
-      if (teacherProfile) {
-        teacher = teacherProfile;
-      }
-    }
+    const teacher: { id: string; full_name: string; phone?: string | null } | null = teacherRes.data || null;
 
-    // 3. Fetch Memorization Logs
-    const { data: logsData } = await supabase
-      .from("memorization_logs")
-      .select("*")
-      .eq("student_id", student.id)
-      .order("created_at", { ascending: false })
-      .limit(30);
-
-    const safeLogs = (logsData || [])
+    const safeLogs = (logsRes.data || [])
       .filter((l) => !l.deleted_at)
       .map(normalizeMemorizationLogRow);
 
-    // 4. Fetch Attendance Records
-    const { data: attData } = await supabase
-      .from("attendance_records")
-      .select("*")
-      .eq("student_id", student.id)
-      .order("date", { ascending: false })
-      .limit(30);
-
-    const safeAtt = attData || [];
+    const safeAtt = attRes.data || [];
 
     // Calculate Attendance Rate
     const totalDays = safeAtt.length;

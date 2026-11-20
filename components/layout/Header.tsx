@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Users, LogOut, WifiOff, RefreshCw, ShieldCheck, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,14 @@ import { logoutTeacher } from "@/lib/actions/auth";
 import { useNetworkSync } from "@/lib/hooks/useNetworkSync";
 import { PWAInstallButton } from "@/components/common/PWAInstallButton";
 import { MosqueLogo } from "@/components/common/MosqueLogo";
-import { AdminAccountSettingsDialog } from "@/components/admin/AdminAccountSettingsDialog";
+
+const AdminAccountSettingsDialog = dynamic(
+  () =>
+    import("@/components/admin/AdminAccountSettingsDialog").then(
+      (m) => m.AdminAccountSettingsDialog
+    ),
+  { ssr: false }
+);
 
 export interface HeaderProps {
   isAdmin?: boolean;

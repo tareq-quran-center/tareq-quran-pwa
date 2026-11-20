@@ -17,7 +17,8 @@ import {
 import { calculateRecitationPages } from "@/lib/quranMetadata";
 import { revalidatePath } from "next/cache";
 import { getActiveGroupId } from "./group";
-import { getSeasons } from "./season";
+import { getSeasonsCached } from "./season";
+import { getCurrentUserProfile } from "./auth";
 import { normalizeMemorizationLogRow } from "@/lib/logUtils";
 
 export interface ActionResult<T = void> {
@@ -581,26 +582,16 @@ export async function restoreStudent(id: string): Promise<ActionResult<StudentRo
 
 export async function getDeletedStudents(): Promise<ActionResult<StudentRow[]>> {
   try {
-    const supabase = createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const { user, profile } = await getCurrentUserProfile();
 
-    if (authError || !user) {
+    if (!user) {
       return {
         success: false,
         error: "غير مصرح لك للوصول، يرجى تسجيل الدخول أولاً",
       };
     }
 
-    // Check if user is an admin
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role, is_active")
-      .eq("id", user.id)
-      .maybeSingle();
-
+    const supabase = createClient();
     const isAdmin = Boolean(profile && (profile.role === "admin" || profile.role === "superadmin") && profile.is_active);
 
     // 1. Query deleted students from public.students table (scoped to teacher unless admin)
@@ -973,58 +964,83 @@ function resolveDateRange(options?: TeacherReportDataOptions): { startStr: strin
 
 export async function getTeacherReportData(options?: TeacherReportDataOptions): Promise<TeacherReportDataResult> {
   try {
-    const supabase = createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const [{ user, profile }, seasonsRes] = await Promise.all([
+      getCurrentUserProfile(),
+      getSeasonsCached(),
+    ]);
 
-    if (authError || !user) {
+    if (!user) {
       return { success: false, error: "غير مصرح لك للوصول، يرجى تسجيل الدخول أولاً" };
     }
 
+    const supabase = createClient();
     const { startStr, endStr } = resolveDateRange(options);
-
-    // Check if user is an admin
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role, is_active")
-      .eq("id", user.id)
-      .maybeSingle();
-
     const isAdmin = Boolean(profile && (profile.role === "admin" || profile.role === "superadmin") && profile.is_active);
 
-    // If teacher (not admin), fetch circles assigned to this teacher
-    let teacherCircleIds: string[] = [];
-    if (!isAdmin) {
-      const { data: teacherCircles } = await supabase
-        .from("circles")
-        .select("id")
-        .eq("teacher_id", user.id);
-      teacherCircleIds = (teacherCircles || []).map((c: any) => c.id);
-    }
+    let studentsRes: { data: any[] | null; error?: any };
+    let circlesRes: { data: any[] | null; error?: any };
+    let attendanceRes: { data: any[] | null; error?: any };
+    let logsRes: { data: any[] | null; error?: any };
 
-    // 1. Fetch Active Students (scoped to teacher if not admin)
-    let studentsQuery = supabase.from("students").select("*");
-    if (!isAdmin) {
+    if (isAdmin) {
+      // Admin: all queries are independent -> run everything in one concurrent batch
+      let attendanceQuery = supabase.from("attendance_records").select("*");
+      if (startStr) attendanceQuery = attendanceQuery.gte("date", startStr);
+      if (endStr) attendanceQuery = attendanceQuery.lte("date", endStr);
+
+      let logsQuery = supabase.from("memorization_logs").select("*");
+      if (startStr) logsQuery = logsQuery.gte("date", startStr);
+      if (endStr) logsQuery = logsQuery.lte("date", endStr);
+      if (options?.limit) logsQuery = logsQuery.limit(options.limit);
+
+      [studentsRes, circlesRes, attendanceRes, logsRes] = await Promise.all([
+        supabase.from("students").select("*"),
+        supabase.from("circles").select("*"),
+        attendanceQuery.order("date", { ascending: false }),
+        logsQuery.order("created_at", { ascending: false }),
+      ]);
+    } else {
+      // Teacher: fetch assigned circles once, then students, then attendance & logs in parallel
+      circlesRes = await supabase.from("circles").select("*").eq("teacher_id", user.id);
+      const teacherCircleIds = (circlesRes.data || []).map((c: any) => c.id);
+
+      let studentsQuery = supabase.from("students").select("*");
       if (teacherCircleIds.length > 0) {
         studentsQuery = studentsQuery.or(`teacher_id.eq.${user.id},group_id.in.(${teacherCircleIds.join(",")})`);
       } else {
         studentsQuery = studentsQuery.eq("teacher_id", user.id);
       }
-    }
 
-    // 2. Fetch Seasons & Circles
-    let circlesQuery = supabase.from("circles").select("*");
-    if (!isAdmin) {
-      circlesQuery = circlesQuery.eq("teacher_id", user.id);
-    }
+      studentsRes = await studentsQuery;
+      const teacherStudentIds = (studentsRes.data || [])
+        .filter((s: any) => !s.deleted_at)
+        .map((s: any) => s.id);
 
-    const [studentsRes, seasonsRes, circlesRes] = await Promise.all([
-      studentsQuery,
-      getSeasons(),
-      circlesQuery,
-    ]);
+      if (teacherStudentIds.length === 0) {
+        attendanceRes = { data: [], error: null };
+        logsRes = { data: [], error: null };
+      } else {
+        let attendanceQuery = supabase
+          .from("attendance_records")
+          .select("*")
+          .in("student_id", teacherStudentIds);
+        if (startStr) attendanceQuery = attendanceQuery.gte("date", startStr);
+        if (endStr) attendanceQuery = attendanceQuery.lte("date", endStr);
+
+        let logsQuery = supabase
+          .from("memorization_logs")
+          .select("*")
+          .in("student_id", teacherStudentIds);
+        if (startStr) logsQuery = logsQuery.gte("date", startStr);
+        if (endStr) logsQuery = logsQuery.lte("date", endStr);
+        if (options?.limit) logsQuery = logsQuery.limit(options.limit);
+
+        [attendanceRes, logsRes] = await Promise.all([
+          attendanceQuery.order("date", { ascending: false }),
+          logsQuery.order("created_at", { ascending: false }),
+        ]);
+      }
+    }
 
     const rawStudents = (studentsRes.data || [])
       .filter((s) => !(s as any).deleted_at)
@@ -1034,50 +1050,6 @@ export async function getTeacherReportData(options?: TeacherReportDataOptions): 
         name: s.name || s.full_name || "طالب",
       }));
     const studentIds = rawStudents.map((s) => s.id);
-
-    // 3. Fetch Time-scoped Attendance Records
-    let attendancePromise;
-    if (!isAdmin && studentIds.length === 0) {
-      attendancePromise = Promise.resolve({ data: [] as any[], error: null });
-    } else {
-      let attendanceQuery = supabase.from("attendance_records").select("*");
-      if (startStr) {
-        attendanceQuery = attendanceQuery.gte("date", startStr);
-      }
-      if (endStr) {
-        attendanceQuery = attendanceQuery.lte("date", endStr);
-      }
-      if (!isAdmin) {
-        attendanceQuery = attendanceQuery.in("student_id", studentIds);
-      }
-      attendancePromise = attendanceQuery.order("date", { ascending: false });
-    }
-
-    // 4. Fetch Logs
-    let logsPromise;
-    if (!isAdmin && studentIds.length === 0) {
-      logsPromise = Promise.resolve({ data: [] as any[], error: null });
-    } else {
-      let logsQuery = supabase.from("memorization_logs").select("*");
-      if (startStr) {
-        logsQuery = logsQuery.gte("date", startStr);
-      }
-      if (endStr) {
-        logsQuery = logsQuery.lte("date", endStr);
-      }
-      if (options?.limit) {
-        logsQuery = logsQuery.limit(options.limit);
-      }
-      if (!isAdmin) {
-        logsQuery = logsQuery.in("student_id", studentIds);
-      }
-      logsPromise = logsQuery.order("created_at", { ascending: false });
-    }
-
-    const [attendanceRes, logsRes] = await Promise.all([
-      attendancePromise,
-      logsPromise,
-    ]);
 
     const logs = logsRes.data || [];
 

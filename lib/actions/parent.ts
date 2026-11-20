@@ -203,117 +203,84 @@ export async function getStudentProgressByToken(token: string): Promise<ParentPr
     }
 
     // ==========================================
-    // المرحلة الثانية: استعلام سجلات التسميع (مستقل)
+    // المراحل المتوازية: جلب السجلات والحضور والإخوة والنشاطات دفعة واحدة
     // ==========================================
-    let safeLogs: any[] = [];
-    try {
-      const { data: logs, error: logsError } = await supabase
+    const phoneToSearch = studentRecord.parent_phone || (studentRecord as any).phone;
+    const studentGroupId = (studentRecord as any).group_id || null;
+
+    const logsPromise = Promise.resolve(
+      supabase
         .from("memorization_logs")
         .select("*")
         .eq("student_id", studentRecord.id)
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(50)
+    ).catch(() => ({ data: null, error: true }));
 
-      if (logsError) {
-        if (process.env.NODE_ENV === "development") {
-          console.warn("[getStudentProgressByToken] Logs query warning (non-fatal):", {
-            message: logsError.message,
-            code: logsError.code,
-            details: logsError.details,
-            hint: logsError.hint,
-          });
-        }
-      } else if (Array.isArray(logs)) {
-        safeLogs = logs.map(normalizeMemorizationLogRow);
-      }
-    } catch (err) {
-      if (process.env.NODE_ENV === "development") {
-        console.warn("[getStudentProgressByToken] Logs exception (non-fatal):", err);
-      }
-    }
-
-    // ==========================================
-    // المرحلة الثالثة: استعلام سجلات الحضور (مستقل)
-    // ==========================================
-    let safeAttendance: any[] = [];
-    try {
-      const { data: attendance, error: attError } = await supabase
-        .from("attendance_records")
-        .select("*")
-        .eq("student_id", studentRecord.id)
-        .order("date", { ascending: false })
-        .limit(30);
-
-      if (attError) {
-        if (process.env.NODE_ENV === "development") {
-          console.warn("[getStudentProgressByToken] Attendance records query warning, trying alternative (non-fatal):", {
-            message: attError.message,
-            code: attError.code,
-            details: attError.details,
-            hint: attError.hint,
-          });
-        }
-        // Check if attendance table exists under alternate name
-        const { data: altAttendance } = await supabase
-          .from("attendance")
+    const attendancePromise = (async () => {
+      try {
+        const { data: attendance, error: attError } = await supabase
+          .from("attendance_records")
           .select("*")
           .eq("student_id", studentRecord.id)
           .order("date", { ascending: false })
           .limit(30);
 
-        if (Array.isArray(altAttendance)) {
-          safeAttendance = altAttendance;
+        if (!attError && Array.isArray(attendance)) {
+          return attendance;
         }
-      } else if (Array.isArray(attendance)) {
-        safeAttendance = attendance;
+        if (attError) {
+          const { data: altAttendance } = await supabase
+            .from("attendance")
+            .select("*")
+            .eq("student_id", studentRecord.id)
+            .order("date", { ascending: false })
+            .limit(30);
+          if (Array.isArray(altAttendance)) {
+            return altAttendance;
+          }
+        }
+      } catch {
+        // non-fatal
       }
-    } catch (err) {
-      if (process.env.NODE_ENV === "development") {
-        console.warn("[getStudentProgressByToken] Attendance exception (non-fatal):", err);
-      }
-    }
+      return [];
+    })();
 
-    // ==========================================
-    // المرحلة الرابعة: استعلام الأبناء الإخوة المسجلين بنفس الهاتف (مستقل)
-    // ==========================================
+    const siblingsPromise = phoneToSearch
+      ? Promise.resolve(
+          supabase
+            .from("students")
+            .select("id, name, parent_token, avatar_url")
+            .eq("parent_phone", phoneToSearch)
+            .is("deleted_at", null)
+            .order("created_at", { ascending: false })
+        ).catch(() => ({ data: null }))
+      : Promise.resolve({ data: null });
+
+    const activitiesPromise = import("./activity")
+      .then(({ getActivitiesForParent }) => getActivitiesForParent(studentRecord.id, studentGroupId))
+      .catch(() => []);
+
+    const [logsRes, safeAttendance, siblingsRes, safeActivities] = await Promise.all([
+      logsPromise,
+      attendancePromise,
+      siblingsPromise,
+      activitiesPromise,
+    ]);
+
+    const safeLogs: any[] =
+      !logsRes.error && Array.isArray(logsRes.data)
+        ? logsRes.data.map(normalizeMemorizationLogRow)
+        : [];
+
     let safeSiblings: Array<{ id: string; full_name: string; parent_token: string; avatar_url?: string | null }> = [];
-    const phoneToSearch = studentRecord.parent_phone || (studentRecord as any).phone;
-    if (phoneToSearch) {
-      try {
-        const { data: siblingList } = await supabase
-          .from("students")
-          .select("id, name, parent_token, avatar_url")
-          .eq("parent_phone", phoneToSearch)
-          .is("deleted_at", null)
-          .order("created_at", { ascending: false });
-
-        if (siblingList && siblingList.length > 1) {
-          safeSiblings = siblingList.map((st: any) => ({
-            id: st.id,
-            full_name: st.name || "طالب",
-            parent_token: st.parent_token,
-            avatar_url: st.avatar_url,
-          }));
-        }
-      } catch (err) {
-        if (process.env.NODE_ENV === "development") {
-          console.warn("[getStudentProgressByToken] Siblings query warning (non-fatal):", err);
-        }
-      }
-    }
-
-    // ==========================================
-    // المرحلة الخامسة: استعلام النشاطات والرحلات الموجهة للطالب (مستقل)
-    // ==========================================
-    let safeActivities: any[] = [];
-    try {
-      const { getActivitiesForParent } = await import("./activity");
-      const studentGroupId = (studentRecord as any).group_id || null;
-      safeActivities = await getActivitiesForParent(studentRecord.id, studentGroupId);
-    } catch (err) {
-      if (process.env.NODE_ENV === "development") {
-        console.warn("[getStudentProgressByToken] Activities query warning (non-fatal):", err);
-      }
+    if (siblingsRes.data && siblingsRes.data.length > 1) {
+      safeSiblings = siblingsRes.data.map((st: any) => ({
+        id: st.id,
+        full_name: st.name || "طالب",
+        parent_token: st.parent_token,
+        avatar_url: st.avatar_url,
+      }));
     }
 
     return {

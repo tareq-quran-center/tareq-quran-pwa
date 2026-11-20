@@ -7,7 +7,7 @@ import { MosqueLogo } from "@/components/common/MosqueLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Sparkles, ArrowLeft, Loader2, AlertCircle } from "lucide-react";
-import { getStudentTrackData } from "@/lib/actions/track";
+import { resolveStudentParentToken } from "@/lib/actions/track";
 
 export default function TrackSearchPage() {
   const [code, setCode] = useState("");
@@ -24,9 +24,9 @@ export default function TrackSearchPage() {
     setErrorMsg(null);
 
     try {
-      const data = await getStudentTrackData(clean);
-      if (data.success && data.student?.parent_token) {
-        router.push(`/parent/${data.student.parent_token}`);
+      const data = await resolveStudentParentToken(clean);
+      if (data.success && data.parent_token) {
+        router.push(`/parent/${data.parent_token}`);
       } else {
         setErrorMsg(
           data.error || "لم يتم العثور على طالب مرتبط بهذا الرمز أو رقم الهاتف، يرجى التأكد من الرقم."

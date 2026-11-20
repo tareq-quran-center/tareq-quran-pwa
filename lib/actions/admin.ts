@@ -15,7 +15,7 @@ import {
   BulkImportPayload,
   BulkImportResult,
 } from "@/types";
-import { getSeasons } from "./season";
+import { getSeasonsCached } from "./season";
 import { FALLBACK_SEASONS } from "@/lib/constants/seasons";
 import { validateAndFormatJordanianPhone } from "@/lib/phoneUtils";
 
@@ -64,88 +64,38 @@ export async function getAdminCenterData(): Promise<AdminDataResult> {
 
     const supabase = createClient();
 
-    // 1. Fetch seasons
-    const seasonsRes = await getSeasons();
+    // Run all independent admin queries concurrently in a single parallel batch
+    const [
+      seasonsRes,
+      profilesRes,
+      circlesRes,
+      groupsRes,
+      membersRes,
+      studentsRes,
+      logsRes,
+      attendanceRes,
+    ] = await Promise.all([
+      getSeasonsCached(),
+      supabase.from("profiles").select("*").then((r) => r, () => ({ data: null, error: true })),
+      supabase.from("circles").select("*").then((r) => r, () => ({ data: null, error: true })),
+      supabase.from("groups").select("*").then((r) => r, () => ({ data: null, error: true })),
+      supabase.from("group_members").select("*").then((r) => r, () => ({ data: null, error: true })),
+      supabase.from("students").select("*").then((r) => r, () => ({ data: null, error: true })),
+      supabase.from("memorization_logs").select("*").then((r) => r, () => ({ data: null, error: true })),
+      supabase.from("attendance_records").select("*").then((r) => r, () => ({ data: null, error: true })),
+    ]);
+
     const seasonsList = seasonsRes.data;
     const activeSeason = seasonsRes.activeSeason || seasonsList[0];
     const seasonMap = new Map(seasonsList.map((s) => [s.id, s]));
 
-    // 2. Fetch all profiles (teachers & admins)
-    let profiles: any[] = [];
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*");
-      if (!error && data) profiles = data;
-    } catch (e) {
-      console.error("Failed to fetch profiles:", e);
-    }
-
-    // 3. Fetch all circles (season-linked halaqat)
-    let circles: CircleRow[] = [];
-    try {
-      const { data: cData, error: cErr } = await supabase
-        .from("circles")
-        .select("*");
-      if (!cErr && cData) circles = cData as CircleRow[];
-    } catch (e) {
-      console.error("Failed to fetch circles:", e);
-    }
-
-    // 4. Fetch all groups (halaqat)
-    let groups: any[] = [];
-    try {
-      const { data, error } = await supabase
-        .from("groups")
-        .select("*");
-      if (!error && data) groups = data;
-    } catch (e) {
-      console.error("Failed to fetch groups:", e);
-    }
-
-    // 5. Fetch all group_members
-    let members: any[] = [];
-    try {
-      const { data, error } = await supabase
-        .from("group_members")
-        .select("*");
-      if (!error && data) members = data;
-    } catch (e) {
-      console.error("Failed to fetch group_members:", e);
-    }
-
-    // 4. Fetch all students across center
-    let rawStudents: any[] = [];
-    try {
-      const { data, error } = await supabase
-        .from("students")
-        .select("*");
-      if (!error && data) rawStudents = data;
-    } catch (e) {
-      console.error("Failed to fetch students:", e);
-    }
-
-    // 5. Fetch all memorization logs
-    let rawLogs: any[] = [];
-    try {
-      const { data, error } = await supabase
-        .from("memorization_logs")
-        .select("*");
-      if (!error && data) rawLogs = data;
-    } catch (e) {
-      console.error("Failed to fetch memorization_logs:", e);
-    }
-
-    // 6. Fetch recent attendance records
-    let attendance: any[] = [];
-    try {
-      const { data, error } = await supabase
-        .from("attendance_records")
-        .select("*");
-      if (!error && data) attendance = data;
-    } catch (e) {
-      console.error("Failed to fetch attendance_records:", e);
-    }
+    const profiles: any[] = !profilesRes.error && profilesRes.data ? profilesRes.data : [];
+    const circles: CircleRow[] = !circlesRes.error && circlesRes.data ? (circlesRes.data as CircleRow[]) : [];
+    const groups: any[] = !groupsRes.error && groupsRes.data ? groupsRes.data : [];
+    const members: any[] = !membersRes.error && membersRes.data ? membersRes.data : [];
+    const rawStudents: any[] = !studentsRes.error && studentsRes.data ? studentsRes.data : [];
+    const rawLogs: any[] = !logsRes.error && logsRes.data ? logsRes.data : [];
+    const attendance: any[] = !attendanceRes.error && attendanceRes.data ? attendanceRes.data : [];
 
     const safeProfiles = profiles;
     safeProfiles.sort((a: any, b: any) =>
@@ -380,9 +330,9 @@ export async function createHalaqa(data: {
     const cleanName = data.name.trim();
 
     // Determine target season (default to active season or permanent club)
-    let targetSeasonId = data.season_id;
+    let targetSeasonId = data.season_id || "";
     if (!targetSeasonId) {
-      const seasonsRes = await getSeasons();
+      const seasonsRes = await getSeasonsCached();
       targetSeasonId = seasonsRes.activeSeason?.id || FALLBACK_SEASONS[0].id;
     }
 

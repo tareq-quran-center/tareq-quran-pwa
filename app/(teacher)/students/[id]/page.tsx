@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUserProfile } from "@/lib/actions/auth";
 import { getStudentLogsCached } from "@/lib/actions/log";
 import { getStudentAttendanceCached } from "@/lib/actions/attendance";
 import { StudentDetailClient } from "@/components/teacher/StudentDetailClient";
@@ -17,20 +18,18 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
   const { id } = params;
   const supabase = createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    notFound();
-  }
-
-  // Fetch Student details, Memorization Logs, and Attendance Records concurrently in parallel
-  const [studentRes, logsRes, attendanceRes] = await Promise.all([
+  // Fetch Auth/Profile, Student details, Memorization Logs, and Attendance Records concurrently
+  const [authRes, studentRes, logsRes, attendanceRes] = await Promise.all([
+    getCurrentUserProfile(),
     supabase.from("students").select("*").eq("id", id).single(),
     getStudentLogsCached(id, 100),
     getStudentAttendanceCached(id, 100),
   ]);
+
+  const { user, profile } = authRes;
+  if (!user) {
+    notFound();
+  }
 
   const rawStudent = studentRes.data;
   if (studentRes.error || !rawStudent) {
@@ -39,12 +38,6 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
 
   // Authorization Guard: Center admins can view any student.
   // Teachers can only view students assigned to them directly or via their circle.
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, is_active")
-    .eq("id", user.id)
-    .maybeSingle();
-
   const isAdmin = Boolean(profile && (profile.role === "admin" || profile.role === "superadmin") && profile.is_active);
 
   if (!isAdmin) {

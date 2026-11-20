@@ -59,7 +59,7 @@ export default function QuranReaderPage() {
   useEffect(() => {
     if (viewMode !== "reader") return;
 
-    const pagesToPreload = [currentPage - 1, currentPage + 1].filter(
+    const pagesToPreload = [currentPage - 1, currentPage + 1, currentPage + 2].filter(
       (p) => p >= 1 && p <= 604
     );
 

@@ -1,5 +1,6 @@
 "use server";
 
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { loginSchema, signupSchema, LoginInput, SignupInput } from "@/lib/validations/auth";
 import { redirect } from "next/navigation";
@@ -88,7 +89,7 @@ export async function logoutTeacher(): Promise<void> {
   redirect("/login");
 }
 
-export async function getCurrentUserProfile(): Promise<{
+const getCurrentUserProfileCached = cache(async (): Promise<{
   user: any;
   profile: {
     id: string;
@@ -98,7 +99,7 @@ export async function getCurrentUserProfile(): Promise<{
     is_active: boolean;
   } | null;
   isAdmin: boolean;
-}> {
+}> => {
   try {
     const supabase = createClient();
     const {
@@ -135,5 +136,19 @@ export async function getCurrentUserProfile(): Promise<{
   } catch {
     return { user: null, profile: null, isAdmin: false };
   }
+});
+
+export async function getCurrentUserProfile(): Promise<{
+  user: any;
+  profile: {
+    id: string;
+    full_name: string;
+    phone: string | null;
+    role: "admin" | "teacher" | string;
+    is_active: boolean;
+  } | null;
+  isAdmin: boolean;
+}> {
+  return getCurrentUserProfileCached();
 }
 

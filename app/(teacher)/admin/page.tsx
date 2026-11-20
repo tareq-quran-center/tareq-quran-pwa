@@ -1,5 +1,6 @@
 import { getCurrentUserProfile } from "@/lib/actions/auth";
 import { getAdminCenterData } from "@/lib/actions/admin";
+import { getActivitiesForAdmin } from "@/lib/actions/activity";
 import { AdminDashboardClient } from "@/components/admin/AdminDashboardClient";
 import { AlertCircle } from "lucide-react";
 import Link from "next/link";
@@ -21,7 +22,10 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
-  const data = await getAdminCenterData();
+  const [data, activitiesRes] = await Promise.all([
+    getAdminCenterData(),
+    getActivitiesForAdmin(),
+  ]);
 
   if (!data.success) {
     if (data.error === "AUTH_REQUIRED" || data.error?.includes("تسجيل الدخول")) {
@@ -58,6 +62,8 @@ export default async function AdminPage() {
           teachers: data.teachers,
           students: data.students,
           seasons: data.seasons,
+          activities: activitiesRes.success && activitiesRes.data ? activitiesRes.data : [],
+          isMissingActivityTables: Boolean(activitiesRes.isMissingTables),
           currentUserIsAdmin: data.currentUserIsAdmin,
           currentUserId: user?.id || data.currentUserId,
           currentUserProfile: {

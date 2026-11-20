@@ -38,11 +38,14 @@ export async function getActivitiesForAdmin(): Promise<{
 
     const supabase = createClient();
 
-    // 1. Query Supabase activities table
-    const { data: dbActivities, error: actError } = await supabase
-      .from("activities")
-      .select("*")
-      .order("created_at", { ascending: false });
+    // Query activities, responses, and active students concurrently
+    const [actRes, respRes, studentsRes] = await Promise.all([
+      supabase.from("activities").select("*").order("created_at", { ascending: false }),
+      supabase.from("activity_responses").select("*"),
+      supabase.from("students").select("id, name, group_id").is("deleted_at", null),
+    ]);
+
+    const { data: dbActivities, error: actError } = actRes;
 
     if (actError) {
       const isMissingTable =
@@ -68,32 +71,12 @@ export async function getActivitiesForAdmin(): Promise<{
       return { success: true, data: [], isMissingTables: false };
     }
 
-    // 2. Fetch all responses to aggregate stats
-    let responsesList: ActivityResponseRow[] = [];
-    const { data: dbResponses, error: respError } = await supabase
-      .from("activity_responses")
-      .select("*");
+    const responsesList: ActivityResponseRow[] =
+      !respRes.error && Array.isArray(respRes.data) ? (respRes.data as any) : [];
 
-    if (!respError && Array.isArray(dbResponses)) {
-      responsesList = dbResponses as any;
-    }
-
-    // 3. Fetch students to map names (using 'name' which exists in schema)
-    let studentMap = new Map<string, string>();
-    try {
-      const { data: dbStudents } = await supabase
-        .from("students")
-        .select("id, name, group_id")
-        .is("deleted_at", null);
-
-      if (dbStudents) {
-        studentMap = new Map(
-          dbStudents.map((s: any) => [s.id, s.name || "طالب"])
-        );
-      }
-    } catch (stErr) {
-      console.warn("[getActivitiesForAdmin] Error fetching students map:", stErr);
-    }
+    const studentMap = new Map<string, string>(
+      (studentsRes.data || []).map((s: any) => [s.id, s.name || "طالب"])
+    );
 
     // 4. Map activities with detailed counts & populated responses
     const activitiesWithStats: ActivityWithStats[] = activitiesList.map((act) => {
@@ -260,12 +243,20 @@ export async function getActivitiesForParent(
   try {
     const supabase = createClient();
 
-    // 1. Fetch active activities
-    const { data: dbActivities, error } = await supabase
-      .from("activities")
-      .select("*")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false });
+    // Fetch active activities and student's responses concurrently
+    const [actRes, respRes] = await Promise.all([
+      supabase
+        .from("activities")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("activity_responses")
+        .select("*")
+        .eq("student_id", studentId),
+    ]);
+
+    const { data: dbActivities, error } = actRes;
 
     if (error || !Array.isArray(dbActivities) || dbActivities.length === 0) {
       return [];
@@ -284,16 +275,8 @@ export async function getActivitiesForParent(
 
     if (targetedActivities.length === 0) return [];
 
-    // 3. Fetch this student's responses
-    let studentResponses: ActivityResponseRow[] = [];
-    const { data: dbResponses, error: respErr } = await supabase
-      .from("activity_responses")
-      .select("*")
-      .eq("student_id", studentId);
-
-    if (!respErr && Array.isArray(dbResponses) && dbResponses.length > 0) {
-      studentResponses = dbResponses as ActivityResponseRow[];
-    }
+    const studentResponses: ActivityResponseRow[] =
+      !respRes.error && Array.isArray(respRes.data) ? (respRes.data as ActivityResponseRow[]) : [];
 
     const responseMap = new Map(studentResponses.map((r) => [r.activity_id, r]));
 

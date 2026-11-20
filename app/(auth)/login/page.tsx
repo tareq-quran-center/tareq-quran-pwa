@@ -34,10 +34,7 @@ export default function LoginPage() {
     if (res.success) {
       setSuccessMessage("تم تسجيل الدخول بنجاح! جاري التوجيه...");
       const targetPath = res.data?.role === "admin" ? "/admin" : "/dashboard";
-      setTimeout(() => {
-        router.push(targetPath);
-        router.refresh();
-      }, 500);
+      router.replace(targetPath);
     } else {
       setErrorMessage(res.error || "فشل تسجيل الدخول");
       setIsLoading(false);

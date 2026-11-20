@@ -11,13 +11,27 @@ import {
   SeasonRow,
   ActivityWithStats,
 } from "@/types";
-import { ActivityDialog } from "./ActivityDialog";
-import { ActivitiesManagerTab } from "./ActivitiesManagerTab";
 import {
   getActivitiesForAdmin,
   createActivity,
   deleteActivity,
 } from "@/lib/actions/activity";
+
+const ActivityDialog = dynamic(
+  () => import("./ActivityDialog").then((m) => m.ActivityDialog),
+  { ssr: false }
+);
+const ActivitiesManagerTab = dynamic(
+  () => import("./ActivitiesManagerTab").then((m) => m.ActivitiesManagerTab),
+  { ssr: false }
+);
+const AdminAccountSettingsDialog = dynamic(
+  () =>
+    import("./AdminAccountSettingsDialog").then(
+      (m) => m.AdminAccountSettingsDialog
+    ),
+  { ssr: false }
+);
 
 const BulkStudentImportDialog = dynamic(
   () =>
@@ -46,7 +60,6 @@ import { IslamicAdminBanner } from "./IslamicAdminBanner";
 import { IslamicHalaqaCard } from "./IslamicHalaqaCard";
 import { IslamicSidebarWidgets } from "./IslamicSidebarWidgets";
 import { HalaqatHonorBoard } from "./HalaqatHonorBoard";
-import { AdminAccountSettingsDialog } from "./AdminAccountSettingsDialog";
 import { SeasonSelector } from "@/components/common/SeasonSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,6 +113,8 @@ interface AdminDashboardClientProps {
       }
     >;
     seasons?: SeasonRow[];
+    activities?: ActivityWithStats[];
+    isMissingActivityTables?: boolean;
     currentUserIsAdmin?: boolean;
     currentUserId?: string;
     currentUserProfile?: {
@@ -120,9 +135,11 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
 
   const [currentUser, setCurrentUser] = useState(initialData.currentUserProfile);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [activities, setActivities] = useState<ActivityWithStats[]>([]);
+  const [activities, setActivities] = useState<ActivityWithStats[]>(initialData.activities || []);
   const [isActivityDialogOpen, setIsActivityDialogOpen] = useState(false);
-  const [isMissingActivityTables, setIsMissingActivityTables] = useState(false);
+  const [isMissingActivityTables, setIsMissingActivityTables] = useState(
+    Boolean(initialData.isMissingActivityTables)
+  );
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -131,23 +148,6 @@ export function AdminDashboardClient({ initialData }: AdminDashboardClientProps)
         setIsSettingsOpen(true);
       }
     }
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-    getActivitiesForAdmin().then((res) => {
-      if (isMounted) {
-        if (res.success && res.data) {
-          setActivities(res.data);
-        }
-        if (res.isMissingTables) {
-          setIsMissingActivityTables(true);
-        }
-      }
-    });
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   const [seasons] = useState<SeasonRow[]>(

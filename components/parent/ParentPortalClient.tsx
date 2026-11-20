@@ -53,7 +53,10 @@ export function ParentPortalClient({ student, logs, attendance, siblings, activi
   const safeAttendance = Array.isArray(attendance) ? attendance : [];
 
   const totalLogsCount = safeLogs.length;
-  const totalPagesCount = safeLogs.reduce((acc, log) => acc + (Number(log.page_count) || 0), 0);
+  const totalPagesCount =
+    Math.round(
+      safeLogs.reduce((acc, log) => acc + (Number(log.page_count) || 0), 0) * 100
+    ) / 100;
 
   const presentCount = safeAttendance.filter(
     (a) => a?.status === "حاضر" || a?.status === "متأخر"
@@ -325,7 +328,7 @@ export function ParentPortalClient({ student, logs, attendance, siblings, activi
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+          <Card className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden min-w-0">
             <CardHeader className="p-3 sm:p-4 pb-1 flex flex-row items-center justify-between space-y-0">
               <CardTitle className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">
                 إجمالي الصفحات
@@ -335,8 +338,8 @@ export function ParentPortalClient({ student, logs, attendance, siblings, activi
               </div>
             </CardHeader>
             <CardContent className="p-3 sm:p-4 pt-0">
-              <div className="text-lg sm:text-2xl font-black text-slate-900 dark:text-slate-50 tracking-tight">
-                {formatPageCount(totalPagesCount)}
+              <div className="text-lg sm:text-2xl font-black text-slate-900 dark:text-slate-50 tracking-tight break-words">
+                {totalPagesCount > 0 ? formatPageCount(totalPagesCount) : "0 صفحة"}
               </div>
               <CardDescription className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
                 صفحة منجزة

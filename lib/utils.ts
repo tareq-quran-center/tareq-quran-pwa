@@ -25,13 +25,15 @@ export function formatPageCount(count?: number | null): string {
     return "صفحة واحدة";
   }
 
-  if (count === 0.25) return "¼ صفحة";
-  if (count === 0.5) return "½ صفحة";
-  if (count === 0.75) return "¾ صفحة";
-  if (count === 1) return "صفحة واحدة";
-  if (count === 2) return "صفحتان";
+  const cleanCount = Math.round(count * 100) / 100;
 
-  return `${count} صفحة`;
+  if (cleanCount === 0.25) return "¼ صفحة";
+  if (cleanCount === 0.5) return "½ صفحة";
+  if (cleanCount === 0.75) return "¾ صفحة";
+  if (cleanCount === 1) return "صفحة واحدة";
+  if (cleanCount === 2) return "صفحتان";
+
+  return `${cleanCount} صفحة`;
 }
 
 export const GRADE_LABELS: Record<EvaluationGradeEnum, { label: string; color: string }> = {
